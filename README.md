@@ -20,5 +20,11 @@ You can download the binaries from my website [www.mikescher.de](http://www.mike
 Set Up
 ======
 
-You need the other [BefunUtils](https://github.com/Mikescher/BefunUtils) projects to run this.  
-Follow the setup instructions from BefunUtils: [README](https://github.com/Mikescher/BefunUtils/blob/master/README.md)
+*This program was developed under Windows with Visual Studio.*
+
+You don't need other [BefunUtils](https://github.com/Mikescher/BefunUtils) projects to use this.  
+Theoretically you can only clone this repository and start using it.  
+But it could be useful to get the whole BefunUtils solution like described [here](https://github.com/Mikescher/BefunUtils/blob/master/README.md)  
+Especially BefunDebug could be useful for testing.
+
+To see the this in action look at my [BefunWrite](https://github.com/Mikescher/BefunExec) source code or my [BefunDebug](https://github.com/Mikescher/BefunDebug) code.
