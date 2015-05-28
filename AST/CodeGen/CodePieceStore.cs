@@ -4,8 +4,43 @@ using System;
 
 namespace BefunGen.AST.CodeGen
 {
+	public class CodePieceStoreElement
+	{
+		public string Name;
+		public Func<CodePiece> Function;
+		public CodePieceStoreElement(string n, Func<CodePiece> f)
+		{
+			Name = n;
+			Function = f;
+		}
+	}
+
 	public static class CodePieceStore
 	{
+		#region Store
+
+
+
+		public static CodePieceStoreElement[] CODEPIECES = new[]
+		{
+			new CodePieceStoreElement("ReadArrayToStack", () => ReadArrayToStack(8, 0, 0, false)),
+			new CodePieceStoreElement("WriteArrayFromStack", () => ReadArrayToStack(8, 0, 0, false)),
+			new CodePieceStoreElement("WriteArrayFromReversedStack", () => WriteArrayFromReversedStack(8, 0, 0, false)),
+			new CodePieceStoreElement("VerticalLaneTurnout_Test", () => VerticalLaneTurnout_Test()),
+			new CodePieceStoreElement("VerticalLaneTurnout_Dec", () => VerticalLaneTurnout_Dec(false)),
+			new CodePieceStoreElement("BooleanStackFlooder", () => BooleanStackFlooder()),
+			new CodePieceStoreElement("PopMultipleStackValues", () => PopMultipleStackValues(8, false)),
+			new CodePieceStoreElement("ReadValueFromField", () => ReadValueFromField(new MathExt.Point(0, 0), false)),
+			new CodePieceStoreElement("WriteValueToField", () => WriteValueToField(new MathExt.Point(0, 0), false)),
+			new CodePieceStoreElement("ModuloRangeLimiter", () => ModuloRangeLimiter(8, false)),
+			new CodePieceStoreElement("RandomDigitGenerator", () => RandomDigitGenerator(CodePiece.ParseFromLine("8"), false)),
+			new CodePieceStoreElement("Base4DigitJoiner", () => Base4DigitJoiner(false)),
+			new CodePieceStoreElement("SwitchStatementTester", () => SwitchStatementTester(false)),
+			new CodePieceStoreElement("SwitchLaneTurnout", () => SwitchLaneTurnout()),
+		};
+
+		#endregion
+
 		#region ReadArrayToStack
 
 		public static CodePiece ReadArrayToStack(VarDeclaration_Array v, bool reversed)
