@@ -21,7 +21,7 @@ But there is also a small IDE [BefunWrite](https://github.com/Mikescher/BefunWri
 Download
 ========
 
-You can download the binaries from my website [www.mikescher.de](http://www.mikescher.de/programs/view/BefunUtils)
+You can download the binaries from my website [www.mikescher.com](http://www.mikescher.com/programs/view/BefunUtils)
 
 Set Up
 ======

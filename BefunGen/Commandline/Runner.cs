@@ -17,12 +17,12 @@ namespace BefunGen.Commandline
 		{
 			if (args.Length > 0 && File.Exists(args[0]))
 			{
-				args[0] = "-file=\"" + args[0] + "\"";
+				args[0] = "-file=" + args[0];
 			}
 
 			if (args.Length > 1 && File.Exists(args[1]))
 			{
-				args[1] = "-out=\"" + args[1] + "\"";
+				args[1] = "-out=" + args[1];
 			}
 
 			cmda = new CommandLineArguments(args, false);
