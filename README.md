@@ -12,6 +12,12 @@ But thats not really the problem, because the target of BefunGen is **not** gene
 BefunGen itself is not a standalone program, it's a simple library. You are free to use the DLL in your own program (but beware of the license, please give me credits...). If you need help how to use it you can either simply look at the source code (of BefunGen or BefunWrite) or write me a friendly mail.
 
 
+Running
+=======
+
+You can call BefunGen simply via the commandline and supply it with an *.tf file to compile. (call with `--help` to see all the options).
+But there is also a small IDE [BefunWrite](https://github.com/Mikescher/BefunWrite) which makes it a lot easier to write a program.
+
 Download
 ========
 
@@ -28,9 +34,3 @@ But it could be useful to get the whole BefunUtils solution like described [here
 Especially BefunDebug could be useful for testing.
 
 To see the this in action look at my [BefunWrite](https://github.com/Mikescher/BefunExec) source code or my [BefunDebug](https://github.com/Mikescher/BefunDebug) code.
-
-
-Additional Projects
-===================
-
-BefunGenTest is the test suite for BefunGen

@@ -3,6 +3,8 @@ using BefunGen.AST.Exceptions;
 using BefunGen.Properties;
 using System;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BefunGen.AST
 {
@@ -207,6 +209,49 @@ namespace BefunGen.AST
 				case GOLD.ParseMessage.GroupError: //GROUP ERROR! Unexpected end of file
 					throw new GroupErrorException(new SourceCodePosition(parser));
 			}
+		}
+
+		public string ExtractDisplayFromTFFormat(string sourcecode)
+		{
+			string[] lines = Regex.Split(@"\r?\n", sourcecode);
+
+			var displayBuilder = new StringBuilder();
+			var inDisplayDefinition = false;
+			foreach (var line in lines)
+			{
+				if (line.StartsWith("///"))
+				{
+					string content = line.Substring(3);
+
+					if (inDisplayDefinition)
+					{
+						if (content.Trim() == "</DISPLAY>")
+						{
+							return displayBuilder.ToString();
+						}
+						else
+						{
+							if (displayBuilder.Length == 0)
+								displayBuilder.Append(content);
+							else
+								displayBuilder.Append("\n" + content);
+						}
+					}
+					else
+					{
+						if (content.Trim() == "<DISPLAY>")
+						{
+							inDisplayDefinition = true;
+							displayBuilder = new StringBuilder();
+						}
+					}
+				}
+				else
+				{
+					inDisplayDefinition = false;
+				}
+			}
+			return string.Empty;
 		}
 
 		public string getGrammarDefinition()
