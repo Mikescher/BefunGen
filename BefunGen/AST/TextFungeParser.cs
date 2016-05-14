@@ -211,9 +211,9 @@ namespace BefunGen.AST
 			}
 		}
 
-		public string ExtractDisplayFromTFFormat(string sourcecode)
+		public static string ExtractDisplayFromTFFormat(string sourcecode)
 		{
-			string[] lines = Regex.Split(@"\r?\n", sourcecode);
+			string[] lines = Regex.Split(sourcecode, @"\r?\n");
 
 			var displayBuilder = new StringBuilder();
 			var inDisplayDefinition = false;

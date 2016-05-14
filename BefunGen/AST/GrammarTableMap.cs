@@ -29,7 +29,7 @@ namespace BefunGen.AST
 
 				case ProductionIndex.Header_Program_Identifier_Colon_Display_Lbracket_Comma_Rbracket:
 					//  <Header> ::= program Identifier ':' display '[' <Literal_Int> ',' <Literal_Int> ']'
-					result = new Program_Header(p, GetStrData(1, r), ((Literal_Int)r.get_Data(5)).Value, ((Literal_Int)r.get_Data(7)).Value);
+					result = new Program_Header(p, GetStrData(1, r), (int)((Literal_Int)r.get_Data(5)).Value, (int)((Literal_Int)r.get_Data(7)).Value);
 					break;
 
 				case ProductionIndex.Constants_Const:
@@ -545,22 +545,22 @@ namespace BefunGen.AST
 
 				case ProductionIndex.Type_intarr_Lbracket_Rbracket:
 					// <Type_IntArr> ::= <Type_Int> '[' <Literal_Int> ']'
-					result = new BType_IntArr(p, ((Literal_Int)r.get_Data(2)).Value);
+					result = new BType_IntArr(p, (int)((Literal_Int)r.get_Data(2)).Value);
 					break;
 
 				case ProductionIndex.Type_string_Lbracket_Rbracket:
 					// <Type_String> ::= <Type_Char> '[' <Literal_Int> ']'
-					result = new BType_CharArr(p, ((Literal_Int)r.get_Data(2)).Value);
+					result = new BType_CharArr(p, (int)((Literal_Int)r.get_Data(2)).Value);
 					break;
 
 				case ProductionIndex.Type_digitarr_Lbracket_Rbracket:
 					// <Type_DigitArr> ::= <Type_Digit> '[' <Literal_Int> ']'
-					result = new BType_DigitArr(p, ((Literal_Int)r.get_Data(2)).Value);
+					result = new BType_DigitArr(p, (int)((Literal_Int)r.get_Data(2)).Value);
 					break;
 
 				case ProductionIndex.Type_boolarr_Lbracket_Rbracket:
 					// <Type_BoolArr> ::= <Type_Bool> '[' <Literal_Int> ']'
-					result = new BType_BoolArr(p, ((Literal_Int)r.get_Data(2)).Value);
+					result = new BType_BoolArr(p, (int)((Literal_Int)r.get_Data(2)).Value);
 					break;
 
 				case ProductionIndex.Literal:
@@ -615,12 +615,12 @@ namespace BefunGen.AST
 
 				case ProductionIndex.Literal_int_Decliteral:
 					// <Literal_Int> ::= DecLiteral
-					result = new Literal_Int(p, Convert.ToInt32(GetStrData(r), 10));
+					result = new Literal_Int(p, Convert.ToInt64(GetStrData(r), 10));
 					break;
 
 				case ProductionIndex.Literal_int_Hexliteral:
 					// <Literal_Int> ::= HexLiteral
-					result = new Literal_Int(p, Convert.ToInt32(GetStrData(r), 16));
+					result = new Literal_Int(p, Convert.ToInt64(GetStrData(r), 16));
 					break;
 
 				case ProductionIndex.Literal_char_Charliteral:

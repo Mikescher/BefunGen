@@ -316,7 +316,7 @@ namespace BefunGen.AST
 
 		public override Literal getDefaultValue()
 		{
-			return new Literal_IntArr(new SourceCodePosition(), Enumerable.Repeat((int)CGO.DefaultNumeralValue, Size).ToList());
+			return new Literal_IntArr(new SourceCodePosition(), Enumerable.Repeat((long)CGO.DefaultNumeralValue, Size).ToList());
 		}
 
 		public override bool isImplicitCastableTo(BType other)

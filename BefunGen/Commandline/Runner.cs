@@ -81,7 +81,7 @@ namespace BefunGen.Commandline
 
 				var parser = new TextFungeParser();
 
-				string outputCode = parser.generateCode(inputCode, parser.ExtractDisplayFromTFFormat(inputCode), cmda.IsSet("debug"));
+				string outputCode = parser.generateCode(inputCode, TextFungeParser.ExtractDisplayFromTFFormat(inputCode), cmda.IsSet("debug"));
 
 				File.WriteAllText(output, outputCode, Encoding.UTF8);
 

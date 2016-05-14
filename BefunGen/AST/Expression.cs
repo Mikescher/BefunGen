@@ -2,7 +2,6 @@ using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.AST.Exceptions;
 using BefunGen.MathExtensions;
-using System;
 
 namespace BefunGen.AST
 {
@@ -14,7 +13,7 @@ namespace BefunGen.AST
 			//--
 		}
 
-		public int? GetValueLiteral_Value()
+		public long? GetValueLiteral_Value()
 		{
 			if (this is Expression_Literal && (this as Expression_Literal).Value is Literal_Value)
 				return ((this as Expression_Literal).Value as Literal_Value).GetValueAsInt();
@@ -998,8 +997,8 @@ namespace BefunGen.AST
 		{
 			evaluateSubExpressions();
 
-			int? l = Left.GetValueLiteral_Value();
-			int? r = Right.GetValueLiteral_Value();
+			long? l = Left.GetValueLiteral_Value();
+			long? r = Right.GetValueLiteral_Value();
 
 			if (l == 0)
 			{
@@ -1057,8 +1056,8 @@ namespace BefunGen.AST
 		{
 			evaluateSubExpressions();
 
-			int? l = Left.GetValueLiteral_Value();
-			int? r = Right.GetValueLiteral_Value();
+			long? l = Left.GetValueLiteral_Value();
+			long? r = Right.GetValueLiteral_Value();
 
 			if (l == 0)
 			{
@@ -1108,8 +1107,8 @@ namespace BefunGen.AST
 		{
 			evaluateSubExpressions();
 
-			int? l = Left.GetValueLiteral_Value();
-			int? r = Right.GetValueLiteral_Value();
+			long? l = Left.GetValueLiteral_Value();
+			long? r = Right.GetValueLiteral_Value();
 
 			if (l == 0 && r.HasValue && r != 0)
 			{
@@ -1159,8 +1158,8 @@ namespace BefunGen.AST
 		{
 			evaluateSubExpressions();
 
-			int? l = Left.GetValueLiteral_Value();
-			int? r = Right.GetValueLiteral_Value();
+			long? l = Left.GetValueLiteral_Value();
+			long? r = Right.GetValueLiteral_Value();
 
 			if (l == 0)
 			{
@@ -1210,8 +1209,8 @@ namespace BefunGen.AST
 		{
 			evaluateSubExpressions();
 
-			int? l = Left.GetValueLiteral_Value();
-			int? r = Right.GetValueLiteral_Value();
+			long? l = Left.GetValueLiteral_Value();
+			long? r = Right.GetValueLiteral_Value();
 
 			if (r == 0)
 			{
@@ -1672,8 +1671,8 @@ namespace BefunGen.AST
 
 			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
 			{
-				int? l = Left.GetValueLiteral_Value();
-				int? r = Right.GetValueLiteral_Value();
+				long? l = Left.GetValueLiteral_Value();
+				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
@@ -1753,8 +1752,8 @@ namespace BefunGen.AST
 
 			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
 			{
-				int? l = Left.GetValueLiteral_Value();
-				int? r = Right.GetValueLiteral_Value();
+				long? l = Left.GetValueLiteral_Value();
+				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
@@ -1834,8 +1833,8 @@ namespace BefunGen.AST
 
 			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
 			{
-				int? l = Left.GetValueLiteral_Value();
-				int? r = Right.GetValueLiteral_Value();
+				long? l = Left.GetValueLiteral_Value();
+				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
@@ -1898,8 +1897,8 @@ namespace BefunGen.AST
 
 			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
 			{
-				int? l = Left.GetValueLiteral_Value();
-				int? r = Right.GetValueLiteral_Value();
+				long? l = Left.GetValueLiteral_Value();
+				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
@@ -1962,8 +1961,8 @@ namespace BefunGen.AST
 
 			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
 			{
-				int? l = Left.GetValueLiteral_Value();
-				int? r = Right.GetValueLiteral_Value();
+				long? l = Left.GetValueLiteral_Value();
+				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
@@ -2074,8 +2073,8 @@ namespace BefunGen.AST
 
 			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
 			{
-				int? l = Left.GetValueLiteral_Value();
-				int? r = Right.GetValueLiteral_Value();
+				long? l = Left.GetValueLiteral_Value();
+				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
@@ -2249,7 +2248,7 @@ namespace BefunGen.AST
 		{
 			evaluateSubExpressions();
 
-			int? v = Expr.GetValueLiteral_Value();
+			long? v = Expr.GetValueLiteral_Value();
 
 			if (v.HasValue)
 			{
@@ -2733,7 +2732,7 @@ namespace BefunGen.AST
 		{
 			Exponent = Exponent.evaluateExpressions();
 
-			int? v = Exponent.GetValueLiteral_Value();
+			long? v = Exponent.GetValueLiteral_Value();
 
 			if (v.HasValue && v.Value <= 0)
 			{

@@ -58,7 +58,7 @@ namespace BefunGen.AST
 
 		public abstract bool ValueEquals(Literal_Value o);
 
-		public abstract int GetValueAsInt();
+		public abstract long GetValueAsInt();
 	}
 
 	public abstract class Literal_Array : Literal
@@ -91,9 +91,9 @@ namespace BefunGen.AST
 
 	public class Literal_Int : Literal_Value
 	{
-		public readonly int Value;
+		public readonly long Value;
 
-		public Literal_Int(SourceCodePosition pos, int v)
+		public Literal_Int(SourceCodePosition pos, long v)
 			: base(pos)
 		{
 			this.Value = v;
@@ -119,7 +119,7 @@ namespace BefunGen.AST
 			return (o is Literal_Int) && (o as Literal_Int).Value == this.Value;
 		}
 
-		public override int GetValueAsInt()
+		public override long GetValueAsInt()
 		{
 			return Value;
 		}
@@ -155,7 +155,7 @@ namespace BefunGen.AST
 			return (o is Literal_Char) && (o as Literal_Char).Value == this.Value;
 		}
 
-		public override int GetValueAsInt()
+		public override long GetValueAsInt()
 		{
 			return Value;
 		}
@@ -191,7 +191,7 @@ namespace BefunGen.AST
 			return (o is Literal_Bool) && (o as Literal_Bool).Value == this.Value;
 		}
 
-		public override int GetValueAsInt()
+		public override long GetValueAsInt()
 		{
 			return Value ? 1 : 0;
 		}
@@ -227,7 +227,7 @@ namespace BefunGen.AST
 			return (o is Literal_Digit) && (o as Literal_Digit).Value == this.Value;
 		}
 
-		public override int GetValueAsInt()
+		public override long GetValueAsInt()
 		{
 			return Value;
 		}
@@ -239,9 +239,9 @@ namespace BefunGen.AST
 
 	public class Literal_IntArr : Literal_Array
 	{
-		public List<int> Value = new List<int>();
+		public List<long> Value = new List<long>();
 
-		public Literal_IntArr(SourceCodePosition pos, List<int> v)
+		public Literal_IntArr(SourceCodePosition pos, List<long> v)
 			: base(pos)
 		{
 			this.Value = v.ToList();
