@@ -51,7 +51,7 @@ namespace BefunGen.Commandline
 				SetNOPCellsToCustom = cmda.GetBoolDefault("specnop", false),
 
 				DefaultNumeralValue            = (byte) cmda.GetUIntDefaultRange("init_number", 0, 0, 255),
-				DefaultCharacterValue          = (char) cmda.GetUIntDefaultRange("init_char", 0, 0, 255),
+				DefaultCharacterValue          = (char) cmda.GetUIntDefaultRange("init_char", ' ', 0, 255),
 				DefaultBooleanValue            = cmda.GetBoolDefault("init_bool", false),
 
 				StripDoubleStringmodeToogle    = cmda.GetBoolDefault("o_stringmode", true),
@@ -65,14 +65,14 @@ namespace BefunGen.Commandline
 
 				DefaultVarDeclarationWidth     = cmda.GetIntDefaultRange("varwidthmin", 16, 0, 2048),
 
-				DefaultDisplayValue            = (char) cmda.GetUIntDefaultRange("displ_char", 0, 0, 255),
-				DisplayBorder                  = (char) cmda.GetUIntDefaultRange("displ_borderchar", 0, 0, 255),
+				DefaultDisplayValue            = (char) cmda.GetUIntDefaultRange("displ_char", ' ', 0, 255),
+				DisplayBorder                  = (char) cmda.GetUIntDefaultRange("displ_borderchar", '#', 0, 255),
 				DisplayBorderThickness         = cmda.GetIntDefaultRange("displ_borderwidth", 16, 0, 128),
 
-				DefaultVarDeclarationSymbol    = (char) cmda.GetUIntDefaultRange("chr_vardecl", 0, 0, 255),
-				DefaultTempSymbol              = (char) cmda.GetUIntDefaultRange("chr_tmpdecl", 0, 0, 255),
-				DefaultResultTempSymbol        = (char) cmda.GetUIntDefaultRange("chr_tempresult", 0, 0, 255),
-				CustomNOPSymbol                = (char) cmda.GetUIntDefaultRange("chr_nop", 0, 0, 255)
+				DefaultVarDeclarationSymbol    = (char) cmda.GetUIntDefaultRange("chr_vardecl", ' ', 0, 255),
+				DefaultTempSymbol              = (char) cmda.GetUIntDefaultRange("chr_tmpdecl", ' ', 0, 255),
+				DefaultResultTempSymbol        = (char) cmda.GetUIntDefaultRange("chr_tempresult", ' ', 0, 255),
+				CustomNOPSymbol                = (char) cmda.GetUIntDefaultRange("chr_nop", '@', 0, 255)
 			};
 			
 			try
