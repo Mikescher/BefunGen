@@ -4,13 +4,17 @@ using BefunGen.AST.Exceptions;
 using System;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BefunGen.Commandline
 {
 	class Runner
 	{
 		private static string TITLE = "BefunGen";
-		
+
+		// https://www.debuggex.com/r/e51Awdj5tCpvrP3E
+		private static Regex REX_FILENAME = new Regex(@"^(?:[a-zA-Z]\:|\\\\[\w\.\-\(\)]+\\[\w.$\-\(\)]+)\\(?:[\w\-\(\)]+\\)*\w([\w\-\(\)\.])+$");
+
 		private readonly CommandLineArguments cmda;
 
 		public Runner(string[] args)
@@ -20,7 +24,7 @@ namespace BefunGen.Commandline
 				args[0] = "-file=" + args[0];
 			}
 
-			if (args.Length > 1 && File.Exists(args[1]))
+			if (args.Length > 1 && REX_FILENAME.IsMatch(args[1]))
 			{
 				args[1] = "-out=" + args[1];
 			}
@@ -40,10 +44,10 @@ namespace BefunGen.Commandline
 			}
 
 			var input = cmda.GetStringDefault("file", null);
-			if (string.IsNullOrWhiteSpace(input) || !File.Exists("file")) return Fail("Please specify a valid file");
+			if (string.IsNullOrWhiteSpace(input) || !File.Exists(input)) return Fail("Please specify a valid input file");
 
 			var output = cmda.GetStringDefault("out", Path.ChangeExtension(input, "b93"));
-			if (string.IsNullOrWhiteSpace(input)) return Fail("Please specify a valid file");
+			if (string.IsNullOrWhiteSpace(input)) return Fail("Please specify a valid output file");
 
 			ASTObject.CGO = new CodeGenOptions
 			{
@@ -67,7 +71,7 @@ namespace BefunGen.Commandline
 
 				DefaultDisplayValue            = (char) cmda.GetUIntDefaultRange("displ_char", ' ', 0, 255),
 				DisplayBorder                  = (char) cmda.GetUIntDefaultRange("displ_borderchar", '#', 0, 255),
-				DisplayBorderThickness         = cmda.GetIntDefaultRange("displ_borderwidth", 16, 0, 128),
+				DisplayBorderThickness         = cmda.GetIntDefaultRange("displ_borderwidth", 1, 0, 128),
 
 				DefaultVarDeclarationSymbol    = (char) cmda.GetUIntDefaultRange("chr_vardecl", ' ', 0, 255),
 				DefaultTempSymbol              = (char) cmda.GetUIntDefaultRange("chr_tmpdecl", ' ', 0, 255),
@@ -77,12 +81,14 @@ namespace BefunGen.Commandline
 			
 			try
 			{
+				Console.Out.WriteLine("Reading from " + Path.GetFullPath(input));
 				string inputCode = File.ReadAllText(input);
 
 				var parser = new TextFungeParser();
 
 				string outputCode = parser.generateCode(inputCode, TextFungeParser.ExtractDisplayFromTFFormat(inputCode), cmda.IsSet("debug"));
 
+				Console.Out.WriteLine("Writing to " + Path.GetFullPath(output));
 				File.WriteAllText(output, outputCode, Encoding.UTF8);
 
 				return 0;
