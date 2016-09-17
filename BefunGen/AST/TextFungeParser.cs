@@ -19,32 +19,32 @@ namespace BefunGen.AST
 		{
 			parser = new GOLD.Parser();
 
-			loadTables(new BinaryReader(new MemoryStream(getGrammar())));
+			LoadTables(new BinaryReader(new MemoryStream(GetGrammar())));
 		}
 
-		public bool loadTables(BinaryReader r)
+		public bool LoadTables(BinaryReader r)
 		{
 			return parser.LoadTables(r);
 		}
 
-		public bool loadTables(string p)
+		public bool LoadTables(string p)
 		{
-			return loadTables(new BinaryReader(new FileStream(p, FileMode.Open)));
+			return LoadTables(new BinaryReader(new FileStream(p, FileMode.Open)));
 		}
 
-		public string generateCode(string txt, string initialDisplay, bool debug)
+		public string GenerateCode(string txt, string initialDisplay, bool debug)
 		{
 			Program p;
 			CodePiece c;
-			return generateCode(txt, initialDisplay, debug, out p, out c);
+			return GenerateCode(txt, initialDisplay, debug, out p, out c);
 		}
 
-		public string generateCode(string txt, string initialDisplay, bool debug, out Program p, out CodePiece cp)
+		public string GenerateCode(string txt, string initialDisplay, bool debug, out Program p, out CodePiece cp)
 		{
-			p = generateAST(txt) as Program;
+			p = GenerateAst(txt) as Program;
 
 			GenerateTime = Environment.TickCount;
-			cp = p.generateCode(initialDisplay);
+			cp = p.GenerateCode(initialDisplay);
 			GenerateTime = Environment.TickCount - GenerateTime;
 
 			string result;
@@ -57,18 +57,18 @@ namespace BefunGen.AST
 			return result;
 		}
 
-		public Program generateAST(string txt)
+		public Program GenerateAst(string txt)
 		{
 			ParseTime = Environment.TickCount;
 
 			Program result = null;
 
-			result = (Program)parse(txt);
+			result = (Program)Parse(txt);
 
 			if (result == null)
 				throw new Exception("Result == null");
 
-			result.prepare();
+			result.Prepare();
 
 			ParseTime = Environment.TickCount - ParseTime;
 
@@ -83,7 +83,7 @@ namespace BefunGen.AST
 
 			try
 			{
-				result = (Program)parse(txt);
+				result = (Program)Parse(txt);
 			}
 			catch (BefunGenException e)
 			{
@@ -107,7 +107,7 @@ namespace BefunGen.AST
 
 			try
 			{
-				result.prepare();
+				result.Prepare();
 			}
 			catch (BefunGenException e)
 			{
@@ -124,7 +124,7 @@ namespace BefunGen.AST
 
 			try
 			{
-				result.generateCode(disp);
+				result.GenerateCode(disp);
 			}
 			catch (BefunGenException e)
 			{
@@ -146,7 +146,7 @@ namespace BefunGen.AST
 			return true;
 		}
 
-		private object parse(string txt)
+		private object Parse(string txt)
 		{
 			lock (this)
 			{
@@ -169,7 +169,7 @@ namespace BefunGen.AST
 						case GOLD.ParseMessage.InternalError:
 						case GOLD.ParseMessage.NotLoadedError:
 						case GOLD.ParseMessage.GroupError:
-							fail(response);
+							Fail(response);
 							break;
 
 						case GOLD.ParseMessage.Reduction: // Reduction
@@ -190,7 +190,7 @@ namespace BefunGen.AST
 			}
 		}
 
-		private void fail(GOLD.ParseMessage msg)
+		private void Fail(GOLD.ParseMessage msg)
 		{
 			switch (msg)
 			{
@@ -254,12 +254,12 @@ namespace BefunGen.AST
 			return string.Empty;
 		}
 
-		public string getGrammarDefinition()
+		public string GetGrammarDefinition()
 		{
 			return Resources.TextFunge_grm;
 		}
 
-		public byte[] getGrammar()
+		public byte[] GetGrammar()
 		{
 			return Resources.TextFunge_egt;
 		}

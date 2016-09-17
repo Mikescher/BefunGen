@@ -1,9 +1,9 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class MethodCall_HorizontalReEntry_Tag : CodeTag
+	public class MethodCallHorizontalReEntryTag : CodeTag
 	{
-		public MethodCall_HorizontalReEntry_Tag(ICodeAddressTarget target)
+		public MethodCallHorizontalReEntryTag(ICodeAddressTarget target)
 			: base("Horizontal_MethodCall_ReEntry", target)
 		{
 			//NOP

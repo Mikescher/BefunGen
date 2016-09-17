@@ -1,18 +1,18 @@
 ﻿
 namespace BefunGen.AST.CodeGen.NumberCode
 {
-	public class NumberCodeFactory_Boolean
+	public class NumberCodeFactoryBoolean
 	{
-		public static CodePiece generateCode(long Value)
+		public static CodePiece GenerateCode(long value)
 		{
-			return generateCode(Value, false);
+			return GenerateCode(value, false);
 		}
 
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			if (Value == 0 || Value == 1)
+			if (value == 0 || value == 1)
 			{
-				return generateCode(Value == 1, reversed);
+				return GenerateCode(value == 1, reversed);
 			}
 			else
 			{
@@ -20,18 +20,18 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			}
 		}
 
-		public static CodePiece generateCode(bool Value, bool reversed)
+		public static CodePiece GenerateCode(bool value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(bool Value)
+		public static CodePiece GenerateCode(bool value)
 		{
 			CodePiece p = new CodePiece();
-			p[0, 0] = BCHelper.dig(Value ? (byte)1 : (byte)0);
+			p[0, 0] = BCHelper.Dig(value ? (byte)1 : (byte)0);
 			return p;
 		}
 	}

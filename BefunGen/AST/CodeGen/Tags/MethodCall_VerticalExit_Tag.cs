@@ -1,27 +1,27 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class MethodCall_VerticalExit_Tag : CodeTag
+	public class MethodCallVerticalExitTag : CodeTag
 	{
-		public MethodCall_VerticalExit_Tag(Method target)
+		public MethodCallVerticalExitTag(Method target)
 			: base("Vertical_MethodCall_Exit (Method)", target)
 		{
 			//NOP
 		}
 
-		public MethodCall_VerticalExit_Tag(Statement_Label target)
+		public MethodCallVerticalExitTag(StatementLabel target)
 			: base("Vertical_MethodCall_Exit (Label)", target)
 		{
 			//NOP
 		}
 
-		public MethodCall_VerticalExit_Tag(object target)
+		public MethodCallVerticalExitTag(object target)
 			: base("Vertical_MethodCall_Exit (" + target.GetType().Name + ")", target)
 		{
 			//NOP
 		}
 
-		public MethodCall_VerticalExit_Tag()
+		public MethodCallVerticalExitTag()
 			: base("Vertical_MethodCall_Exit (PARAMLESS)")
 		{
 			//NOP

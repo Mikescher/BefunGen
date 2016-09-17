@@ -50,22 +50,22 @@ namespace BefunGen.AST
 
 		public override int GetHashCode()
 		{
-			return -getPriority();
+			return -GetPriority();
 		}
 
 		public override string ToString()
 		{
-			return getDebugString();
+			return GetDebugString();
 		}
 
-		public abstract Literal getDefaultValue();
-		public abstract bool isImplicitCastableTo(BType other);
-		public abstract int getPriority();
+		public abstract Literal GetDefaultValue();
+		public abstract bool IsImplicitCastableTo(BType other);
+		public abstract int GetPriority();
 	}
 
-	public abstract class BType_Value : BType
+	public abstract class BTypeValue : BType
 	{
-		public BType_Value(SourceCodePosition pos)
+		public BTypeValue(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
@@ -77,13 +77,13 @@ namespace BefunGen.AST
 		}
 	}
 
-	public abstract class BType_Array : BType
+	public abstract class BTypeArray : BType
 	{
-		public BType_Value InternalType { get { return getInternType(); } }
+		public BTypeValue InternalType { get { return GetInternType(); } }
 
 		public readonly int Size;
 
-		public BType_Array(SourceCodePosition pos, int sz)
+		public BTypeArray(SourceCodePosition pos, int sz)
 			: base(pos)
 		{
 			Size = sz;
@@ -99,20 +99,20 @@ namespace BefunGen.AST
 			if ((object)p == null)
 				return false;
 
-			return this.GetType() == p.GetType() && (p as BType_Array).Size == Size;
+			return this.GetType() == p.GetType() && (p as BTypeArray).Size == Size;
 		}
 
 		public override int GetHashCode()
 		{
-			return getPriority() * (Size + 1);
+			return GetPriority() * (Size + 1);
 		}
 
-		protected abstract BType_Value getInternType();
+		protected abstract BTypeValue GetInternType();
 	}
 
-	public class BType_Void : BType // neither Array nor Value ...
+	public class BTypeVoid : BType // neither Array nor Value ...
 	{
-		public BType_Void(SourceCodePosition pos)
+		public BTypeVoid(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
@@ -123,30 +123,30 @@ namespace BefunGen.AST
 			return 1;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "void";
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
 			throw new VoidObjectCallException(Position);
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
 			return false;
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_VOID;
 		}
 	}
 
-	public class BType_Union : BType // Only for internal cast - is castable to everything
+	public class BTypeUnion : BType // Only for internal cast - is castable to everything
 	{
-		public BType_Union(SourceCodePosition pos)
+		public BTypeUnion(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
@@ -154,25 +154,25 @@ namespace BefunGen.AST
 
 		public override int GetSize()
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "union";
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_Int(new SourceCodePosition(), 0);
+			return new LiteralInt(new SourceCodePosition(), 0);
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
 			return true;
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_UNION;
 		}
@@ -182,117 +182,117 @@ namespace BefunGen.AST
 
 	#region Value Types
 
-	public class BType_Int : BType_Value
+	public class BTypeInt : BTypeValue
 	{
-		public BType_Int(SourceCodePosition pos)
+		public BTypeInt(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "int";
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_Int(new SourceCodePosition(), CGO.DefaultNumeralValue);
+			return new LiteralInt(new SourceCodePosition(), CGO.DefaultNumeralValue);
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Int);
+			return (other is BTypeInt);
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_INT;
 		}
 	}
 
-	public class BType_Digit : BType_Value
+	public class BTypeDigit : BTypeValue
 	{
-		public BType_Digit(SourceCodePosition pos)
+		public BTypeDigit(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "digit";
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_Digit(new SourceCodePosition(), CGO.DefaultNumeralValue);
+			return new LiteralDigit(new SourceCodePosition(), CGO.DefaultNumeralValue);
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Digit || other is BType_Int);
+			return (other is BTypeDigit || other is BTypeInt);
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_DIGIT;
 		}
 	}
 
-	public class BType_Char : BType_Value
+	public class BTypeChar : BTypeValue
 	{
-		public BType_Char(SourceCodePosition pos)
+		public BTypeChar(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "char";
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_Char(new SourceCodePosition(), CGO.DefaultCharacterValue);
+			return new LiteralChar(new SourceCodePosition(), CGO.DefaultCharacterValue);
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Char);
+			return (other is BTypeChar);
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_CHAR;
 		}
 	}
 
-	public class BType_Bool : BType_Value
+	public class BTypeBool : BTypeValue
 	{
-		public BType_Bool(SourceCodePosition pos)
+		public BTypeBool(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "bool";
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_Bool(new SourceCodePosition(), CGO.DefaultBooleanValue);
+			return new LiteralBool(new SourceCodePosition(), CGO.DefaultBooleanValue);
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Bool);
+			return (other is BTypeBool);
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_BOOL;
 		}
@@ -302,135 +302,135 @@ namespace BefunGen.AST
 
 	#region Array Types
 
-	public class BType_IntArr : BType_Array
+	public class BTypeIntArr : BTypeArray
 	{
-		public BType_IntArr(SourceCodePosition pos, int sz)
+		public BTypeIntArr(SourceCodePosition pos, int sz)
 			: base(pos, sz)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("int[{0}]", Size);
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_IntArr(new SourceCodePosition(), Enumerable.Repeat((long)CGO.DefaultNumeralValue, Size).ToList());
+			return new LiteralIntArr(new SourceCodePosition(), Enumerable.Repeat((long)CGO.DefaultNumeralValue, Size).ToList());
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Array && (other as BType_Array).Size == Size && (other is BType_IntArr));
+			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeIntArr));
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_INT;
 		}
 
-		protected override BType_Value getInternType()
+		protected override BTypeValue GetInternType()
 		{
-			return new BType_Int(Position);
+			return new BTypeInt(Position);
 		}
 	}
 
-	public class BType_CharArr : BType_Array
+	public class BTypeCharArr : BTypeArray
 	{
-		public BType_CharArr(SourceCodePosition pos, int sz)
+		public BTypeCharArr(SourceCodePosition pos, int sz)
 			: base(pos, sz)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("char[{0}]", Size);
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_CharArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultCharacterValue, Size).ToList());
+			return new LiteralCharArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultCharacterValue, Size).ToList());
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Array && (other as BType_Array).Size == Size && (other is BType_CharArr));
+			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeCharArr));
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_CHAR;
 		}
 
-		protected override BType_Value getInternType()
+		protected override BTypeValue GetInternType()
 		{
-			return new BType_Char(Position);
+			return new BTypeChar(Position);
 		}
 	}
 
-	public class BType_DigitArr : BType_Array
+	public class BTypeDigitArr : BTypeArray
 	{
-		public BType_DigitArr(SourceCodePosition pos, int sz)
+		public BTypeDigitArr(SourceCodePosition pos, int sz)
 			: base(pos, sz)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("digit[{0}]", Size);
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_DigitArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultNumeralValue, Size).ToList());
+			return new LiteralDigitArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultNumeralValue, Size).ToList());
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Array && (other as BType_Array).Size == Size && (other is BType_DigitArr || other is BType_IntArr));
+			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeDigitArr || other is BTypeIntArr));
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_DIGIT;
 		}
 
-		protected override BType_Value getInternType()
+		protected override BTypeValue GetInternType()
 		{
-			return new BType_Digit(Position);
+			return new BTypeDigit(Position);
 		}
 	}
 
-	public class BType_BoolArr : BType_Array
+	public class BTypeBoolArr : BTypeArray
 	{
-		public BType_BoolArr(SourceCodePosition pos, int sz)
+		public BTypeBoolArr(SourceCodePosition pos, int sz)
 			: base(pos, sz)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("bool[{0}]", Size);
 		}
 
-		public override Literal getDefaultValue()
+		public override Literal GetDefaultValue()
 		{
-			return new Literal_BoolArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultBooleanValue, Size).ToList());
+			return new LiteralBoolArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultBooleanValue, Size).ToList());
 		}
 
-		public override bool isImplicitCastableTo(BType other)
+		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BType_Array && (other as BType_Array).Size == Size && (other is BType_BoolArr));
+			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeBoolArr));
 		}
 
-		public override int getPriority()
+		public override int GetPriority()
 		{
 			return PRIORITY_BOOL;
 		}
 
-		protected override BType_Value getInternType()
+		protected override BTypeValue GetInternType()
 		{
-			return new BType_Bool(Position);
+			return new BTypeBool(Position);
 		}
 	}
 

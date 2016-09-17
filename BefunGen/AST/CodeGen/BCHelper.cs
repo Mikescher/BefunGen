@@ -53,39 +53,39 @@ namespace BefunGen.AST.CodeGen
 			get { return new BefungeCommand(BefungeCommandType.GreaterThan); }
 		}
 
-		public static BefungeCommand PC_Right
+		public static BefungeCommand PCRight
 		{
-			get { return new BefungeCommand(BefungeCommandType.PC_Right); }
+			get { return new BefungeCommand(BefungeCommandType.PCRight); }
 		}
 
-		public static BefungeCommand PC_Left
+		public static BefungeCommand PCLeft
 		{
-			get { return new BefungeCommand(BefungeCommandType.PC_Left); }
+			get { return new BefungeCommand(BefungeCommandType.PCLeft); }
 		}
 
-		public static BefungeCommand PC_Up
+		public static BefungeCommand PCUp
 		{
-			get { return new BefungeCommand(BefungeCommandType.PC_Up); }
+			get { return new BefungeCommand(BefungeCommandType.PCUp); }
 		}
 
-		public static BefungeCommand PC_Down
+		public static BefungeCommand PCDown
 		{
-			get { return new BefungeCommand(BefungeCommandType.PC_Down); }
+			get { return new BefungeCommand(BefungeCommandType.PCDown); }
 		}
 
-		public static BefungeCommand PC_Random
+		public static BefungeCommand PCRandom
 		{
-			get { return new BefungeCommand(BefungeCommandType.PC_Random); }
+			get { return new BefungeCommand(BefungeCommandType.PCRandom); }
 		}
 
-		public static BefungeCommand If_Horizontal
+		public static BefungeCommand IfHorizontal
 		{
-			get { return new BefungeCommand(BefungeCommandType.If_Horizontal); }
+			get { return new BefungeCommand(BefungeCommandType.IfHorizontal); }
 		}
 
-		public static BefungeCommand If_Vertical
+		public static BefungeCommand IfVertical
 		{
-			get { return new BefungeCommand(BefungeCommandType.If_Vertical); }
+			get { return new BefungeCommand(BefungeCommandType.IfVertical); }
 		}
 
 		public static BefungeCommand Stringmode
@@ -93,54 +93,54 @@ namespace BefunGen.AST.CodeGen
 			get { return new BefungeCommand(BefungeCommandType.Stringmode); }
 		}
 
-		public static BefungeCommand Stack_Dup
+		public static BefungeCommand StackDup
 		{
-			get { return new BefungeCommand(BefungeCommandType.Stack_Dup); }
+			get { return new BefungeCommand(BefungeCommandType.StackDup); }
 		}
 
-		public static BefungeCommand Stack_Swap
+		public static BefungeCommand StackSwap
 		{
-			get { return new BefungeCommand(BefungeCommandType.Stack_Swap); }
+			get { return new BefungeCommand(BefungeCommandType.StackSwap); }
 		}
 
-		public static BefungeCommand Stack_Pop
+		public static BefungeCommand StackPop
 		{
-			get { return new BefungeCommand(BefungeCommandType.Stack_Pop); }
+			get { return new BefungeCommand(BefungeCommandType.StackPop); }
 		}
 
-		public static BefungeCommand Out_Int
+		public static BefungeCommand OutInt
 		{
-			get { return new BefungeCommand(BefungeCommandType.Out_Int); }
+			get { return new BefungeCommand(BefungeCommandType.OutInt); }
 		}
 
-		public static BefungeCommand Out_ASCII
+		public static BefungeCommand OutASCII
 		{
-			get { return new BefungeCommand(BefungeCommandType.Out_ASCII); }
+			get { return new BefungeCommand(BefungeCommandType.OutASCII); }
 		}
 
-		public static BefungeCommand PC_Jump
+		public static BefungeCommand PCJump
 		{
-			get { return new BefungeCommand(BefungeCommandType.PC_Jump); }
+			get { return new BefungeCommand(BefungeCommandType.PCJump); }
 		}
 
-		public static BefungeCommand Reflect_Set
+		public static BefungeCommand ReflectSet
 		{
-			get { return new BefungeCommand(BefungeCommandType.Reflect_Set); }
+			get { return new BefungeCommand(BefungeCommandType.ReflectSet); }
 		}
 
-		public static BefungeCommand Reflect_Get
+		public static BefungeCommand ReflectGet
 		{
-			get { return new BefungeCommand(BefungeCommandType.Reflect_Get); }
+			get { return new BefungeCommand(BefungeCommandType.ReflectGet); }
 		}
 
-		public static BefungeCommand In_Int
+		public static BefungeCommand InInt
 		{
-			get { return new BefungeCommand(BefungeCommandType.In_Int); }
+			get { return new BefungeCommand(BefungeCommandType.InInt); }
 		}
 
-		public static BefungeCommand In_ASCII
+		public static BefungeCommand InASCII
 		{
-			get { return new BefungeCommand(BefungeCommandType.In_ASCII); }
+			get { return new BefungeCommand(BefungeCommandType.InASCII); }
 		}
 
 		public static BefungeCommand Stop
@@ -148,71 +148,71 @@ namespace BefunGen.AST.CodeGen
 			get { return new BefungeCommand(BefungeCommandType.Stop); }
 		}
 
-		public static BefungeCommand Digit_0
+		public static BefungeCommand Digit0
 		{
-			get { return dig(0); }
+			get { return Dig(0); }
 		}
 
-		public static BefungeCommand Digit_1
+		public static BefungeCommand Digit1
 		{
-			get { return dig(1); }
+			get { return Dig(1); }
 		}
 
-		public static BefungeCommand Digit_2
+		public static BefungeCommand Digit2
 		{
-			get { return dig(2); }
+			get { return Dig(2); }
 		}
 
-		public static BefungeCommand Digit_3
+		public static BefungeCommand Digit3
 		{
-			get { return dig(3); }
+			get { return Dig(3); }
 		}
 
-		public static BefungeCommand Digit_4
+		public static BefungeCommand Digit4
 		{
-			get { return dig(4); }
+			get { return Dig(4); }
 		}
 
-		public static BefungeCommand Digit_5
+		public static BefungeCommand Digit5
 		{
-			get { return dig(5); }
+			get { return Dig(5); }
 		}
 
-		public static BefungeCommand Digit_6
+		public static BefungeCommand Digit6
 		{
-			get { return dig(6); }
+			get { return Dig(6); }
 		}
 
-		public static BefungeCommand Digit_7
+		public static BefungeCommand Digit7
 		{
-			get { return dig(7); }
+			get { return Dig(7); }
 		}
 
-		public static BefungeCommand Digit_8
+		public static BefungeCommand Digit8
 		{
-			get { return dig(8); }
+			get { return Dig(8); }
 		}
 
-		public static BefungeCommand Digit_9
+		public static BefungeCommand Digit9
 		{
-			get { return dig(9); }
+			get { return Dig(9); }
 		}
 
 		#endregion
 
 		#region Other
 
-		public static BefungeCommand chr(int v)
+		public static BefungeCommand Chr(int v)
 		{
 			return new BefungeCommand(BefungeCommandType.Other, v);
 		}
 
-		public static BefungeCommand chr(long v)
+		public static BefungeCommand Chr(long v)
 		{
 			return new BefungeCommand(BefungeCommandType.Other, (int)v); // Hardcode down - hopefully never use such big numbers ...
 		}
 
-		public static BefungeCommand dig(byte v)
+		public static BefungeCommand Dig(byte v)
 		{
 			if (v < 10)
 				return new BefungeCommand(BefungeCommandType.Other, '0' + v);
@@ -271,37 +271,37 @@ namespace BefunGen.AST.CodeGen
 
 		public static BefungeCommand PC_Right_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.PC_Right, tag);
+			return new BefungeCommand(BefungeCommandType.PCRight, tag);
 		}
 
 		public static BefungeCommand PC_Left_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.PC_Left, tag);
+			return new BefungeCommand(BefungeCommandType.PCLeft, tag);
 		}
 
 		public static BefungeCommand PC_Up_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.PC_Up, tag);
+			return new BefungeCommand(BefungeCommandType.PCUp, tag);
 		}
 
 		public static BefungeCommand PC_Down_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.PC_Down, tag);
+			return new BefungeCommand(BefungeCommandType.PCDown, tag);
 		}
 
 		public static BefungeCommand PC_Random_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.PC_Random, tag);
+			return new BefungeCommand(BefungeCommandType.PCRandom, tag);
 		}
 
 		public static BefungeCommand If_Horizontal_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.If_Horizontal, tag);
+			return new BefungeCommand(BefungeCommandType.IfHorizontal, tag);
 		}
 
 		public static BefungeCommand If_Vertical_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.If_Vertical, tag);
+			return new BefungeCommand(BefungeCommandType.IfVertical, tag);
 		}
 
 		public static BefungeCommand Stringmode_tagged(CodeTag tag)
@@ -311,52 +311,52 @@ namespace BefunGen.AST.CodeGen
 
 		public static BefungeCommand Stack_Dup_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Stack_Dup, tag);
+			return new BefungeCommand(BefungeCommandType.StackDup, tag);
 		}
 
 		public static BefungeCommand Stack_Swap_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Stack_Swap, tag);
+			return new BefungeCommand(BefungeCommandType.StackSwap, tag);
 		}
 
 		public static BefungeCommand Stack_Pop_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Stack_Pop, tag);
+			return new BefungeCommand(BefungeCommandType.StackPop, tag);
 		}
 
 		public static BefungeCommand Out_Int_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Out_Int, tag);
+			return new BefungeCommand(BefungeCommandType.OutInt, tag);
 		}
 
 		public static BefungeCommand Out_ASCII_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Out_ASCII, tag);
+			return new BefungeCommand(BefungeCommandType.OutASCII, tag);
 		}
 
 		public static BefungeCommand PC_Jump_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.PC_Jump, tag);
+			return new BefungeCommand(BefungeCommandType.PCJump, tag);
 		}
 
 		public static BefungeCommand Reflect_Set_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Reflect_Set, tag);
+			return new BefungeCommand(BefungeCommandType.ReflectSet, tag);
 		}
 
 		public static BefungeCommand Reflect_Get_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.Reflect_Get, tag);
+			return new BefungeCommand(BefungeCommandType.ReflectGet, tag);
 		}
 
 		public static BefungeCommand In_Int_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.In_Int, tag);
+			return new BefungeCommand(BefungeCommandType.InInt, tag);
 		}
 
 		public static BefungeCommand In_ASCII_tagged(CodeTag tag)
 		{
-			return new BefungeCommand(BefungeCommandType.In_ASCII, tag);
+			return new BefungeCommand(BefungeCommandType.InASCII, tag);
 		}
 
 		public static BefungeCommand Stop_tagged(CodeTag tag)
@@ -366,64 +366,64 @@ namespace BefunGen.AST.CodeGen
 
 		public static BefungeCommand Digit_0_tagged(CodeTag tag)
 		{
-			return dig(0, tag);
+			return Dig(0, tag);
 		}
 
 		public static BefungeCommand Digit_1_tagged(CodeTag tag)
 		{
-			return dig(1, tag);
+			return Dig(1, tag);
 		}
 
 		public static BefungeCommand Digit_2_tagged(CodeTag tag)
 		{
-			return dig(2, tag);
+			return Dig(2, tag);
 		}
 
 		public static BefungeCommand Digit_3_tagged(CodeTag tag)
 		{
-			return dig(3, tag);
+			return Dig(3, tag);
 		}
 
 		public static BefungeCommand Digit_4_tagged(CodeTag tag)
 		{
-			return dig(4, tag);
+			return Dig(4, tag);
 		}
 
 		public static BefungeCommand Digit_5_tagged(CodeTag tag)
 		{
-			return dig(5, tag);
+			return Dig(5, tag);
 		}
 
 		public static BefungeCommand Digit_6_tagged(CodeTag tag)
 		{
-			return dig(6, tag);
+			return Dig(6, tag);
 		}
 
 		public static BefungeCommand Digit_7_tagged(CodeTag tag)
 		{
-			return dig(7, tag);
+			return Dig(7, tag);
 		}
 
 		public static BefungeCommand Digit_8_tagged(CodeTag tag)
 		{
-			return dig(8, tag);
+			return Dig(8, tag);
 		}
 
 		public static BefungeCommand Digit_9_tagged(CodeTag tag)
 		{
-			return dig(9, tag);
+			return Dig(9, tag);
 		}
 
 		#endregion
 
 		#region Other (Tagged)
 
-		public static BefungeCommand chr(int v, CodeTag tag)
+		public static BefungeCommand Chr(int v, CodeTag tag)
 		{
 			return new BefungeCommand(BefungeCommandType.Other, v, tag);
 		}
 
-		public static BefungeCommand dig(byte v, CodeTag tag)
+		public static BefungeCommand Dig(byte v, CodeTag tag)
 		{
 			if (v < 10)
 				return new BefungeCommand(BefungeCommandType.Other, '0' + v, tag);
@@ -456,65 +456,65 @@ namespace BefunGen.AST.CodeGen
 				case '`':
 					return BCHelper.GreaterThan;
 				case '>':
-					return BCHelper.PC_Right;
+					return BCHelper.PCRight;
 				case '<':
-					return BCHelper.PC_Left;
+					return BCHelper.PCLeft;
 				case '^':
-					return BCHelper.PC_Up;
+					return BCHelper.PCUp;
 				case 'v':
-					return BCHelper.PC_Down;
+					return BCHelper.PCDown;
 				case '?':
-					return BCHelper.PC_Random;
+					return BCHelper.PCRandom;
 				case '_':
-					return BCHelper.If_Horizontal;
+					return BCHelper.IfHorizontal;
 				case '|':
-					return BCHelper.If_Vertical;
+					return BCHelper.IfVertical;
 				case '"':
 					return BCHelper.Stringmode;
 				case ':':
-					return BCHelper.Stack_Dup;
+					return BCHelper.StackDup;
 				case '\\':
-					return BCHelper.Stack_Swap;
+					return BCHelper.StackSwap;
 				case '$':
-					return BCHelper.Stack_Pop;
+					return BCHelper.StackPop;
 				case '.':
-					return BCHelper.Out_Int;
+					return BCHelper.OutInt;
 				case ',':
-					return BCHelper.Out_ASCII;
+					return BCHelper.OutASCII;
 				case '#':
-					return BCHelper.PC_Jump;
+					return BCHelper.PCJump;
 				case 'p':
-					return BCHelper.Reflect_Set;
+					return BCHelper.ReflectSet;
 				case 'g':
-					return BCHelper.Reflect_Get;
+					return BCHelper.ReflectGet;
 				case '&':
-					return BCHelper.In_Int;
+					return BCHelper.InInt;
 				case '~':
-					return BCHelper.In_ASCII;
+					return BCHelper.InASCII;
 				case '@':
 					return BCHelper.Stop;
 				case '0':
-					return BCHelper.Digit_0;
+					return BCHelper.Digit0;
 				case '1':
-					return BCHelper.Digit_1;
+					return BCHelper.Digit1;
 				case '2':
-					return BCHelper.Digit_2;
+					return BCHelper.Digit2;
 				case '3':
-					return BCHelper.Digit_3;
+					return BCHelper.Digit3;
 				case '4':
-					return BCHelper.Digit_4;
+					return BCHelper.Digit4;
 				case '5':
-					return BCHelper.Digit_5;
+					return BCHelper.Digit5;
 				case '6':
-					return BCHelper.Digit_6;
+					return BCHelper.Digit6;
 				case '7':
-					return BCHelper.Digit_7;
+					return BCHelper.Digit7;
 				case '8':
-					return BCHelper.Digit_8;
+					return BCHelper.Digit8;
 				case '9':
-					return BCHelper.Digit_9;
+					return BCHelper.Digit9;
 				default:
-					return BCHelper.chr(c);
+					return BCHelper.Chr(c);
 			}
 		}
 

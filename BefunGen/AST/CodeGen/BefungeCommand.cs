@@ -1,7 +1,6 @@
 ﻿using BefunGen.AST.CodeGen.Tags;
 using BefunGen.AST.Exceptions;
 using Newtonsoft.Json;
-using System;
 
 namespace BefunGen.AST.CodeGen
 {
@@ -16,24 +15,24 @@ namespace BefunGen.AST.CodeGen
 		Modulo,
 		Not,
 		GreaterThan,
-		PC_Right,
-		PC_Left,
-		PC_Up,
-		PC_Down,
-		PC_Random,
-		If_Horizontal,
-		If_Vertical,
+		PCRight,
+		PCLeft,
+		PCUp,
+		PCDown,
+		PCRandom,
+		IfHorizontal,
+		IfVertical,
 		Stringmode,
-		Stack_Dup,
-		Stack_Swap,
-		Stack_Pop,
-		Out_Int,
-		Out_ASCII,
-		PC_Jump,
-		Reflect_Set,
-		Reflect_Get,
-		In_Int,
-		In_ASCII,
+		StackDup,
+		StackSwap,
+		StackPop,
+		OutInt,
+		OutASCII,
+		PCJump,
+		ReflectSet,
+		ReflectGet,
+		InInt,
+		InASCII,
 		Stop,
 		Other
 	}
@@ -47,33 +46,33 @@ namespace BefunGen.AST.CodeGen
 
 		public readonly CodeTag Tag;
 
-		public BefungeCommand(BefungeCommandType _t)
-			: this(_t, 0)
+		public BefungeCommand(BefungeCommandType t)
+			: this(t, 0)
 		{
 			//--
 		}
 
-		public BefungeCommand(BefungeCommandType _t, CodeTag _p)
-			: this(_t, 0, _p)
+		public BefungeCommand(BefungeCommandType t, CodeTag p)
+			: this(t, 0, p)
 		{
 			//--
 		}
 
-		public BefungeCommand(BefungeCommandType _t, int _p)
-			: this(_t, _p, null)
+		public BefungeCommand(BefungeCommandType t, int p)
+			: this(t, p, null)
 		{
 			//--
 		}
 
 		[JsonConstructor]
-		public BefungeCommand(BefungeCommandType _t, int _p, CodeTag _g)
+		public BefungeCommand(BefungeCommandType t, int p, CodeTag g)
 		{
-			Type = _t;
-			Param = _p;
-			Tag = _g;
+			Type = t;
+			Param = p;
+			Tag = g;
 		}
 
-		public char getCommandCode()
+		public char GetCommandCode()
 		{
 			switch (Type)
 			{
@@ -104,58 +103,58 @@ namespace BefunGen.AST.CodeGen
 				case BefungeCommandType.GreaterThan:
 					return '`';
 
-				case BefungeCommandType.PC_Right:
+				case BefungeCommandType.PCRight:
 					return '>';
 
-				case BefungeCommandType.PC_Left:
+				case BefungeCommandType.PCLeft:
 					return '<';
 
-				case BefungeCommandType.PC_Up:
+				case BefungeCommandType.PCUp:
 					return '^';
 
-				case BefungeCommandType.PC_Down:
+				case BefungeCommandType.PCDown:
 					return 'v';
 
-				case BefungeCommandType.PC_Random:
+				case BefungeCommandType.PCRandom:
 					return '?';
 
-				case BefungeCommandType.If_Horizontal:
+				case BefungeCommandType.IfHorizontal:
 					return '_';
 
-				case BefungeCommandType.If_Vertical:
+				case BefungeCommandType.IfVertical:
 					return '|';
 
 				case BefungeCommandType.Stringmode:
 					return '"';
 
-				case BefungeCommandType.Stack_Dup:
+				case BefungeCommandType.StackDup:
 					return ':';
 
-				case BefungeCommandType.Stack_Swap:
+				case BefungeCommandType.StackSwap:
 					return '\\';
 
-				case BefungeCommandType.Stack_Pop:
+				case BefungeCommandType.StackPop:
 					return '$';
 
-				case BefungeCommandType.Out_Int:
+				case BefungeCommandType.OutInt:
 					return '.';
 
-				case BefungeCommandType.Out_ASCII:
+				case BefungeCommandType.OutASCII:
 					return ',';
 
-				case BefungeCommandType.PC_Jump:
+				case BefungeCommandType.PCJump:
 					return '#';
 
-				case BefungeCommandType.Reflect_Set:
+				case BefungeCommandType.ReflectSet:
 					return 'p';
 
-				case BefungeCommandType.Reflect_Get:
+				case BefungeCommandType.ReflectGet:
 					return 'g';
 
-				case BefungeCommandType.In_Int:
+				case BefungeCommandType.InInt:
 					return '&';
 
-				case BefungeCommandType.In_ASCII:
+				case BefungeCommandType.InASCII:
 					return '~';
 
 				case BefungeCommandType.Stop:
@@ -169,9 +168,9 @@ namespace BefunGen.AST.CodeGen
 			}
 		}
 
-		public BefungeCommand copyWithTag(CodeTag _g)
+		public BefungeCommand CopyWithTag(CodeTag g)
 		{
-			return new BefungeCommand(Type, Param, _g);
+			return new BefungeCommand(Type, Param, g);
 		}
 
 		public bool IsDeltaIndependent()
@@ -192,27 +191,27 @@ namespace BefunGen.AST.CodeGen
 				case BefungeCommandType.Modulo:
 				case BefungeCommandType.Not:
 				case BefungeCommandType.GreaterThan:
-				case BefungeCommandType.PC_Random:
+				case BefungeCommandType.PCRandom:
 				case BefungeCommandType.Stringmode:
-				case BefungeCommandType.Stack_Dup:
-				case BefungeCommandType.Stack_Swap:
-				case BefungeCommandType.Stack_Pop:
-				case BefungeCommandType.Out_Int:
-				case BefungeCommandType.Out_ASCII:
-				case BefungeCommandType.PC_Jump:
-				case BefungeCommandType.PC_Up:
-				case BefungeCommandType.PC_Down:
-				case BefungeCommandType.If_Vertical:
-				case BefungeCommandType.Reflect_Set:
-				case BefungeCommandType.Reflect_Get:
-				case BefungeCommandType.In_Int:
-				case BefungeCommandType.In_ASCII:
+				case BefungeCommandType.StackDup:
+				case BefungeCommandType.StackSwap:
+				case BefungeCommandType.StackPop:
+				case BefungeCommandType.OutInt:
+				case BefungeCommandType.OutASCII:
+				case BefungeCommandType.PCJump:
+				case BefungeCommandType.PCUp:
+				case BefungeCommandType.PCDown:
+				case BefungeCommandType.IfVertical:
+				case BefungeCommandType.ReflectSet:
+				case BefungeCommandType.ReflectGet:
+				case BefungeCommandType.InInt:
+				case BefungeCommandType.InASCII:
 				case BefungeCommandType.Stop:
 				case BefungeCommandType.Other:
 					return true;
-				case BefungeCommandType.PC_Right:
-				case BefungeCommandType.PC_Left:
-				case BefungeCommandType.If_Horizontal:
+				case BefungeCommandType.PCRight:
+				case BefungeCommandType.PCLeft:
+				case BefungeCommandType.IfHorizontal:
 					return false;
 				default:
 					throw new InvalidBefungeCommandTypeException(new SourceCodePosition());
@@ -232,27 +231,27 @@ namespace BefunGen.AST.CodeGen
 				case BefungeCommandType.Modulo:
 				case BefungeCommandType.Not:
 				case BefungeCommandType.GreaterThan:
-				case BefungeCommandType.PC_Random:
+				case BefungeCommandType.PCRandom:
 				case BefungeCommandType.Stringmode:
-				case BefungeCommandType.Stack_Dup:
-				case BefungeCommandType.Stack_Swap:
-				case BefungeCommandType.Stack_Pop:
-				case BefungeCommandType.Out_Int:
-				case BefungeCommandType.Out_ASCII:
-				case BefungeCommandType.PC_Jump:
-				case BefungeCommandType.PC_Left:
-				case BefungeCommandType.PC_Right:
-				case BefungeCommandType.If_Horizontal:
-				case BefungeCommandType.Reflect_Set:
-				case BefungeCommandType.Reflect_Get:
-				case BefungeCommandType.In_Int:
-				case BefungeCommandType.In_ASCII:
+				case BefungeCommandType.StackDup:
+				case BefungeCommandType.StackSwap:
+				case BefungeCommandType.StackPop:
+				case BefungeCommandType.OutInt:
+				case BefungeCommandType.OutASCII:
+				case BefungeCommandType.PCJump:
+				case BefungeCommandType.PCLeft:
+				case BefungeCommandType.PCRight:
+				case BefungeCommandType.IfHorizontal:
+				case BefungeCommandType.ReflectSet:
+				case BefungeCommandType.ReflectGet:
+				case BefungeCommandType.InInt:
+				case BefungeCommandType.InASCII:
 				case BefungeCommandType.Stop:
 				case BefungeCommandType.Other:
 					return true;
-				case BefungeCommandType.PC_Up:
-				case BefungeCommandType.PC_Down:
-				case BefungeCommandType.If_Vertical:
+				case BefungeCommandType.PCUp:
+				case BefungeCommandType.PCDown:
+				case BefungeCommandType.IfVertical:
 					return false;
 				default:
 					throw new InvalidBefungeCommandTypeException(new SourceCodePosition());
@@ -265,10 +264,10 @@ namespace BefunGen.AST.CodeGen
 			{
 				case BefungeCommandType.NOP:
 				case BefungeCommandType.Walkway:
-				case BefungeCommandType.PC_Up:
-				case BefungeCommandType.PC_Down:
-				case BefungeCommandType.PC_Right:
-				case BefungeCommandType.PC_Left:
+				case BefungeCommandType.PCUp:
+				case BefungeCommandType.PCDown:
+				case BefungeCommandType.PCRight:
+				case BefungeCommandType.PCLeft:
 				case BefungeCommandType.Stop:
 					return true;
 				case BefungeCommandType.Add:
@@ -278,21 +277,21 @@ namespace BefunGen.AST.CodeGen
 				case BefungeCommandType.Modulo:
 				case BefungeCommandType.Not:
 				case BefungeCommandType.GreaterThan:
-				case BefungeCommandType.PC_Random:
+				case BefungeCommandType.PCRandom:
 				case BefungeCommandType.Stringmode:
-				case BefungeCommandType.Stack_Dup:
-				case BefungeCommandType.Stack_Swap:
-				case BefungeCommandType.Stack_Pop:
-				case BefungeCommandType.Out_Int:
-				case BefungeCommandType.Out_ASCII:
-				case BefungeCommandType.PC_Jump:
-				case BefungeCommandType.If_Vertical:
-				case BefungeCommandType.Reflect_Set:
-				case BefungeCommandType.Reflect_Get:
-				case BefungeCommandType.In_Int:
-				case BefungeCommandType.In_ASCII:
+				case BefungeCommandType.StackDup:
+				case BefungeCommandType.StackSwap:
+				case BefungeCommandType.StackPop:
+				case BefungeCommandType.OutInt:
+				case BefungeCommandType.OutASCII:
+				case BefungeCommandType.PCJump:
+				case BefungeCommandType.IfVertical:
+				case BefungeCommandType.ReflectSet:
+				case BefungeCommandType.ReflectGet:
+				case BefungeCommandType.InInt:
+				case BefungeCommandType.InASCII:
 				case BefungeCommandType.Other:
-				case BefungeCommandType.If_Horizontal:
+				case BefungeCommandType.IfHorizontal:
 					return false;
 				default:
 					throw new InvalidBefungeCommandTypeException(new SourceCodePosition());
@@ -301,10 +300,10 @@ namespace BefunGen.AST.CodeGen
 
 		public bool EqualsTagLess(BefungeCommand c)
 		{
-			return !hasTag() && !c.hasTag() && this.Type == c.Type && this.Param == c.Param;
+			return !HasTag() && !c.HasTag() && this.Type == c.Type && this.Param == c.Param;
 		}
 
-		public bool hasTag()
+		public bool HasTag()
 		{
 			return Tag != null;
 		}

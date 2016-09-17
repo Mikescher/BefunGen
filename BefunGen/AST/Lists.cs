@@ -8,14 +8,14 @@ namespace BefunGen.AST
 	/// <summary>
 	/// These Lists are only temporary on AST-Creation - They should NEVER appear in the resulting AST
 	/// </summary>
-	public abstract class ASTList : ASTObject
+	public abstract class AstList : ASTObject
 	{
-		public ASTList(SourceCodePosition pos)
+		public AstList(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			throw new AccessTemporaryASTObjectException(Position);
 		}
@@ -23,145 +23,145 @@ namespace BefunGen.AST
 
 	#region Lists
 
-	public class List_Expressions : ASTList
+	public class ListExpressions : AstList
 	{
 		public List<Expression> List = new List<Expression>();
 
-		public List_Expressions(SourceCodePosition pos)
+		public ListExpressions(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_Expressions(SourceCodePosition pos, Expression e)
+		public ListExpressions(SourceCodePosition pos, Expression e)
 			: base(pos)
 		{
 			List.Add(e);
 		}
 
-		public List_Expressions Append(Expression e)
+		public ListExpressions Append(Expression e)
 		{
 			List.Add(e);
 			return this;
 		}
 	}
 
-	public class List_Statements : ASTList
+	public class ListStatements : AstList
 	{
 		public List<Statement> List = new List<Statement>();
 
-		public List_Statements(SourceCodePosition pos)
+		public ListStatements(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_Statements(SourceCodePosition pos, Statement s)
+		public ListStatements(SourceCodePosition pos, Statement s)
 			: base(pos)
 		{
 			List.Add(s);
 		}
 
-		public List_Statements Append(Statement s)
+		public ListStatements Append(Statement s)
 		{
 			List.Add(s);
 			return this;
 		}
 	}
 
-	public class List_VarDeclarations : ASTList
+	public class ListVarDeclarations : AstList
 	{
 		public List<VarDeclaration> List = new List<VarDeclaration>();
 
-		public List_VarDeclarations(SourceCodePosition pos)
+		public ListVarDeclarations(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_VarDeclarations(SourceCodePosition pos, VarDeclaration d)
+		public ListVarDeclarations(SourceCodePosition pos, VarDeclaration d)
 			: base(pos)
 		{
 			List.Add(d);
 		}
 
-		public List_VarDeclarations Append(VarDeclaration d)
+		public ListVarDeclarations Append(VarDeclaration d)
 		{
 			List.Add(d);
 			return this;
 		}
 
-		public List_VarDeclarations Append(List_VarDeclarations d)
+		public ListVarDeclarations Append(ListVarDeclarations d)
 		{
 			List.AddRange(d.List);
 			return this;
 		}
 	}
 
-	public class List_Methods : ASTList
+	public class ListMethods : AstList
 	{
 		public List<Method> List = new List<Method>();
 
-		public List_Methods(SourceCodePosition pos)
+		public ListMethods(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_Methods(SourceCodePosition pos, Method d)
+		public ListMethods(SourceCodePosition pos, Method d)
 			: base(pos)
 		{
 			List.Add(d);
 		}
 
-		public List_Methods Append(Method d)
+		public ListMethods Append(Method d)
 		{
 			List.Add(d);
 			return this;
 		}
 	}
 
-	public class List_Switchs : ASTList
+	public class ListSwitchs : AstList
 	{
-		public List<Switch_Case> List = new List<Switch_Case>();
+		public List<SwitchCase> List = new List<SwitchCase>();
 
-		public List_Switchs(SourceCodePosition pos)
+		public ListSwitchs(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_Switchs(SourceCodePosition pos, Literal_Value l, Statement s)
+		public ListSwitchs(SourceCodePosition pos, LiteralValue l, Statement s)
 			: base(pos)
 		{
-			List.Add(new Switch_Case(l, s));
+			List.Add(new SwitchCase(l, s));
 		}
 
-		public List_Switchs Append(Literal_Value l, Statement s)
+		public ListSwitchs Append(LiteralValue l, Statement s)
 		{
-			List.Add(new Switch_Case(l, s));
+			List.Add(new SwitchCase(l, s));
 			return this;
 		}
 
-		public List_Switchs Prepend(Literal_Value l, Statement s)
+		public ListSwitchs Prepend(LiteralValue l, Statement s)
 		{
-			List.Insert(0, new Switch_Case(l, s));
+			List.Insert(0, new SwitchCase(l, s));
 			return this;
 		}
 	}
 
-	public class List_OutfElements : ASTList
+	public class ListOutfElements : AstList
 	{
-		public class Outf_Union
+		public class OutfUnion
 		{
-			public readonly Literal_CharArr String;
+			public readonly LiteralCharArr String;
 			public readonly Expression Expr;
 
 			public bool IsString { get { return String != null; } }
 			public bool IsExpression { get { return Expr != null; } }
 
-			public Outf_Union(Literal_CharArr v)
+			public OutfUnion(LiteralCharArr v)
 			{
 				String = v;
 				Expr = null;
 			}
 
-			public Outf_Union(Expression v)
+			public OutfUnion(Expression v)
 			{
 				String = null;
 				Expr = v;
@@ -171,11 +171,11 @@ namespace BefunGen.AST
 			{
 				if (IsString)
 				{
-					return new Statement_Out_CharArrLiteral(String.Position, String);
+					return new StatementOutCharArrLiteral(String.Position, String);
 				}
 				else if (IsExpression)
 				{
-					return new Statement_Out(Expr.Position, Expr);
+					return new StatementOut(Expr.Position, Expr);
 				}
 				else
 				{
@@ -184,66 +184,66 @@ namespace BefunGen.AST
 			}
 		}
 
-		public List<Outf_Union> List = new List<Outf_Union>();
+		public List<OutfUnion> List = new List<OutfUnion>();
 
-		public List_OutfElements(SourceCodePosition pos)
+		public ListOutfElements(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_OutfElements(SourceCodePosition pos, Expression v)
+		public ListOutfElements(SourceCodePosition pos, Expression v)
 			: base(pos)
 		{
-			List.Add(new Outf_Union(v));
+			List.Add(new OutfUnion(v));
 		}
 
-		public List_OutfElements(SourceCodePosition pos, Literal_CharArr v)
+		public ListOutfElements(SourceCodePosition pos, LiteralCharArr v)
 			: base(pos)
 		{
-			List.Add(new Outf_Union(v));
+			List.Add(new OutfUnion(v));
 		}
 
-		public List_OutfElements Append(Expression v)
+		public ListOutfElements Append(Expression v)
 		{
-			List.Add(new Outf_Union(v));
+			List.Add(new OutfUnion(v));
 			return this;
 		}
 
-		public List_OutfElements Append(Literal_CharArr v)
+		public ListOutfElements Append(LiteralCharArr v)
 		{
-			List.Add(new Outf_Union(v));
+			List.Add(new OutfUnion(v));
 			return this;
 		}
 
-		public List_OutfElements Prepend(Expression v)
+		public ListOutfElements Prepend(Expression v)
 		{
-			List.Insert(0, new Outf_Union(v));
+			List.Insert(0, new OutfUnion(v));
 			return this;
 		}
 
-		public List_OutfElements Prepend(Literal_CharArr v)
+		public ListOutfElements Prepend(LiteralCharArr v)
 		{
-			List.Insert(0, new Outf_Union(v));
+			List.Insert(0, new OutfUnion(v));
 			return this;
 		}
 	}
 
-	public class List_Identifier : ASTList
+	public class ListIdentifier : AstList
 	{
 		public List<String> List = new List<String>();
 
-		public List_Identifier(SourceCodePosition pos)
+		public ListIdentifier(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_Identifier(SourceCodePosition pos, String e)
+		public ListIdentifier(SourceCodePosition pos, String e)
 			: base(pos)
 		{
 			List.Add(e);
 		}
 
-		public List_Identifier Append(String e)
+		public ListIdentifier Append(String e)
 		{
 			List.Add(e);
 			return this;
@@ -254,88 +254,88 @@ namespace BefunGen.AST
 
 	#region Literals Lists
 
-	public class List_LiteralDigits : ASTList
+	public class ListLiteralDigits : AstList
 	{
-		public List<Literal_Digit> List = new List<Literal_Digit>();
+		public List<LiteralDigit> List = new List<LiteralDigit>();
 
-		public List_LiteralDigits(SourceCodePosition pos)
+		public ListLiteralDigits(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_LiteralDigits(SourceCodePosition pos, Literal_Digit e)
+		public ListLiteralDigits(SourceCodePosition pos, LiteralDigit e)
 			: base(pos)
 		{
 			List.Add(e);
 		}
 
-		public List_LiteralDigits Append(Literal_Digit e)
+		public ListLiteralDigits Append(LiteralDigit e)
 		{
 			List.Add(e);
 			return this;
 		}
 	}
 
-	public class List_LiteralInts : ASTList
+	public class ListLiteralInts : AstList
 	{
-		public List<Literal_Int> List = new List<Literal_Int>();
+		public List<LiteralInt> List = new List<LiteralInt>();
 
-		public List_LiteralInts(SourceCodePosition pos)
+		public ListLiteralInts(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_LiteralInts(SourceCodePosition pos, Literal_Int e)
+		public ListLiteralInts(SourceCodePosition pos, LiteralInt e)
 			: base(pos)
 		{
 			List.Add(e);
 		}
 
-		public List_LiteralInts Append(Literal_Int e)
+		public ListLiteralInts Append(LiteralInt e)
 		{
 			List.Add(e);
 			return this;
 		}
 	}
 
-	public class List_LiteralChars : ASTList
+	public class ListLiteralChars : AstList
 	{
-		public List<Literal_Char> List = new List<Literal_Char>();
+		public List<LiteralChar> List = new List<LiteralChar>();
 
-		public List_LiteralChars(SourceCodePosition pos)
+		public ListLiteralChars(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_LiteralChars(SourceCodePosition pos, Literal_Char e)
+		public ListLiteralChars(SourceCodePosition pos, LiteralChar e)
 			: base(pos)
 		{
 			List.Add(e);
 		}
 
-		public List_LiteralChars Append(Literal_Char e)
+		public ListLiteralChars Append(LiteralChar e)
 		{
 			List.Add(e);
 			return this;
 		}
 	}
 
-	public class List_LiteralBools : ASTList
+	public class ListLiteralBools : AstList
 	{
-		public List<Literal_Bool> List = new List<Literal_Bool>();
+		public List<LiteralBool> List = new List<LiteralBool>();
 
-		public List_LiteralBools(SourceCodePosition pos)
+		public ListLiteralBools(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public List_LiteralBools(SourceCodePosition pos, Literal_Bool e)
+		public ListLiteralBools(SourceCodePosition pos, LiteralBool e)
 			: base(pos)
 		{
 			List.Add(e);
 		}
 
-		public List_LiteralBools Append(Literal_Bool e)
+		public ListLiteralBools Append(LiteralBool e)
 		{
 			List.Add(e);
 			return this;
@@ -346,12 +346,12 @@ namespace BefunGen.AST
 
 	#region Helper
 
-	public class Switch_Case
+	public class SwitchCase
 	{
-		public Literal_Value Value;
+		public LiteralValue Value;
 		public Statement Body;
 
-		public Switch_Case(Literal_Value v, Statement s)
+		public SwitchCase(LiteralValue v, Statement s)
 		{
 			Value = v;
 			Body = s;

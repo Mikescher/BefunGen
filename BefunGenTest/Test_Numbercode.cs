@@ -20,7 +20,7 @@ namespace BefunGenTest
 		{
 			for (int i = NC_RANGE_MIN; i < NC_RANGE_MAX; i++)
 			{
-				List<Tuple<NumberRep, CodePiece>> vs = NumberCodeHelper.generateAllCode(i, true);
+				List<Tuple<NumberRep, CodePiece>> vs = NumberCodeHelper.GenerateAllCode(i, true);
 
 				foreach (var val in vs)
 					MultiCPTester.Test_ForStackValue(val.Item2.ToSimpleString() + "@", i);
@@ -32,7 +32,7 @@ namespace BefunGenTest
 		{
 			for (int i = NC_RANGE_MIN; i < NC_RANGE_MAX; i++)
 			{
-				List<Tuple<NumberRep, CodePiece>> vs = NumberCodeHelper.generateAllCode(i, true, true);
+				List<Tuple<NumberRep, CodePiece>> vs = NumberCodeHelper.GenerateAllCode(i, true, true);
 
 				foreach (var val in vs)
 					MultiCPTester.Test_ForStackValueReverse("@" + val.Item2.ToSimpleString(), i);

@@ -15,143 +15,143 @@ namespace BefunGen.AST
 
 		public long? GetValueLiteral_Value()
 		{
-			if (this is Expression_Literal && (this as Expression_Literal).Value is Literal_Value)
-				return ((this as Expression_Literal).Value as Literal_Value).GetValueAsInt();
+			if (this is ExpressionLiteral && (this as ExpressionLiteral).Value is LiteralValue)
+				return ((this as ExpressionLiteral).Value as LiteralValue).GetValueAsInt();
 			else
 				return null;
 		}
 
 		public bool? GetValueLiteral_Bool_Value()
 		{
-			if (this is Expression_Literal && (this as Expression_Literal).Value is Literal_Bool)
-				return ((this as Expression_Literal).Value as Literal_Bool).Value;
+			if (this is ExpressionLiteral && (this as ExpressionLiteral).Value is LiteralBool)
+				return ((this as ExpressionLiteral).Value as LiteralBool).Value;
 			else
 				return null;
 		}
 
-		public abstract void linkVariables(Method owner);
-		public abstract void linkResultTypes(Method owner);
-		public abstract void linkMethods(Program owner);
-		public abstract void addressCodePoints();
+		public abstract void LinkVariables(Method owner);
+		public abstract void LinkResultTypes(Method owner);
+		public abstract void LinkMethods(Program owner);
+		public abstract void AddressCodePoints();
 
-		public abstract Expression inlineConstants();
-		public abstract Expression evaluateExpressions();
+		public abstract Expression InlineConstants();
+		public abstract Expression EvaluateExpressions();
 
-		public abstract BType getResultType();
+		public abstract BType GetResultType();
 
-		public abstract CodePiece generateCode(bool reversed);
+		public abstract CodePiece GenerateCode(bool reversed);
 	}
 
 	#region Parents
 
-	public abstract class Expression_Binary : Expression
+	public abstract class ExpressionBinary : Expression
 	{
 		public Expression Left;
 		public Expression Right;
 
-		public Expression_Binary(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionBinary(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos)
 		{
 			this.Left = l;
 			this.Right = r;
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Left.linkVariables(owner);
-			Right.linkVariables(owner);
+			Left.LinkVariables(owner);
+			Right.LinkVariables(owner);
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			Left = Left.inlineConstants();
-			Right = Right.inlineConstants();
+			Left = Left.InlineConstants();
+			Right = Right.InlineConstants();
 
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Left.addressCodePoints();
-			Right.addressCodePoints();
+			Left.AddressCodePoints();
+			Right.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Left.linkMethods(owner);
-			Right.linkMethods(owner);
+			Left.LinkMethods(owner);
+			Right.LinkMethods(owner);
 		}
 
-		public void evaluateSubExpressions()
+		public void EvaluateSubExpressions()
 		{
-			Left = Left.evaluateExpressions();
-			Right = Right.evaluateExpressions();
+			Left = Left.EvaluateExpressions();
+			Right = Right.EvaluateExpressions();
 		}
 	}
 
-	public abstract class Expression_BinaryMathOperation : Expression_Binary
+	public abstract class ExpressionBinaryMathOperation : ExpressionBinary
 	{
-		public Expression_BinaryMathOperation(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionBinaryMathOperation(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Left.linkResultTypes(owner);
-			Right.linkResultTypes(owner);
+			Left.LinkResultTypes(owner);
+			Right.LinkResultTypes(owner);
 
-			BType present_L = Left.getResultType();
-			BType wanted_L = new BType_Int(Position);
+			BType presentL = Left.GetResultType();
+			BType wantedL = new BTypeInt(Position);
 
-			BType present_R = Right.getResultType();
-			BType wanted_R = new BType_Int(Position);
+			BType presentR = Right.GetResultType();
+			BType wantedR = new BTypeInt(Position);
 
-			if (present_L != wanted_L)
+			if (presentL != wantedL)
 			{
-				if (present_L.isImplicitCastableTo(wanted_L))
-					Left = new Expression_Cast(Position, wanted_L, Left);
+				if (presentL.IsImplicitCastableTo(wantedL))
+					Left = new ExpressionCast(Position, wantedL, Left);
 				else
-					throw new ImplicitCastException(Position, present_L, wanted_L);
+					throw new ImplicitCastException(Position, presentL, wantedL);
 			}
 
-			if (present_R != wanted_R)
+			if (presentR != wantedR)
 			{
-				if (present_R.isImplicitCastableTo(wanted_R))
-					Right = new Expression_Cast(Position, wanted_R, Right);
+				if (presentR.IsImplicitCastableTo(wantedR))
+					Right = new ExpressionCast(Position, wantedR, Right);
 				else
-					throw new ImplicitCastException(Position, present_R, wanted_R);
+					throw new ImplicitCastException(Position, presentR, wantedR);
 			}
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			if (Left.getResultType() != Right.getResultType())
-				throw new InvalidASTStateException(Position);
+			if (Left.GetResultType() != Right.GetResultType())
+				throw new InvalidAstStateException(Position);
 
-			return Left.getResultType();
+			return Left.GetResultType();
 		}
 
-		protected CodePiece generateCode_Operands(bool reversed, BefungeCommand cmd)
+		protected CodePiece GenerateCode_Operands(bool reversed, BefungeCommand cmd)
 		{
-			CodePiece cp_l = Left.generateCode(reversed);
-			CodePiece cp_r = Right.generateCode(reversed);
+			CodePiece cpL = Left.GenerateCode(reversed);
+			CodePiece cpR = Right.GenerateCode(reversed);
 
 			if (reversed)
 			{
-				MathExt.Swap(ref cp_l, ref cp_r); // In Reverse Mode l & r are reversed and then they are reversed added
+				MathExt.Swap(ref cpL, ref cpR); // In Reverse Mode l & r are reversed and then they are reversed added
 			}
 
 			if (CGO.StripDoubleStringmodeToogle)
 			{
-				if (cp_l.lastColumnIsSingle() && cp_r.firstColumnIsSingle() && cp_l[cp_l.MaxX - 1, 0].Type == BefungeCommandType.Stringmode && cp_r[0, 0].Type == BefungeCommandType.Stringmode)
+				if (cpL.LastColumnIsSingle() && cpR.FirstColumnIsSingle() && cpL[cpL.MaxX - 1, 0].Type == BefungeCommandType.Stringmode && cpR[0, 0].Type == BefungeCommandType.Stringmode)
 				{
-					cp_l.RemoveColumn(cp_l.MaxX - 1);
-					cp_r.RemoveColumn(0);
+					cpL.RemoveColumn(cpL.MaxX - 1);
+					cpR.RemoveColumn(0);
 				}
 			}
 
-			CodePiece p = CodePiece.CombineHorizontal(cp_l, cp_r);
+			CodePiece p = CodePiece.CombineHorizontal(cpL, cpR);
 
 			if (reversed)
 			{
@@ -162,229 +162,229 @@ namespace BefunGen.AST
 				p.AppendRight(cmd);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public abstract class Expression_BinaryBoolOperation : Expression_Binary
+	public abstract class ExpressionBinaryBoolOperation : ExpressionBinary
 	{
-		public Expression_BinaryBoolOperation(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionBinaryBoolOperation(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Left.linkResultTypes(owner);
-			Right.linkResultTypes(owner);
+			Left.LinkResultTypes(owner);
+			Right.LinkResultTypes(owner);
 
-			BType present_L = Left.getResultType();
-			BType wanted_L = new BType_Bool(Position);
+			BType presentL = Left.GetResultType();
+			BType wantedL = new BTypeBool(Position);
 
-			BType present_R = Right.getResultType();
-			BType wanted_R = new BType_Bool(Position);
+			BType presentR = Right.GetResultType();
+			BType wantedR = new BTypeBool(Position);
 
-			if (present_L != wanted_L)
+			if (presentL != wantedL)
 			{
-				if (present_L.isImplicitCastableTo(wanted_L))
-					Left = new Expression_Cast(Position, wanted_L, Left);
+				if (presentL.IsImplicitCastableTo(wantedL))
+					Left = new ExpressionCast(Position, wantedL, Left);
 				else
-					throw new ImplicitCastException(Position, present_L, wanted_L);
+					throw new ImplicitCastException(Position, presentL, wantedL);
 			}
 
-			if (present_R != wanted_R)
+			if (presentR != wantedR)
 			{
-				if (present_R.isImplicitCastableTo(wanted_R))
-					Right = new Expression_Cast(Position, wanted_R, Right);
+				if (presentR.IsImplicitCastableTo(wantedR))
+					Right = new ExpressionCast(Position, wantedR, Right);
 				else
-					throw new ImplicitCastException(Position, present_R, wanted_R);
+					throw new ImplicitCastException(Position, presentR, wantedR);
 			}
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			if (Left.getResultType() != Right.getResultType())
-				throw new InvalidASTStateException(Position);
+			if (Left.GetResultType() != Right.GetResultType())
+				throw new InvalidAstStateException(Position);
 
-			return Left.getResultType();
+			return Left.GetResultType();
 		}
 	}
 
-	public abstract class Expression_Compare : Expression_Binary
+	public abstract class ExpressionCompare : ExpressionBinary
 	{
-		public Expression_Compare(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionCompare(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Left.linkResultTypes(owner);
-			Right.linkResultTypes(owner);
+			Left.LinkResultTypes(owner);
+			Right.LinkResultTypes(owner);
 
-			BType present_L = Left.getResultType();
+			BType presentL = Left.GetResultType();
 
-			BType present_R = Right.getResultType();
+			BType presentR = Right.GetResultType();
 
-			if (present_L is BType_Array || present_R is BType_Array)
-				throw new InvalidCompareException(present_L, present_R, Position);
+			if (presentL is BTypeArray || presentR is BTypeArray)
+				throw new InvalidCompareException(presentL, presentR, Position);
 
-			if (present_L != present_R)
+			if (presentL != presentR)
 			{
-				if (present_R.isImplicitCastableTo(present_L) && present_L.isImplicitCastableTo(present_R))
+				if (presentR.IsImplicitCastableTo(presentL) && presentL.IsImplicitCastableTo(presentR))
 				{
-					if (present_R.getPriority() > present_L.getPriority())
-						Right = new Expression_Cast(Position, present_L, Right);
+					if (presentR.GetPriority() > presentL.GetPriority())
+						Right = new ExpressionCast(Position, presentL, Right);
 					else
-						Left = new Expression_Cast(Position, present_R, Left);
+						Left = new ExpressionCast(Position, presentR, Left);
 				}
-				else if (present_R.isImplicitCastableTo(present_L))
+				else if (presentR.IsImplicitCastableTo(presentL))
 				{
-					Right = new Expression_Cast(Position, present_L, Right);
+					Right = new ExpressionCast(Position, presentL, Right);
 				}
-				else if (present_L.isImplicitCastableTo(present_R))
+				else if (presentL.IsImplicitCastableTo(presentR))
 				{
-					Left = new Expression_Cast(Position, present_R, Left);
+					Left = new ExpressionCast(Position, presentR, Left);
 				}
 				else
 				{
-					throw new InvalidCompareException(present_L, present_R, Position);
+					throw new InvalidCompareException(presentL, presentR, Position);
 				}
 			}
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			if (Left.getResultType() != Right.getResultType())
-				throw new InvalidASTStateException(Position);
+			if (Left.GetResultType() != Right.GetResultType())
+				throw new InvalidAstStateException(Position);
 
-			return new BType_Bool(new SourceCodePosition());
+			return new BTypeBool(new SourceCodePosition());
 		}
 	}
 
-	public abstract class Expression_Unary : Expression
+	public abstract class ExpressionUnary : Expression
 	{
 		public Expression Expr;
 
-		public Expression_Unary(SourceCodePosition pos, Expression e)
+		public ExpressionUnary(SourceCodePosition pos, Expression e)
 			: base(pos)
 		{
 			this.Expr = e;
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Expr.linkVariables(owner);
+			Expr.LinkVariables(owner);
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			Expr = Expr.inlineConstants();
+			Expr = Expr.InlineConstants();
 
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Expr.addressCodePoints();
+			Expr.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Expr.linkMethods(owner);
+			Expr.LinkMethods(owner);
 		}
 
-		public void evaluateSubExpressions()
+		public void EvaluateSubExpressions()
 		{
-			Expr = Expr.evaluateExpressions();
+			Expr = Expr.EvaluateExpressions();
 		}
 	}
 
-	public abstract class Expression_ValuePointer : Expression
+	public abstract class ExpressionValuePointer : Expression
 	{
-		public Expression_ValuePointer(SourceCodePosition pos)
+		public ExpressionValuePointer(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
 		// Puts X and Y on the stack: [X, Y]
-		public abstract CodePiece generateCodeSingle(bool reversed);
+		public abstract CodePiece GenerateCodeSingle(bool reversed);
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public abstract CodePiece generateCodeDoubleX(bool reversed);
+		public abstract CodePiece GenerateCodeDoubleX(bool reversed);
 		// Puts Y on the stack: [Y]
-		public abstract CodePiece generateCodeSingleY(bool reversed);
+		public abstract CodePiece GenerateCodeSingleY(bool reversed);
 	}
 
-	public abstract class Expression_Rand : Expression
+	public abstract class ExpressionRand : Expression
 	{
-		public Expression_Rand(SourceCodePosition pos)
+		public ExpressionRand(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 	}
 
-	public abstract class Expression_Crement : Expression
+	public abstract class ExpressionCrement : Expression
 	{
-		public Expression_ValuePointer Target;
+		public ExpressionValuePointer Target;
 
-		public Expression_Crement(SourceCodePosition pos, Expression_ValuePointer v)
+		public ExpressionCrement(SourceCodePosition pos, ExpressionValuePointer v)
 			: base(pos)
 		{
 			Target = v;
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
 			return this;
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Target.linkVariables(owner);
+			Target.LinkVariables(owner);
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			Target.inlineConstants();
+			Target.InlineConstants();
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Target.addressCodePoints();
+			Target.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Target.linkMethods(owner);
+			Target.LinkMethods(owner);
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return Target.getResultType();
+			return Target.GetResultType();
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Target.linkResultTypes(owner);
+			Target.LinkResultTypes(owner);
 
-			if (!(Target.getResultType() is BType_Int || Target.getResultType() is BType_Digit || Target.getResultType() is BType_Char))
-				throw new ImplicitCastException(Position, Target.getResultType(), new BType_Int(Position), new BType_Digit(Position), new BType_Char(Position));
+			if (!(Target.GetResultType() is BTypeInt || Target.GetResultType() is BTypeDigit || Target.GetResultType() is BTypeChar))
+				throw new ImplicitCastException(Position, Target.GetResultType(), new BTypeInt(Position), new BTypeDigit(Position), new BTypeChar(Position));
 		}
 	}
 
@@ -392,35 +392,35 @@ namespace BefunGen.AST
 
 	#region ValuePointer
 
-	public class Expression_DirectValuePointer : Expression_ValuePointer
+	public class ExpressionDirectValuePointer : ExpressionValuePointer
 	{
 		public string Identifier; // Temporary -- before linking;
 		public VarDeclaration Target; // Could also be an array without index
 
-		public Expression_DirectValuePointer(SourceCodePosition pos, string id)
+		public ExpressionDirectValuePointer(SourceCodePosition pos, string id)
 			: base(pos)
 		{
 			this.Identifier = id;
 		}
 
-		public Expression_DirectValuePointer(SourceCodePosition pos, VarDeclaration target)
+		public ExpressionDirectValuePointer(SourceCodePosition pos, VarDeclaration target)
 			: base(pos)
 		{
 			this.Identifier = null;
 			this.Target = target;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return Target.getShortDebugString();
+			return Target.GetShortDebugString();
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			if (Target != null && Identifier == null) // Already linked
 				return;
 
-			Target = owner.findVariableByIdentifier(Identifier) as VarDeclaration;
+			Target = owner.FindVariableByIdentifier(Identifier) as VarDeclaration;
 
 			if (Target == null)
 				throw new UnresolvableReferenceException(Identifier, Position);
@@ -428,11 +428,11 @@ namespace BefunGen.AST
 			Identifier = null;
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
 			if (Target.IsConstant)
 			{
-				return new Expression_Literal(Position, Target.Initial);
+				return new ExpressionLiteral(Position, Target.Initial);
 			}
 			else
 			{
@@ -440,25 +440,25 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
 			return Target.Type;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (Target is VarDeclaration_Array)
+			if (Target is VarDeclarationArray)
 			{
-				return generateCode_Array(reversed);
+				return GenerateCode_Array(reversed);
 			}
-			else if (Target is VarDeclaration_Value)
+			else if (Target is VarDeclarationValue)
 			{
-				return generateCode_Value(reversed);
+				return GenerateCode_Value(reversed);
 			}
 			else
 			{
@@ -466,225 +466,225 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
 			return this;
 		}
 
-		private CodePiece generateCode_Value(bool reversed)
+		private CodePiece GenerateCode_Value(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
-				p.AppendLeft(BCHelper.Reflect_Get);
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
+				p.AppendLeft(BCHelper.ReflectGet);
 			}
 			else
 			{
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
+				p.AppendRight(BCHelper.ReflectGet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		private CodePiece generateCode_Array(bool reversed)
+		private CodePiece GenerateCode_Array(bool reversed)
 		{
-			VarDeclaration_Array vda = Target as VarDeclaration_Array;
+			VarDeclarationArray vda = Target as VarDeclarationArray;
 
 			return CodePieceStore.ReadArrayToStack(vda.Size, vda.CodePositionX, vda.CodePositionY, reversed);
 		}
 
 		// Puts X and Y on the stack: [X, Y]
-		public override CodePiece generateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 			else
 			{
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public override CodePiece generateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
-				p.AppendLeft(BCHelper.Stack_Dup);
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
+				p.AppendLeft(BCHelper.StackDup);
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 			else
 			{
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
-				p.AppendRight(BCHelper.Stack_Dup);
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		/// Puts Y on the stack: [Y]
-		public override CodePiece generateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(bool reversed)
 		{
-			return NumberCodeHelper.generateCode(Target.CodePositionY, reversed);
+			return NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed);
 		}
 	}
 
-	public class Expression_DisplayValuePointer : Expression_DirectValuePointer
+	public class ExpressionDisplayValuePointer : ExpressionDirectValuePointer
 	{
-		private Program Owner;
+		private Program owner;
 
-		public Expression Target_X;
-		public Expression Target_Y;
+		public Expression TargetX;
+		public Expression TargetY;
 
-		public Expression_DisplayValuePointer(SourceCodePosition pos, Expression x, Expression y)
+		public ExpressionDisplayValuePointer(SourceCodePosition pos, Expression x, Expression y)
 			: base(pos, "@display")
 		{
 			Target = null;
 
-			Target_X = x;
-			Target_Y = y;
+			TargetX = x;
+			TargetY = y;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format(@"DISPLAY[{0}][{1}]", Target_X.getDebugString(), Target_Y.getDebugString());
+			return string.Format(@"DISPLAY[{0}][{1}]", TargetX.GetDebugString(), TargetY.GetDebugString());
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			this.Owner = owner.Owner;
+			this.owner = owner.Owner;
 
-			if (Owner.DisplayWidth * Owner.DisplayHeight == 0)
+			if (this.owner.DisplayWidth * this.owner.DisplayHeight == 0)
 				throw new EmptyDisplayAccessException(Position);
 
-			Target_X.linkVariables(owner);
-			Target_Y.linkVariables(owner);
+			TargetX.LinkVariables(owner);
+			TargetY.LinkVariables(owner);
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			Target_X = Target_X.inlineConstants();
-			Target_Y = Target_Y.inlineConstants();
+			TargetX = TargetX.InlineConstants();
+			TargetY = TargetY.InlineConstants();
 			return this;
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Target_X.linkResultTypes(owner);
-			Target_Y.linkResultTypes(owner);
+			TargetX.LinkResultTypes(owner);
+			TargetY.LinkResultTypes(owner);
 
-			BType wanted = new BType_Int(Position);
-			BType present_X = Target_X.getResultType();
-			BType present_Y = Target_Y.getResultType();
+			BType wanted = new BTypeInt(Position);
+			BType presentX = TargetX.GetResultType();
+			BType presentY = TargetY.GetResultType();
 
-			if (present_X != wanted)
+			if (presentX != wanted)
 			{
-				if (present_X.isImplicitCastableTo(wanted))
-					Target_X = new Expression_Cast(Position, wanted, Target_X);
+				if (presentX.IsImplicitCastableTo(wanted))
+					TargetX = new ExpressionCast(Position, wanted, TargetX);
 				else
-					throw new ImplicitCastException(Position, present_X, wanted);
+					throw new ImplicitCastException(Position, presentX, wanted);
 			}
 
-			if (present_Y != wanted)
+			if (presentY != wanted)
 			{
-				if (present_Y.isImplicitCastableTo(wanted))
-					Target_Y = new Expression_Cast(Position, wanted, Target_Y);
+				if (presentY.IsImplicitCastableTo(wanted))
+					TargetY = new ExpressionCast(Position, wanted, TargetY);
 				else
-					throw new ImplicitCastException(Position, present_Y, wanted);
+					throw new ImplicitCastException(Position, presentY, wanted);
 			}
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			Target_X = Target_X.evaluateExpressions();
-			Target_Y = Target_Y.evaluateExpressions();
+			TargetX = TargetX.EvaluateExpressions();
+			TargetY = TargetY.EvaluateExpressions();
 
 			return this;
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return new BType_Char(Position);
+			return new BTypeChar(Position);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = generateCodeSingle(reversed);
+			CodePiece p = GenerateCodeSingle(reversed);
 
 			if (reversed)
 			{
-				p.AppendLeft(BCHelper.Reflect_Get);
+				p.AppendLeft(BCHelper.ReflectGet);
 			}
 			else
 			{
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.ReflectGet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		// Puts X and Y on the stack: [X, Y]
-		public override CodePiece generateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(bool reversed)
 		{
 			if (reversed)
 			{
-				return CodePiece.CombineHorizontal(generateCodeSingleY(reversed), generateCodeSingleX(reversed));
+				return CodePiece.CombineHorizontal(GenerateCodeSingleY(reversed), GenerateCodeSingleX(reversed));
 			}
 			else
 			{
-				return CodePiece.CombineHorizontal(generateCodeSingleX(reversed), generateCodeSingleY(reversed));
+				return CodePiece.CombineHorizontal(GenerateCodeSingleX(reversed), GenerateCodeSingleY(reversed));
 			}
 		}
 
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public override CodePiece generateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(generateCodeSingleX(reversed));
-				p.AppendLeft(BCHelper.Stack_Dup);
-				p.AppendLeft(generateCodeSingleY(reversed));
+				p.AppendLeft(GenerateCodeSingleX(reversed));
+				p.AppendLeft(BCHelper.StackDup);
+				p.AppendLeft(GenerateCodeSingleY(reversed));
 			}
 			else
 			{
-				p.AppendRight(generateCodeSingleX(reversed));
-				p.AppendRight(BCHelper.Stack_Dup);
-				p.AppendRight(generateCodeSingleY(reversed));
+				p.AppendRight(GenerateCodeSingleX(reversed));
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(GenerateCodeSingleY(reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		/// Puts X on the stack: [X]
-		public CodePiece generateCodeSingleX(bool reversed)
+		public CodePiece GenerateCodeSingleX(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -693,10 +693,10 @@ namespace BefunGen.AST
 				#region Reversed
 				//  +{(MODULO)}{TargetX}{OffsetX}
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Owner.DisplayOffsetX));
-				p.AppendLeft(Target_X.generateCode(reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(owner.DisplayOffsetX));
+				p.AppendLeft(TargetX.GenerateCode(reversed));
 				if (CGO.DisplayModuloAccess)
-					p.AppendLeft(CodePieceStore.ModuloRangeLimiter(Owner.DisplayWidth, reversed));
+					p.AppendLeft(CodePieceStore.ModuloRangeLimiter(owner.DisplayWidth, reversed));
 				p.AppendLeft(BCHelper.Add);
 
 				#endregion
@@ -706,22 +706,22 @@ namespace BefunGen.AST
 				#region Normal
 				//  {OffsetX}{TargetX}{(MODULO)}+
 
-				p.AppendRight(NumberCodeHelper.generateCode(Owner.DisplayOffsetX));
-				p.AppendRight(Target_X.generateCode(reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(owner.DisplayOffsetX));
+				p.AppendRight(TargetX.GenerateCode(reversed));
 				if (CGO.DisplayModuloAccess)
-					p.AppendRight(CodePieceStore.ModuloRangeLimiter(Owner.DisplayWidth, reversed));
+					p.AppendRight(CodePieceStore.ModuloRangeLimiter(owner.DisplayWidth, reversed));
 				p.AppendRight(BCHelper.Add);
 
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		/// Puts Y on the stack: [Y]
-		public override CodePiece generateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -730,10 +730,10 @@ namespace BefunGen.AST
 				#region Reversed
 				//  +{(MODULO)}{TargetY}{OffsetY}
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Owner.DisplayOffsetY));
-				p.AppendLeft(Target_Y.generateCode(reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(owner.DisplayOffsetY));
+				p.AppendLeft(TargetY.GenerateCode(reversed));
 				if (CGO.DisplayModuloAccess)
-					p.AppendLeft(CodePieceStore.ModuloRangeLimiter(Owner.DisplayHeight, reversed));
+					p.AppendLeft(CodePieceStore.ModuloRangeLimiter(owner.DisplayHeight, reversed));
 				p.AppendLeft(BCHelper.Add);
 
 				#endregion
@@ -743,241 +743,241 @@ namespace BefunGen.AST
 				#region Normal
 				//  {OffsetY}{TargetY}{(MODULO)}+
 
-				p.AppendRight(NumberCodeHelper.generateCode(Owner.DisplayOffsetY));
-				p.AppendRight(Target_Y.generateCode(reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(owner.DisplayOffsetY));
+				p.AppendRight(TargetY.GenerateCode(reversed));
 				if (CGO.DisplayModuloAccess)
-					p.AppendRight(CodePieceStore.ModuloRangeLimiter(Owner.DisplayHeight, reversed));
+					p.AppendRight(CodePieceStore.ModuloRangeLimiter(owner.DisplayHeight, reversed));
 				p.AppendRight(BCHelper.Add);
 
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_ArrayValuePointer : Expression_ValuePointer
+	public class ExpressionArrayValuePointer : ExpressionValuePointer
 	{
 		public string Identifier; // Temporary - before linkng
-		public VarDeclaration_Array Target;
+		public VarDeclarationArray Target;
 
 		public Expression Index;
 
-		public Expression_ArrayValuePointer(SourceCodePosition pos, string id, Expression idx)
+		public ExpressionArrayValuePointer(SourceCodePosition pos, string id, Expression idx)
 			: base(pos)
 		{
 			this.Identifier = id;
 			this.Index = idx;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return Target.getShortDebugString() + "[" + Index.getDebugString() + "]";
+			return Target.GetShortDebugString() + "[" + Index.GetDebugString() + "]";
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			if (Target != null && Identifier == null) // Already linked
 				return;
 
-			Index.linkVariables(owner);
+			Index.LinkVariables(owner);
 
-			Target = owner.findVariableByIdentifier(Identifier) as VarDeclaration_Array;
+			Target = owner.FindVariableByIdentifier(Identifier) as VarDeclarationArray;
 
 			if (Target == null)
 				throw new UnresolvableReferenceException(Identifier, Position);
-			if (!typeof(BType_Array).IsAssignableFrom(Target.Type.GetType()))
+			if (!typeof(BTypeArray).IsAssignableFrom(Target.Type.GetType()))
 				throw new IndexOperatorNotDefiniedException(Position);
 
 			Identifier = null;
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			Index = Index.inlineConstants();
+			Index = Index.InlineConstants();
 
 			return this;
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Index.linkResultTypes(owner);
+			Index.LinkResultTypes(owner);
 
-			BType present = Index.getResultType();
-			BType wanted = new BType_Int(Position);
+			BType present = Index.GetResultType();
+			BType wanted = new BTypeInt(Position);
 
 			if (present != wanted)
 			{
-				if (present.isImplicitCastableTo(wanted))
-					Index = new Expression_Cast(Position, wanted, Index);
+				if (present.IsImplicitCastableTo(wanted))
+					Index = new ExpressionCast(Position, wanted, Index);
 				else
 					throw new ImplicitCastException(Position, present, wanted);
 			}
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			Index = Index.evaluateExpressions();
+			Index = Index.EvaluateExpressions();
 			return this;
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
 			return Target.InternalType;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Index.generateCode(reversed));
+				p.AppendLeft(Index.GenerateCode(reversed));
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
 				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 
-				p.AppendLeft(BCHelper.Reflect_Get);
+				p.AppendLeft(BCHelper.ReflectGet);
 			}
 			else
 			{
-				p.AppendRight(Index.generateCode(reversed));
+				p.AppendRight(Index.GenerateCode(reversed));
 
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.ReflectGet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		// This puts X and Y of the var on the stack
-		public override CodePiece generateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Index.generateCode(reversed));
+				p.AppendLeft(Index.GenerateCode(reversed));
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
 				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 			else
 			{
-				p.AppendRight(Index.generateCode(reversed));
+				p.AppendRight(Index.GenerateCode(reversed));
 
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public override CodePiece generateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Index.generateCode(reversed));
+				p.AppendLeft(Index.GenerateCode(reversed));
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
 				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(BCHelper.Stack_Dup);
+				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 			else
 			{
-				p.AppendRight(Index.generateCode(reversed));
+				p.AppendRight(Index.GenerateCode(reversed));
 
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(BCHelper.Stack_Dup);
+				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePositionY, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		/// Puts Y on the stack: [Y]
-		public override CodePiece generateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(bool reversed)
 		{
-			return NumberCodeHelper.generateCode(Target.CodePositionY, reversed);
+			return NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed);
 		}
 	}
 
-	public class Expression_VoidValuePointer : Expression_ValuePointer
+	public class ExpressionVoidValuePointer : ExpressionValuePointer
 	{
-		public Expression_VoidValuePointer(SourceCodePosition pos)
+		public ExpressionVoidValuePointer(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "void";
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
 			return this;
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
 			return this;
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return new BType_Void(Position);
+			return new BTypeVoid(Position);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 
-		public override CodePiece generateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(bool reversed)
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 
-		public override CodePiece generateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(bool reversed)
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 
-		public override CodePiece generateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(bool reversed)
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 	}
 
@@ -985,17 +985,17 @@ namespace BefunGen.AST
 
 	#region BinaryMathOperation
 
-	public class Expression_Mult : Expression_BinaryMathOperation
+	public class ExpressionMult : ExpressionBinaryMathOperation
 	{
-		public Expression_Mult(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionMult(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			long? l = Left.GetValueLiteral_Value();
 			long? r = Right.GetValueLiteral_Value();
@@ -1018,7 +1018,7 @@ namespace BefunGen.AST
 			}
 			else if (l.HasValue && r.HasValue)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Int(Left.Position, l.Value * r.Value));
+				return new ExpressionLiteral(Left.Position, new LiteralInt(Left.Position, l.Value * r.Value));
 			}
 			else
 			{
@@ -1026,35 +1026,35 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} * {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} * {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = generateCode_Operands(reversed, BCHelper.Mult);
+			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Mult);
 
 			return p;
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Mult(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionMult(p, v, e));
 		}
 	}
 
-	public class Expression_Div : Expression_BinaryMathOperation
+	public class ExpressionDiv : ExpressionBinaryMathOperation
 	{
-		public Expression_Div(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionDiv(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			long? l = Left.GetValueLiteral_Value();
 			long? r = Right.GetValueLiteral_Value();
@@ -1069,7 +1069,7 @@ namespace BefunGen.AST
 			}
 			else if (l.HasValue && r.HasValue && r != 0)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Int(Left.Position, l.Value / r.Value));
+				return new ExpressionLiteral(Left.Position, new LiteralInt(Left.Position, l.Value / r.Value));
 			}
 			else
 			{
@@ -1077,35 +1077,35 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} / {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} / {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = generateCode_Operands(reversed, BCHelper.Div);
+			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Div);
 
 			return p;
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Div(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionDiv(p, v, e));
 		}
 	}
 
-	public class Expression_Mod : Expression_BinaryMathOperation
+	public class ExpressionMod : ExpressionBinaryMathOperation
 	{
-		public Expression_Mod(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionMod(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			long? l = Left.GetValueLiteral_Value();
 			long? r = Right.GetValueLiteral_Value();
@@ -1116,11 +1116,11 @@ namespace BefunGen.AST
 			}
 			else if (r == 1)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Int(Left.Position, 0));
+				return new ExpressionLiteral(Left.Position, new LiteralInt(Left.Position, 0));
 			}
 			else if (l.HasValue && r.HasValue && r != 0)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Int(Left.Position, l.Value % r.Value));
+				return new ExpressionLiteral(Left.Position, new LiteralInt(Left.Position, l.Value % r.Value));
 			}
 			else
 			{
@@ -1128,35 +1128,35 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} % {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} % {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = generateCode_Operands(reversed, BCHelper.Modulo);
+			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Modulo);
 
 			return p;
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Mod(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionMod(p, v, e));
 		}
 	}
 
-	public class Expression_Add : Expression_BinaryMathOperation
+	public class ExpressionAdd : ExpressionBinaryMathOperation
 	{
-		public Expression_Add(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionAdd(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			long? l = Left.GetValueLiteral_Value();
 			long? r = Right.GetValueLiteral_Value();
@@ -1171,7 +1171,7 @@ namespace BefunGen.AST
 			}
 			else if (l.HasValue && r.HasValue)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Int(Left.Position, l.Value + r.Value));
+				return new ExpressionLiteral(Left.Position, new LiteralInt(Left.Position, l.Value + r.Value));
 			}
 			else
 			{
@@ -1179,35 +1179,35 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} + {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} + {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = generateCode_Operands(reversed, BCHelper.Add);
+			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Add);
 
 			return p;
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Add(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionAdd(p, v, e));
 		}
 	}
 
-	public class Expression_Sub : Expression_BinaryMathOperation
+	public class ExpressionSub : ExpressionBinaryMathOperation
 	{
-		public Expression_Sub(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionSub(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			long? l = Left.GetValueLiteral_Value();
 			long? r = Right.GetValueLiteral_Value();
@@ -1218,7 +1218,7 @@ namespace BefunGen.AST
 			}
 			else if (l.HasValue && r.HasValue)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Int(Left.Position, l.Value - r.Value));
+				return new ExpressionLiteral(Left.Position, new LiteralInt(Left.Position, l.Value - r.Value));
 			}
 			else
 			{
@@ -1226,21 +1226,21 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} - {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} - {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = generateCode_Operands(reversed, BCHelper.Sub);
+			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Sub);
 
 			return p;
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Sub(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionSub(p, v, e));
 		}
 	}
 
@@ -1248,17 +1248,17 @@ namespace BefunGen.AST
 
 	#region BinaryBoolOperation
 
-	public class Expression_And : Expression_BinaryBoolOperation
+	public class ExpressionAnd : ExpressionBinaryBoolOperation
 	{
-		public Expression_And(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionAnd(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			bool? l = Left.GetValueLiteral_Bool_Value();
 			bool? r = Right.GetValueLiteral_Bool_Value();
@@ -1285,12 +1285,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} AND {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} AND {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (reversed)
 			{
@@ -1300,34 +1300,34 @@ namespace BefunGen.AST
 				// ^0$< 
 				CodePiece p = new CodePiece();
 
-				p[0, -2] = BCHelper.PC_Down;
+				p[0, -2] = BCHelper.PCDown;
 				p[1, -2] = BCHelper.Walkway;
 				p[2, -2] = BCHelper.Walkway;
-				p[3, -2] = BCHelper.Digit_0;
-				p[4, -2] = BCHelper.PC_Left;
+				p[3, -2] = BCHelper.Digit0;
+				p[4, -2] = BCHelper.PCLeft;
 
-				p[0, -1] = BCHelper.PC_Down;
+				p[0, -1] = BCHelper.PCDown;
 				p[1, -1] = BCHelper.Walkway;
-				p[2, -1] = BCHelper.Digit_1;
-				p[3, -1] = BCHelper.If_Horizontal;
-				p[4, -1] = BCHelper.PC_Up;
+				p[2, -1] = BCHelper.Digit1;
+				p[3, -1] = BCHelper.IfHorizontal;
+				p[4, -1] = BCHelper.PCUp;
 
-				p[0, 0] = BCHelper.PC_Left;
+				p[0, 0] = BCHelper.PCLeft;
 				p[1, 0] = BCHelper.Unused;
 				p[2, 0] = BCHelper.Unused;
-				p[3, 0] = BCHelper.If_Vertical;
+				p[3, 0] = BCHelper.IfVertical;
 				p[4, 0] = BCHelper.Walkway;
 
-				p[0, 1] = BCHelper.PC_Up;
-				p[1, 1] = BCHelper.Digit_0;
-				p[2, 1] = BCHelper.Stack_Pop;
-				p[3, 1] = BCHelper.PC_Left;
+				p[0, 1] = BCHelper.PCUp;
+				p[1, 1] = BCHelper.Digit0;
+				p[2, 1] = BCHelper.StackPop;
+				p[3, 1] = BCHelper.PCLeft;
 				p[4, 1] = BCHelper.Unused;
 
-				p.AppendRight(Right.generateCode(reversed));
-				p.AppendRight(Left.generateCode(reversed));
+				p.AppendRight(Right.GenerateCode(reversed));
+				p.AppendRight(Left.GenerateCode(reversed));
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
@@ -1339,56 +1339,56 @@ namespace BefunGen.AST
 				//  >$0^
 				CodePiece p = new CodePiece();
 
-				p[0, -2] = BCHelper.PC_Right;
-				p[1, -2] = BCHelper.Digit_1;
+				p[0, -2] = BCHelper.PCRight;
+				p[1, -2] = BCHelper.Digit1;
 				p[2, -2] = BCHelper.Walkway;
 				p[3, -2] = BCHelper.Walkway;
-				p[4, -2] = BCHelper.PC_Down;
+				p[4, -2] = BCHelper.PCDown;
 
-				p[0, -1] = BCHelper.PC_Up;
-				p[1, -1] = BCHelper.If_Horizontal;
-				p[2, -1] = BCHelper.Digit_0;
+				p[0, -1] = BCHelper.PCUp;
+				p[1, -1] = BCHelper.IfHorizontal;
+				p[2, -1] = BCHelper.Digit0;
 				p[3, -1] = BCHelper.Walkway;
-				p[4, -1] = BCHelper.PC_Down;
+				p[4, -1] = BCHelper.PCDown;
 
 				p[0, 0] = BCHelper.Walkway;
-				p[1, 0] = BCHelper.If_Vertical;
+				p[1, 0] = BCHelper.IfVertical;
 				p[2, 0] = BCHelper.Unused;
 				p[3, 0] = BCHelper.Unused;
-				p[4, 0] = BCHelper.PC_Right;
+				p[4, 0] = BCHelper.PCRight;
 
 				p[0, 1] = BCHelper.Unused;
-				p[1, 1] = BCHelper.PC_Right;
-				p[2, 1] = BCHelper.Stack_Pop;
-				p[3, 1] = BCHelper.Digit_0;
-				p[4, 1] = BCHelper.PC_Up;
+				p[1, 1] = BCHelper.PCRight;
+				p[2, 1] = BCHelper.StackPop;
+				p[3, 1] = BCHelper.Digit0;
+				p[4, 1] = BCHelper.PCUp;
 
-				p.AppendLeft(Right.generateCode(reversed));
-				p.AppendLeft(Left.generateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(reversed));
+				p.AppendLeft(Left.GenerateCode(reversed));
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_And(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionAnd(p, v, e));
 		}
 	}
 
-	public class Expression_Or : Expression_BinaryBoolOperation
+	public class ExpressionOr : ExpressionBinaryBoolOperation
 	{
-		public Expression_Or(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionOr(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			bool? l = Left.GetValueLiteral_Bool_Value();
 			bool? r = Right.GetValueLiteral_Bool_Value();
@@ -1415,12 +1415,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} OR {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} OR {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (reversed)
 			{
@@ -1430,33 +1430,33 @@ namespace BefunGen.AST
 				// ^  0<
 				CodePiece p = new CodePiece();
 
-				p[0, -1] = BCHelper.PC_Down;
-				p[1, -1] = BCHelper.Digit_1;
-				p[2, -1] = BCHelper.Stack_Pop;
-				p[3, -1] = BCHelper.PC_Left;
+				p[0, -1] = BCHelper.PCDown;
+				p[1, -1] = BCHelper.Digit1;
+				p[2, -1] = BCHelper.StackPop;
+				p[3, -1] = BCHelper.PCLeft;
 				p[4, -1] = BCHelper.Unused;
 
-				p[0, 0] = BCHelper.PC_Left;
+				p[0, 0] = BCHelper.PCLeft;
 				p[1, 0] = BCHelper.Unused;
 				p[2, 0] = BCHelper.Unused;
-				p[3, 0] = BCHelper.If_Vertical;
+				p[3, 0] = BCHelper.IfVertical;
 				p[4, 0] = BCHelper.Walkway;
 
-				p[0, 1] = BCHelper.PC_Up;
+				p[0, 1] = BCHelper.PCUp;
 				p[1, 1] = BCHelper.Walkway;
-				p[2, 1] = BCHelper.Digit_1;
-				p[3, 1] = BCHelper.If_Horizontal;
-				p[4, 1] = BCHelper.PC_Down;
+				p[2, 1] = BCHelper.Digit1;
+				p[3, 1] = BCHelper.IfHorizontal;
+				p[4, 1] = BCHelper.PCDown;
 
-				p[0, 2] = BCHelper.PC_Up;
+				p[0, 2] = BCHelper.PCUp;
 				p[1, 2] = BCHelper.Walkway;
 				p[2, 2] = BCHelper.Walkway;
-				p[3, 2] = BCHelper.Digit_0;
-				p[4, 2] = BCHelper.PC_Left;
+				p[3, 2] = BCHelper.Digit0;
+				p[4, 2] = BCHelper.PCLeft;
 
-				p.AppendRight(Right.generateCode(reversed));
-				p.AppendRight(Left.generateCode(reversed));
-				p.normalizeX();
+				p.AppendRight(Right.GenerateCode(reversed));
+				p.AppendRight(Left.GenerateCode(reversed));
+				p.NormalizeX();
 
 				return p;
 
@@ -1470,54 +1470,54 @@ namespace BefunGen.AST
 				CodePiece p = new CodePiece();
 
 				p[0, -1] = BCHelper.Unused;
-				p[1, -1] = BCHelper.PC_Right;
-				p[2, -1] = BCHelper.Stack_Pop;
-				p[3, -1] = BCHelper.Digit_1;
-				p[4, -1] = BCHelper.PC_Down;
+				p[1, -1] = BCHelper.PCRight;
+				p[2, -1] = BCHelper.StackPop;
+				p[3, -1] = BCHelper.Digit1;
+				p[4, -1] = BCHelper.PCDown;
 
 				p[0, 0] = BCHelper.Walkway;
-				p[1, 0] = BCHelper.If_Vertical;
+				p[1, 0] = BCHelper.IfVertical;
 				p[2, 0] = BCHelper.Unused;
 				p[3, 0] = BCHelper.Unused;
-				p[4, 0] = BCHelper.PC_Right;
+				p[4, 0] = BCHelper.PCRight;
 
-				p[0, 1] = BCHelper.PC_Down;
-				p[1, 1] = BCHelper.If_Horizontal;
-				p[2, 1] = BCHelper.Digit_0;
+				p[0, 1] = BCHelper.PCDown;
+				p[1, 1] = BCHelper.IfHorizontal;
+				p[2, 1] = BCHelper.Digit0;
 				p[3, 1] = BCHelper.Walkway;
-				p[4, 1] = BCHelper.PC_Up;
+				p[4, 1] = BCHelper.PCUp;
 
-				p[0, 2] = BCHelper.PC_Right;
-				p[1, 2] = BCHelper.Digit_1;
+				p[0, 2] = BCHelper.PCRight;
+				p[1, 2] = BCHelper.Digit1;
 				p[2, 2] = BCHelper.Walkway;
 				p[3, 2] = BCHelper.Walkway;
-				p[4, 2] = BCHelper.PC_Up;
+				p[4, 2] = BCHelper.PCUp;
 
-				p.AppendLeft(Right.generateCode(reversed));
-				p.AppendLeft(Left.generateCode(reversed));
-				p.normalizeX();
+				p.AppendLeft(Right.GenerateCode(reversed));
+				p.AppendLeft(Left.GenerateCode(reversed));
+				p.NormalizeX();
 
 				return p;
 			}
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Or(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionOr(p, v, e));
 		}
 	}
 
-	public class Expression_Xor : Expression_BinaryBoolOperation
+	public class ExpressionXor : ExpressionBinaryBoolOperation
 	{
-		public Expression_Xor(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionXor(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			bool? l = Left.GetValueLiteral_Bool_Value();
 			bool? r = Right.GetValueLiteral_Bool_Value();
@@ -1532,15 +1532,15 @@ namespace BefunGen.AST
 			}
 			else if (l.HasValue && r.HasValue)
 			{
-				return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value ^ r.Value));
+				return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value ^ r.Value));
 			}
 			else if (r == true)
 			{
-				return new Expression_Not(Left.Position, Left);
+				return new ExpressionNot(Left.Position, Left);
 			}
 			else if (l == true)
 			{
-				return new Expression_Not(Right.Position, Right);
+				return new ExpressionNot(Right.Position, Right);
 			}
 			else
 			{
@@ -1548,12 +1548,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} XOR {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} XOR {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (reversed)
 			{
@@ -1565,38 +1565,38 @@ namespace BefunGen.AST
 				CodePiece p = new CodePiece();
 
 				p[0, -2] = BCHelper.Unused;
-				p[1, -2] = BCHelper.PC_Down;
+				p[1, -2] = BCHelper.PCDown;
 				p[2, -2] = BCHelper.Walkway;
-				p[3, -2] = BCHelper.PC_Left;
+				p[3, -2] = BCHelper.PCLeft;
 				p[4, -2] = BCHelper.Unused;
 
-				p[0, -1] = BCHelper.PC_Down;
-				p[1, -1] = BCHelper.Digit_0;
-				p[2, -1] = BCHelper.If_Horizontal;
-				p[3, -1] = BCHelper.PC_Down;
+				p[0, -1] = BCHelper.PCDown;
+				p[1, -1] = BCHelper.Digit0;
+				p[2, -1] = BCHelper.IfHorizontal;
+				p[3, -1] = BCHelper.PCDown;
 				p[4, -1] = BCHelper.Unused;
 
-				p[0, 0] = BCHelper.PC_Left;
-				p[1, 0] = BCHelper.PC_Left;
-				p[2, 0] = BCHelper.If_Vertical;
-				p[3, 0] = BCHelper.PC_Jump;
-				p[4, 0] = BCHelper.PC_Jump;
+				p[0, 0] = BCHelper.PCLeft;
+				p[1, 0] = BCHelper.PCLeft;
+				p[2, 0] = BCHelper.IfVertical;
+				p[3, 0] = BCHelper.PCJump;
+				p[4, 0] = BCHelper.PCJump;
 
-				p[0, 1] = BCHelper.PC_Up;
-				p[1, 1] = BCHelper.Digit_1;
-				p[2, 1] = BCHelper.If_Horizontal;
-				p[3, 1] = BCHelper.PC_Up;
+				p[0, 1] = BCHelper.PCUp;
+				p[1, 1] = BCHelper.Digit1;
+				p[2, 1] = BCHelper.IfHorizontal;
+				p[3, 1] = BCHelper.PCUp;
 				p[4, 1] = BCHelper.Unused;
 
 				p[0, 2] = BCHelper.Unused;
-				p[1, 2] = BCHelper.PC_Up;
+				p[1, 2] = BCHelper.PCUp;
 				p[2, 2] = BCHelper.Walkway;
-				p[3, 2] = BCHelper.PC_Left;
+				p[3, 2] = BCHelper.PCLeft;
 				p[4, 2] = BCHelper.Unused;
 
-				p.AppendRight(Right.generateCode(reversed));
-				p.AppendRight(Left.generateCode(reversed));
-				p.normalizeX();
+				p.AppendRight(Right.GenerateCode(reversed));
+				p.AppendRight(Left.GenerateCode(reversed));
+				p.NormalizeX();
 
 				return p;
 			}
@@ -1610,46 +1610,46 @@ namespace BefunGen.AST
 				CodePiece p = new CodePiece();
 
 				p[0, -2] = BCHelper.Unused;
-				p[1, -2] = BCHelper.PC_Right;
+				p[1, -2] = BCHelper.PCRight;
 				p[2, -2] = BCHelper.Walkway;
-				p[3, -2] = BCHelper.PC_Down;
+				p[3, -2] = BCHelper.PCDown;
 				p[4, -2] = BCHelper.Unused;
 
 				p[0, -1] = BCHelper.Unused;
-				p[1, -1] = BCHelper.PC_Down;
-				p[2, -1] = BCHelper.If_Horizontal;
-				p[3, -1] = BCHelper.Digit_1;
-				p[4, -1] = BCHelper.PC_Down;
+				p[1, -1] = BCHelper.PCDown;
+				p[2, -1] = BCHelper.IfHorizontal;
+				p[3, -1] = BCHelper.Digit1;
+				p[4, -1] = BCHelper.PCDown;
 
-				p[0, 0] = BCHelper.PC_Jump;
-				p[1, 0] = BCHelper.PC_Jump;
-				p[2, 0] = BCHelper.If_Vertical;
-				p[3, 0] = BCHelper.PC_Right;
-				p[4, 0] = BCHelper.PC_Right;
+				p[0, 0] = BCHelper.PCJump;
+				p[1, 0] = BCHelper.PCJump;
+				p[2, 0] = BCHelper.IfVertical;
+				p[3, 0] = BCHelper.PCRight;
+				p[4, 0] = BCHelper.PCRight;
 
 				p[0, 1] = BCHelper.Unused;
-				p[1, 1] = BCHelper.PC_Up;
-				p[2, 1] = BCHelper.If_Horizontal;
-				p[3, 1] = BCHelper.Digit_0;
-				p[4, 1] = BCHelper.PC_Up;
+				p[1, 1] = BCHelper.PCUp;
+				p[2, 1] = BCHelper.IfHorizontal;
+				p[3, 1] = BCHelper.Digit0;
+				p[4, 1] = BCHelper.PCUp;
 
 				p[0, 2] = BCHelper.Unused;
-				p[1, 2] = BCHelper.PC_Right;
+				p[1, 2] = BCHelper.PCRight;
 				p[2, 2] = BCHelper.Walkway;
-				p[3, 2] = BCHelper.PC_Up;
+				p[3, 2] = BCHelper.PCUp;
 				p[4, 2] = BCHelper.Unused;
 
-				p.AppendLeft(Right.generateCode(reversed));
-				p.AppendLeft(Left.generateCode(reversed));
-				p.normalizeX();
+				p.AppendLeft(Right.GenerateCode(reversed));
+				p.AppendLeft(Left.GenerateCode(reversed));
+				p.NormalizeX();
 
 				return p;
 			}
 		}
 
-		public static Statement_Assignment CreateAugmentedStatement(SourceCodePosition p, Expression_ValuePointer v, Expression e)
+		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
-			return new Statement_Assignment(p, v, new Expression_Xor(p, v, e));
+			return new StatementAssignment(p, v, new ExpressionXor(p, v, e));
 		}
 	}
 
@@ -1657,26 +1657,26 @@ namespace BefunGen.AST
 
 	#region Compare
 
-	public class Expression_Equals : Expression_Compare
+	public class ExpressionEquals : ExpressionCompare
 	{
-		public Expression_Equals(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionEquals(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
-			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
+			if (Left is ExpressionLiteral && Right is ExpressionLiteral && Left.GetResultType() == Right.GetResultType())
 			{
 				long? l = Left.GetValueLiteral_Value();
 				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
-					return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value == r.Value));
+					return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value == r.Value));
 				}
 				else
 				{
@@ -1689,12 +1689,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} == {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} == {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			//  >0v
 			// -| >
@@ -1702,62 +1702,62 @@ namespace BefunGen.AST
 			CodePiece p = new CodePiece();
 
 			p[0, -1] = BCHelper.Unused;
-			p[1, -1] = BCHelper.PC_Right;
-			p[2, -1] = BCHelper.Digit_0;
-			p[3, -1] = BCHelper.PC_Down;
+			p[1, -1] = BCHelper.PCRight;
+			p[2, -1] = BCHelper.Digit0;
+			p[3, -1] = BCHelper.PCDown;
 
 			p[0, 0] = BCHelper.Sub;
-			p[1, 0] = BCHelper.If_Vertical;
+			p[1, 0] = BCHelper.IfVertical;
 			p[2, 0] = BCHelper.Unused;
-			p[3, 0] = BCHelper.PC_Right;
+			p[3, 0] = BCHelper.PCRight;
 
 			p[0, 1] = BCHelper.Unused;
-			p[1, 1] = BCHelper.PC_Right;
-			p[2, 1] = BCHelper.Digit_1;
-			p[3, 1] = BCHelper.PC_Up;
+			p[1, 1] = BCHelper.PCRight;
+			p[2, 1] = BCHelper.Digit1;
+			p[3, 1] = BCHelper.PCUp;
 
 			if (reversed)
 			{
-				p.reverseX(true);
+				p.ReverseX(true);
 			}
 
 			if (reversed)
 			{
-				p.AppendRight(Right.generateCode(reversed));
-				p.AppendRight(Left.generateCode(reversed));
+				p.AppendRight(Right.GenerateCode(reversed));
+				p.AppendRight(Left.GenerateCode(reversed));
 			}
 			else
 			{
-				p.AppendLeft(Right.generateCode(reversed));
-				p.AppendLeft(Left.generateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(reversed));
+				p.AppendLeft(Left.GenerateCode(reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_Unequals : Expression_Compare
+	public class ExpressionUnequals : ExpressionCompare
 	{
-		public Expression_Unequals(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionUnequals(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
-			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
+			if (Left is ExpressionLiteral && Right is ExpressionLiteral && Left.GetResultType() == Right.GetResultType())
 			{
 				long? l = Left.GetValueLiteral_Value();
 				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
-					return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value != r.Value));
+					return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value != r.Value));
 				}
 				else
 				{
@@ -1770,12 +1770,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} != {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} != {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			//  >1v
 			// -| >
@@ -1783,62 +1783,62 @@ namespace BefunGen.AST
 			CodePiece p = new CodePiece();
 
 			p[0, -1] = BCHelper.Unused;
-			p[1, -1] = BCHelper.PC_Right;
-			p[2, -1] = BCHelper.Digit_1;
-			p[3, -1] = BCHelper.PC_Down;
+			p[1, -1] = BCHelper.PCRight;
+			p[2, -1] = BCHelper.Digit1;
+			p[3, -1] = BCHelper.PCDown;
 
 			p[0, 0] = BCHelper.Sub;
-			p[1, 0] = BCHelper.If_Vertical;
+			p[1, 0] = BCHelper.IfVertical;
 			p[2, 0] = BCHelper.Unused;
-			p[3, 0] = BCHelper.PC_Right;
+			p[3, 0] = BCHelper.PCRight;
 
 			p[0, 1] = BCHelper.Unused;
-			p[1, 1] = BCHelper.PC_Right;
-			p[2, 1] = BCHelper.Digit_0;
-			p[3, 1] = BCHelper.PC_Up;
+			p[1, 1] = BCHelper.PCRight;
+			p[2, 1] = BCHelper.Digit0;
+			p[3, 1] = BCHelper.PCUp;
 
 			if (reversed)
 			{
-				p.reverseX(true);
+				p.ReverseX(true);
 			}
 
 			if (reversed)
 			{
-				p.AppendRight(Right.generateCode(reversed));
-				p.AppendRight(Left.generateCode(reversed));
+				p.AppendRight(Right.GenerateCode(reversed));
+				p.AppendRight(Left.GenerateCode(reversed));
 			}
 			else
 			{
-				p.AppendLeft(Right.generateCode(reversed));
-				p.AppendLeft(Left.generateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(reversed));
+				p.AppendLeft(Left.GenerateCode(reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_Greater : Expression_Compare
+	public class ExpressionGreater : ExpressionCompare
 	{
-		public Expression_Greater(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionGreater(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
-			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
+			if (Left is ExpressionLiteral && Right is ExpressionLiteral && Left.GetResultType() == Right.GetResultType())
 			{
 				long? l = Left.GetValueLiteral_Value();
 				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
-					return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value > r.Value));
+					return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value > r.Value));
 				}
 				else
 				{
@@ -1851,58 +1851,58 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} > {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} > {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p;
 
 			if (reversed)
 			{
 				//First Left than Right -->  RIGHT < LEFT
-				p = Left.generateCode(reversed);
-				p.AppendLeft(Right.generateCode(reversed));
+				p = Left.GenerateCode(reversed);
+				p.AppendLeft(Right.GenerateCode(reversed));
 
 				p.AppendLeft(BCHelper.GreaterThan);
 			}
 			else
 			{
 				//First Left than Right -->  RIGHT < LEFT
-				p = Left.generateCode(reversed);
-				p.AppendRight(Right.generateCode(reversed));
+				p = Left.GenerateCode(reversed);
+				p.AppendRight(Right.GenerateCode(reversed));
 
 				p.AppendRight(BCHelper.GreaterThan);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_Lesser : Expression_Compare
+	public class ExpressionLesser : ExpressionCompare
 	{
-		public Expression_Lesser(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionLesser(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
-			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
+			if (Left is ExpressionLiteral && Right is ExpressionLiteral && Left.GetResultType() == Right.GetResultType())
 			{
 				long? l = Left.GetValueLiteral_Value();
 				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
-					return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value < r.Value));
+					return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value < r.Value));
 				}
 				else
 				{
@@ -1915,58 +1915,58 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} < {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} < {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p;
 
 			if (reversed)
 			{
 				//First Right than Left -->  LEFT < RIGHT
-				p = Right.generateCode(reversed);
-				p.AppendLeft(Left.generateCode(reversed));
+				p = Right.GenerateCode(reversed);
+				p.AppendLeft(Left.GenerateCode(reversed));
 
 				p.AppendLeft(BCHelper.GreaterThan);
 			}
 			else
 			{
 				//First Right than Left -->  LEFT < RIGHT
-				p = Right.generateCode(reversed);
-				p.AppendRight(Left.generateCode(reversed));
+				p = Right.GenerateCode(reversed);
+				p.AppendRight(Left.GenerateCode(reversed));
 
 				p.AppendRight(BCHelper.GreaterThan);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_GreaterEquals : Expression_Compare
+	public class ExpressionGreaterEquals : ExpressionCompare
 	{
-		public Expression_GreaterEquals(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionGreaterEquals(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
-			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
+			if (Left is ExpressionLiteral && Right is ExpressionLiteral && Left.GetResultType() == Right.GetResultType())
 			{
 				long? l = Left.GetValueLiteral_Value();
 				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
-					return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value >= r.Value));
+					return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value >= r.Value));
 				}
 				else
 				{
@@ -1979,12 +1979,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} >= {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} >= {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (reversed)
 			{
@@ -1992,25 +1992,25 @@ namespace BefunGen.AST
 				// ^`\0<
 
 				//First Right than Left -->  RIGHT <= LEFT
-				CodePiece ep = Right.generateCode(reversed);
-				ep.AppendLeft(Left.generateCode(reversed));
+				CodePiece ep = Right.GenerateCode(reversed);
+				ep.AppendLeft(Left.GenerateCode(reversed));
 
 				CodePiece p = new CodePiece();
-				p[0, 0] = BCHelper.PC_Left;
-				p[1, 0] = BCHelper.Digit_1;
-				p[2, 0] = BCHelper.Stack_Pop;
-				p[3, 0] = BCHelper.If_Horizontal;
-				p[4, 0] = BCHelper.PC_Down;
-				p[5, 0] = BCHelper.PC_Jump;
+				p[0, 0] = BCHelper.PCLeft;
+				p[1, 0] = BCHelper.Digit1;
+				p[2, 0] = BCHelper.StackPop;
+				p[3, 0] = BCHelper.IfHorizontal;
+				p[4, 0] = BCHelper.PCDown;
+				p[5, 0] = BCHelper.PCJump;
 				p[6, 0] = BCHelper.Not;
-				p[7, 0] = BCHelper.Stack_Dup;
+				p[7, 0] = BCHelper.StackDup;
 				p[8, 0] = BCHelper.Sub;
 
-				p[0, 1] = BCHelper.PC_Up;
+				p[0, 1] = BCHelper.PCUp;
 				p[1, 1] = BCHelper.GreaterThan;
-				p[2, 1] = BCHelper.Stack_Swap;
-				p[3, 1] = BCHelper.Digit_0;
-				p[4, 1] = BCHelper.PC_Left;
+				p[2, 1] = BCHelper.StackSwap;
+				p[3, 1] = BCHelper.Digit0;
+				p[4, 1] = BCHelper.PCLeft;
 				p[5, 1] = BCHelper.Unused;
 				p[6, 1] = BCHelper.Unused;
 				p[7, 1] = BCHelper.Unused;
@@ -2018,7 +2018,7 @@ namespace BefunGen.AST
 
 				ep.AppendLeft(p);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return ep;
 			}
@@ -2028,57 +2028,57 @@ namespace BefunGen.AST
 				//    >0\`^
 
 				//First Right than Left -->  RIGHT <= LEFT
-				CodePiece ep = Right.generateCode(reversed);
-				ep.AppendRight(Left.generateCode(reversed));
+				CodePiece ep = Right.GenerateCode(reversed);
+				ep.AppendRight(Left.GenerateCode(reversed));
 
 				CodePiece p = new CodePiece();
 				p[0, 0] = BCHelper.Sub;
-				p[1, 0] = BCHelper.Stack_Dup;
-				p[2, 0] = BCHelper.PC_Jump;
-				p[3, 0] = BCHelper.PC_Down;
-				p[4, 0] = BCHelper.If_Horizontal;
-				p[5, 0] = BCHelper.Stack_Pop;
-				p[6, 0] = BCHelper.Digit_1;
-				p[7, 0] = BCHelper.PC_Right;
+				p[1, 0] = BCHelper.StackDup;
+				p[2, 0] = BCHelper.PCJump;
+				p[3, 0] = BCHelper.PCDown;
+				p[4, 0] = BCHelper.IfHorizontal;
+				p[5, 0] = BCHelper.StackPop;
+				p[6, 0] = BCHelper.Digit1;
+				p[7, 0] = BCHelper.PCRight;
 
 				p[0, 1] = BCHelper.Unused;
 				p[1, 1] = BCHelper.Unused;
 				p[2, 1] = BCHelper.Unused;
-				p[3, 1] = BCHelper.PC_Right;
-				p[4, 1] = BCHelper.Digit_0;
-				p[5, 1] = BCHelper.Stack_Swap;
+				p[3, 1] = BCHelper.PCRight;
+				p[4, 1] = BCHelper.Digit0;
+				p[5, 1] = BCHelper.StackSwap;
 				p[6, 1] = BCHelper.GreaterThan;
-				p[7, 1] = BCHelper.PC_Up;
+				p[7, 1] = BCHelper.PCUp;
 
 				ep.AppendRight(p);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return ep;
 			}
 		}
 	}
 
-	public class Expression_LesserEquals : Expression_Compare
+	public class ExpressionLesserEquals : ExpressionCompare
 	{
-		public Expression_LesserEquals(SourceCodePosition pos, Expression l, Expression r)
+		public ExpressionLesserEquals(SourceCodePosition pos, Expression l, Expression r)
 			: base(pos, l, r)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
-			if (Left is Expression_Literal && Right is Expression_Literal && Left.getResultType() == Right.getResultType())
+			if (Left is ExpressionLiteral && Right is ExpressionLiteral && Left.GetResultType() == Right.GetResultType())
 			{
 				long? l = Left.GetValueLiteral_Value();
 				long? r = Right.GetValueLiteral_Value();
 
 				if (l.HasValue && r.HasValue)
 				{
-					return new Expression_Literal(Left.Position, new Literal_Bool(Left.Position, l.Value <= r.Value));
+					return new ExpressionLiteral(Left.Position, new LiteralBool(Left.Position, l.Value <= r.Value));
 				}
 				else
 				{
@@ -2091,12 +2091,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("({0} <= {1})", Left.getDebugString(), Right.getDebugString());
+			return string.Format("({0} <= {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (reversed)
 			{
@@ -2104,25 +2104,25 @@ namespace BefunGen.AST
 				// ^`\0<
 
 				//First Left than Right -->  LEFT <= RIGHT
-				CodePiece ep = Left.generateCode(reversed);
-				ep.AppendLeft(Right.generateCode(reversed));
+				CodePiece ep = Left.GenerateCode(reversed);
+				ep.AppendLeft(Right.GenerateCode(reversed));
 
 				CodePiece p = new CodePiece();
-				p[0, 0] = BCHelper.PC_Left;
-				p[1, 0] = BCHelper.Digit_1;
-				p[2, 0] = BCHelper.Stack_Pop;
-				p[3, 0] = BCHelper.If_Horizontal;
-				p[4, 0] = BCHelper.PC_Down;
-				p[5, 0] = BCHelper.PC_Jump;
+				p[0, 0] = BCHelper.PCLeft;
+				p[1, 0] = BCHelper.Digit1;
+				p[2, 0] = BCHelper.StackPop;
+				p[3, 0] = BCHelper.IfHorizontal;
+				p[4, 0] = BCHelper.PCDown;
+				p[5, 0] = BCHelper.PCJump;
 				p[6, 0] = BCHelper.Not;
-				p[7, 0] = BCHelper.Stack_Dup;
+				p[7, 0] = BCHelper.StackDup;
 				p[8, 0] = BCHelper.Sub;
 
-				p[0, 1] = BCHelper.PC_Up;
+				p[0, 1] = BCHelper.PCUp;
 				p[1, 1] = BCHelper.GreaterThan;
-				p[2, 1] = BCHelper.Stack_Swap;
-				p[3, 1] = BCHelper.Digit_0;
-				p[4, 1] = BCHelper.PC_Left;
+				p[2, 1] = BCHelper.StackSwap;
+				p[3, 1] = BCHelper.Digit0;
+				p[4, 1] = BCHelper.PCLeft;
 				p[5, 1] = BCHelper.Unused;
 				p[6, 1] = BCHelper.Unused;
 				p[7, 1] = BCHelper.Unused;
@@ -2130,7 +2130,7 @@ namespace BefunGen.AST
 
 				ep.AppendLeft(p);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return ep;
 			}
@@ -2140,31 +2140,31 @@ namespace BefunGen.AST
 				//    >0\`^
 
 				//First Left than Right -->  LEFT <= RIGHT
-				CodePiece ep = Left.generateCode(reversed);
-				ep.AppendRight(Right.generateCode(reversed));
+				CodePiece ep = Left.GenerateCode(reversed);
+				ep.AppendRight(Right.GenerateCode(reversed));
 
 				CodePiece p = new CodePiece();
 				p[0, 0] = BCHelper.Sub;
-				p[1, 0] = BCHelper.Stack_Dup;
-				p[2, 0] = BCHelper.PC_Jump;
-				p[3, 0] = BCHelper.PC_Down;
-				p[4, 0] = BCHelper.If_Horizontal;
-				p[5, 0] = BCHelper.Stack_Pop;
-				p[6, 0] = BCHelper.Digit_1;
-				p[7, 0] = BCHelper.PC_Right;
+				p[1, 0] = BCHelper.StackDup;
+				p[2, 0] = BCHelper.PCJump;
+				p[3, 0] = BCHelper.PCDown;
+				p[4, 0] = BCHelper.IfHorizontal;
+				p[5, 0] = BCHelper.StackPop;
+				p[6, 0] = BCHelper.Digit1;
+				p[7, 0] = BCHelper.PCRight;
 
 				p[0, 1] = BCHelper.Unused;
 				p[1, 1] = BCHelper.Unused;
 				p[2, 1] = BCHelper.Unused;
-				p[3, 1] = BCHelper.PC_Right;
-				p[4, 1] = BCHelper.Digit_0;
-				p[5, 1] = BCHelper.Stack_Swap;
+				p[3, 1] = BCHelper.PCRight;
+				p[4, 1] = BCHelper.Digit0;
+				p[5, 1] = BCHelper.StackSwap;
 				p[6, 1] = BCHelper.GreaterThan;
-				p[7, 1] = BCHelper.PC_Up;
+				p[7, 1] = BCHelper.PCUp;
 
 				ep.AppendRight(p);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return ep;
 			}
@@ -2175,23 +2175,23 @@ namespace BefunGen.AST
 
 	#region Unary
 
-	public class Expression_Not : Expression_Unary
+	public class ExpressionNot : ExpressionUnary
 	{
-		public Expression_Not(SourceCodePosition pos, Expression e)
+		public ExpressionNot(SourceCodePosition pos, Expression e)
 			: base(pos, e)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			bool? v = Expr.GetValueLiteral_Bool_Value();
 
 			if (v.HasValue)
 			{
-				return new Expression_Literal(Expr.Position, new Literal_Bool(Expr.Position, !v.Value));
+				return new ExpressionLiteral(Expr.Position, new LiteralBool(Expr.Position, !v.Value));
 			}
 			else
 			{
@@ -2199,27 +2199,27 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("(! {0})", Expr.getDebugString());
+			return string.Format("(! {0})", Expr.GetDebugString());
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Expr.linkResultTypes(owner);
+			Expr.LinkResultTypes(owner);
 
-			if (!(Expr.getResultType() is BType_Bool))
-				throw new ImplicitCastException(Position, Expr.getResultType(), new BType_Bool(Position));
+			if (!(Expr.GetResultType() is BTypeBool))
+				throw new ImplicitCastException(Position, Expr.GetResultType(), new BTypeBool(Position));
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return new BType_Bool(Position);
+			return new BTypeBool(Position);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = Expr.generateCode(reversed);
+			CodePiece p = Expr.GenerateCode(reversed);
 
 			if (reversed)
 			{
@@ -2230,29 +2230,29 @@ namespace BefunGen.AST
 				p.AppendRight(BCHelper.Not);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_Negate : Expression_Unary
+	public class ExpressionNegate : ExpressionUnary
 	{
-		public Expression_Negate(SourceCodePosition pos, Expression e)
+		public ExpressionNegate(SourceCodePosition pos, Expression e)
 			: base(pos, e)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			long? v = Expr.GetValueLiteral_Value();
 
 			if (v.HasValue)
 			{
-				return new Expression_Literal(Expr.Position, new Literal_Int(Expr.Position, -v.Value));
+				return new ExpressionLiteral(Expr.Position, new LiteralInt(Expr.Position, -v.Value));
 			}
 			else
 			{
@@ -2260,82 +2260,82 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("(- {1})", Expr.getDebugString());
+			return string.Format("(- {1})", Expr.GetDebugString());
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Expr.linkResultTypes(owner);
+			Expr.LinkResultTypes(owner);
 
-			if (!(Expr.getResultType() is BType_Int))
-				throw new ImplicitCastException(Position, Expr.getResultType(), new BType_Int(Position));
+			if (!(Expr.GetResultType() is BTypeInt))
+				throw new ImplicitCastException(Position, Expr.GetResultType(), new BTypeInt(Position));
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return new BType_Int(Position);
+			return new BTypeInt(Position);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece p = Expr.generateCode(reversed);
+			CodePiece p = Expr.GenerateCode(reversed);
 
 			if (reversed)
 			{
-				p.AppendRight(BCHelper.Digit_0);
+				p.AppendRight(BCHelper.Digit0);
 				p.AppendLeft(BCHelper.Sub);
 			}
 			else
 			{
-				p.AppendLeft(BCHelper.Digit_0);
+				p.AppendLeft(BCHelper.Digit0);
 				p.AppendRight(BCHelper.Sub);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_Cast : Expression_Unary
+	public class ExpressionCast : ExpressionUnary
 	{
 		public BType Type;
 
-		public Expression_Cast(SourceCodePosition pos, BType t, Expression e)
+		public ExpressionCast(SourceCodePosition pos, BType t, Expression e)
 			: base(pos, e)
 		{
 			this.Type = t;
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			evaluateSubExpressions();
+			EvaluateSubExpressions();
 
 			return this;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("(({0}){1})", Type.getDebugString(), Expr.getDebugString());
+			return string.Format("(({0}){1})", Type.GetDebugString(), Expr.GetDebugString());
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Expr.linkResultTypes(owner);
+			Expr.LinkResultTypes(owner);
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
 			return Type;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (CGO.ExtendedBooleanCast && Type.GetType() == typeof(BType_Bool))
+			if (CGO.ExtendedBooleanCast && Type.GetType() == typeof(BTypeBool))
 			{
-				CodePiece p = Expr.generateCode(reversed);
+				CodePiece p = Expr.GenerateCode(reversed);
 
 				if (reversed)
 				{
@@ -2346,7 +2346,7 @@ namespace BefunGen.AST
 					op[1, 0] = BCHelper.Not;
 
 					p.AppendLeft(op);
-					p.normalizeX();
+					p.NormalizeX();
 				}
 				else
 				{
@@ -2363,7 +2363,7 @@ namespace BefunGen.AST
 			}
 			else
 			{
-				return Expr.generateCode(reversed);
+				return Expr.GenerateCode(reversed);
 			}
 
 		}
@@ -2373,201 +2373,201 @@ namespace BefunGen.AST
 
 	#region Inc/Decrement
 
-	public class Expression_PostIncrement : Expression_Crement
+	public class ExpressionPostIncrement : ExpressionCrement
 	{
-		public Expression_PostIncrement(SourceCodePosition pos, Expression_ValuePointer v)
+		public ExpressionPostIncrement(SourceCodePosition pos, ExpressionValuePointer v)
 			: base(pos, v)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("{0}++", Target.getDebugString());
+			return string.Format("{0}++", Target.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.generateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(reversed));
 
-				p.AppendLeft(BCHelper.Stack_Dup);
+				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Add);
 
-				p.AppendLeft(Target.generateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(reversed));
 
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.generateCode(reversed));
+				p.AppendRight(Target.GenerateCode(reversed));
 
-				p.AppendRight(BCHelper.Stack_Dup);
+				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Add);
 
-				p.AppendRight(Target.generateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(reversed));
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_PreIncrement : Expression_Crement
+	public class ExpressionPreIncrement : ExpressionCrement
 	{
-		public Expression_PreIncrement(SourceCodePosition pos, Expression_ValuePointer v)
+		public ExpressionPreIncrement(SourceCodePosition pos, ExpressionValuePointer v)
 			: base(pos, v)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("++{0}", Target.getDebugString());
+			return string.Format("++{0}", Target.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.generateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(reversed));
 
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Add);
 
-				p.AppendLeft(BCHelper.Stack_Dup);
+				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(Target.generateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(reversed));
 
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.generateCode(reversed));
+				p.AppendRight(Target.GenerateCode(reversed));
 
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Add);
 
-				p.AppendRight(BCHelper.Stack_Dup);
+				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(Target.generateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(reversed));
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_PostDecrement : Expression_Crement
+	public class ExpressionPostDecrement : ExpressionCrement
 	{
-		public Expression_PostDecrement(SourceCodePosition pos, Expression_ValuePointer v)
+		public ExpressionPostDecrement(SourceCodePosition pos, ExpressionValuePointer v)
 			: base(pos, v)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("{0}--", Target.getDebugString());
+			return string.Format("{0}--", Target.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.generateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(reversed));
 
-				p.AppendLeft(BCHelper.Stack_Dup);
+				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Sub);
 
-				p.AppendLeft(Target.generateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(reversed));
 
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.generateCode(reversed));
+				p.AppendRight(Target.GenerateCode(reversed));
 
-				p.AppendRight(BCHelper.Stack_Dup);
+				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
 
-				p.AppendRight(Target.generateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(reversed));
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_PreDecrement : Expression_Crement
+	public class ExpressionPreDecrement : ExpressionCrement
 	{
-		public Expression_PreDecrement(SourceCodePosition pos, Expression_ValuePointer v)
+		public ExpressionPreDecrement(SourceCodePosition pos, ExpressionValuePointer v)
 			: base(pos, v)
 		{
 			//--
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("--{0}", Target.getDebugString());
+			return string.Format("--{0}", Target.GetDebugString());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.generateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(reversed));
 
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Sub);
 
-				p.AppendLeft(BCHelper.Stack_Dup);
+				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(Target.generateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(reversed));
 
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.generateCode(reversed));
+				p.AppendRight(Target.GenerateCode(reversed));
 
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
 
-				p.AppendRight(BCHelper.Stack_Dup);
+				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(Target.generateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(reversed));
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
@@ -2577,111 +2577,111 @@ namespace BefunGen.AST
 
 	#region Other
 
-	public class Expression_Literal : Expression
+	public class ExpressionLiteral : Expression
 	{
 		public readonly Literal Value;
 
-		public Expression_Literal(SourceCodePosition pos, Literal l)
+		public ExpressionLiteral(SourceCodePosition pos, Literal l)
 			: base(pos)
 		{
 			this.Value = l;
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
 			return this;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("{0}", Value.getDebugString());
+			return string.Format("{0}", Value.GetDebugString());
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return Value.getBType();
+			return Value.GetBType();
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return Value.generateCode(reversed);
+			return Value.GenerateCode(reversed);
 		}
 	}
 
-	public class Expression_Boolean_Rand : Expression_Rand
+	public class ExpressionBooleanRand : ExpressionRand
 	{
-		public Expression_Boolean_Rand(SourceCodePosition pos)
+		public ExpressionBooleanRand(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
 			return this;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "#RAND#";
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return new BType_Bool(Position);
+			return new BTypeBool(Position);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			//  >>1v
 			// #^?0>>
@@ -2689,107 +2689,107 @@ namespace BefunGen.AST
 			CodePiece p = new CodePiece();
 
 			p[0, -1] = BCHelper.Unused;
-			p[1, -1] = BCHelper.PC_Right;
-			p[2, -1] = BCHelper.PC_Right;
-			p[3, -1] = BCHelper.Digit_1;
-			p[4, -1] = BCHelper.PC_Down;
+			p[1, -1] = BCHelper.PCRight;
+			p[2, -1] = BCHelper.PCRight;
+			p[3, -1] = BCHelper.Digit1;
+			p[4, -1] = BCHelper.PCDown;
 			p[5, -1] = BCHelper.Unused;
 
-			p[0, 0] = BCHelper.PC_Jump;
-			p[1, 0] = BCHelper.PC_Up;
-			p[2, 0] = BCHelper.PC_Random;
-			p[3, 0] = BCHelper.Digit_0;
-			p[4, 0] = BCHelper.PC_Right;
-			p[5, 0] = BCHelper.PC_Right;
+			p[0, 0] = BCHelper.PCJump;
+			p[1, 0] = BCHelper.PCUp;
+			p[2, 0] = BCHelper.PCRandom;
+			p[3, 0] = BCHelper.Digit0;
+			p[4, 0] = BCHelper.PCRight;
+			p[5, 0] = BCHelper.PCRight;
 
 			p[0, 1] = BCHelper.Unused;
 			p[1, 1] = BCHelper.Unused;
-			p[2, 1] = BCHelper.PC_Right;
+			p[2, 1] = BCHelper.PCRight;
 			p[3, 1] = BCHelper.Walkway;
-			p[4, 1] = BCHelper.Digit_0;
-			p[5, 1] = BCHelper.PC_Up;
+			p[4, 1] = BCHelper.Digit0;
+			p[5, 1] = BCHelper.PCUp;
 
 			if (reversed)
 			{
-				p.reverseX(true);
+				p.ReverseX(true);
 			}
 
 			return p;
 		}
 	}
 
-	public class Expression_Base4_Rand : Expression_Rand
+	public class ExpressionBase4Rand : ExpressionRand
 	{
 		public Expression Exponent;
 
-		public Expression_Base4_Rand(SourceCodePosition pos, Expression exp)
+		public ExpressionBase4Rand(SourceCodePosition pos, Expression exp)
 			: base(pos)
 		{
 			Exponent = exp;
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			Exponent = Exponent.evaluateExpressions();
+			Exponent = Exponent.EvaluateExpressions();
 
 			long? v = Exponent.GetValueLiteral_Value();
 
 			if (v.HasValue && v.Value <= 0)
 			{
-				return new Expression_Literal(Exponent.Position, new Literal_Int(Exponent.Position, 0));
+				return new ExpressionLiteral(Exponent.Position, new LiteralInt(Exponent.Position, 0));
 			}
 
 			return this;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return "#RAND_B4 [" + Exponent.getDebugString() + "]";
+			return "#RAND_B4 [" + Exponent.GetDebugString() + "]";
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Exponent.linkVariables(owner);
+			Exponent.LinkVariables(owner);
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			Exponent = Exponent.inlineConstants();
+			Exponent = Exponent.InlineConstants();
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Exponent.linkResultTypes(owner);
+			Exponent.LinkResultTypes(owner);
 
-			BType wanted = new BType_Int(Position);
-			BType present = Exponent.getResultType();
+			BType wanted = new BTypeInt(Position);
+			BType present = Exponent.GetResultType();
 
 			if (present != wanted)
 			{
-				if (present.isImplicitCastableTo(wanted))
-					Exponent = new Expression_Cast(Position, wanted, Exponent);
+				if (present.IsImplicitCastableTo(wanted))
+					Exponent = new ExpressionCast(Position, wanted, Exponent);
 				else
 					throw new ImplicitCastException(Position, present, wanted);
 			}
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
-			return new BType_Int(Position);
+			return new BTypeInt(Position);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -2798,7 +2798,7 @@ namespace BefunGen.AST
 				#region Reversed
 
 				p.AppendRight(CodePieceStore.Base4DigitJoiner(reversed));
-				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.generateCode(reversed), reversed));
+				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.GenerateCode(reversed), reversed));
 
 				#endregion
 			}
@@ -2806,80 +2806,80 @@ namespace BefunGen.AST
 			{
 				#region Normal
 
-				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.generateCode(reversed), reversed));
+				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.GenerateCode(reversed), reversed));
 				p.AppendRight(CodePieceStore.Base4DigitJoiner(reversed));
 
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Expression_FunctionCall : Expression
+	public class ExpressionFunctionCall : Expression
 	{
-		public readonly Statement_MethodCall MethodCall;
+		public readonly StatementMethodCall MethodCall;
 
-		public Expression_FunctionCall(SourceCodePosition pos, Statement_MethodCall mc)
+		public ExpressionFunctionCall(SourceCodePosition pos, StatementMethodCall mc)
 			: base(pos)
 		{
 			this.MethodCall = mc;
 		}
 
-		public override Expression evaluateExpressions()
+		public override Expression EvaluateExpressions()
 		{
-			MethodCall.evaluateExpressions();
+			MethodCall.EvaluateExpressions();
 
 			return this;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return MethodCall.getDebugString();
+			return MethodCall.GetDebugString();
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			MethodCall.linkVariables(owner);
+			MethodCall.LinkVariables(owner);
 		}
 
-		public override Expression inlineConstants()
+		public override Expression InlineConstants()
 		{
-			MethodCall.inlineConstants();
+			MethodCall.InlineConstants();
 
 			return this;
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			MethodCall.addressCodePoints();
+			MethodCall.AddressCodePoints();
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			MethodCall.linkResultTypes(owner);
+			MethodCall.LinkResultTypes(owner);
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			MethodCall.linkMethods(owner);
+			MethodCall.LinkMethods(owner);
 
-			if (MethodCall.Target.ResultType is BType_Void)
+			if (MethodCall.Target.ResultType is BTypeVoid)
 			{
 				throw new InlineVoidMethodCallException(Position);
 			}
 		}
 
-		public override BType getResultType()
+		public override BType GetResultType()
 		{
 			return MethodCall.Target.ResultType;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return MethodCall.generateCode(reversed, false);
+			return MethodCall.GenerateCode(reversed, false);
 		}
 	}
 

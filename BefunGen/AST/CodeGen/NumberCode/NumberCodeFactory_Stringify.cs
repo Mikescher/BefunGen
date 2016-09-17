@@ -4,60 +4,60 @@ using System.Linq;
 
 namespace BefunGen.AST.CodeGen.NumberCode
 {
-	public class NumberCodeFactory_Stringify
+	public class NumberCodeFactoryStringify
 	{
 		private enum StripOp { Add, Mult }
 
 		private const char MIN_ASCII = ' '; // 32
 		private const char MAX_ASCII = '~'; // 126
 
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 
 			if (p == null)
 				return null;
 
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(long lit)
+		public static CodePiece GenerateCode(long lit)
 		{
 			if (lit < 0)
 			{
-				CodePiece p = generateCode(-lit);
+				CodePiece p = GenerateCode(-lit);
 				if (p == null)
 					return null;
-				p.AppendLeft(BCHelper.Digit_0);
+				p.AppendLeft(BCHelper.Digit0);
 				p.AppendRight(BCHelper.Sub);
-				p.normalizeX();
+				p.NormalizeX();
 				return p;
 			}
 
 			if (lit >= 0 && lit <= 9)
 			{
-				return new CodePiece(BCHelper.dig((byte)lit));
+				return new CodePiece(BCHelper.Dig((byte)lit));
 			}
 
 			if (lit < MIN_ASCII && lit >= (MIN_ASCII - 9))
 			{
 				if (lit + 9 == '"')
 				{
-					CodePiece p = generateCode(lit + 8);
+					CodePiece p = GenerateCode(lit + 8);
 					if (p == null)
 						return null;
-					p.AppendRight(BCHelper.Digit_8);
+					p.AppendRight(BCHelper.Digit8);
 					p.AppendRight(BCHelper.Sub);
 					return p;
 				}
 				else
 				{
-					CodePiece p = generateCode(lit + 9);
+					CodePiece p = GenerateCode(lit + 9);
 					if (p == null)
 						return null;
-					p.AppendRight(BCHelper.Digit_9);
+					p.AppendRight(BCHelper.Digit9);
 					p.AppendRight(BCHelper.Sub);
 					return p;
 				}
@@ -72,13 +72,13 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			List<char> str;
 			List<StripOp> ops;
 
-			if (calculateStringOps(out str, out ops, lit))
+			if (CalculateStringOps(out str, out ops, lit))
 			{
 				CodePiece p = new CodePiece();
 
 				p.AppendRight(BCHelper.Stringmode);
 				foreach (char c in str)
-					p.AppendRight(BCHelper.chr(c));
+					p.AppendRight(BCHelper.Chr(c));
 				p.AppendRight(BCHelper.Stringmode);
 
 				for (int i = 0; i < ops.Count; i++)
@@ -102,7 +102,7 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			return null;
 		}
 
-		private static bool calculateStringOps(out List<char> str, out List<StripOp> ops, long val)
+		private static bool CalculateStringOps(out List<char> str, out List<StripOp> ops, long val)
 		{
 			if (val < MIN_ASCII)
 			{
@@ -129,13 +129,13 @@ namespace BefunGen.AST.CodeGen.NumberCode
 
 				if (val % curr == 0 && val / curr > MIN_ASCII)
 				{
-					List<char> o_str;
-					List<StripOp> o_ops;
+					List<char> oStr;
+					List<StripOp> oOps;
 
-					if (calculateStringOps(out o_str, out o_ops, val / curr))
+					if (CalculateStringOps(out oStr, out oOps, val / curr))
 					{
-						str = o_str.ToList();
-						ops = o_ops.ToList();
+						str = oStr.ToList();
+						ops = oOps.ToList();
 
 						str.Insert(0, curr);
 						ops.Add(StripOp.Mult);
@@ -153,13 +153,13 @@ namespace BefunGen.AST.CodeGen.NumberCode
 				if (curr == '"')
 					continue;
 
-				List<char> o_str;
-				List<StripOp> o_ops;
+				List<char> oStr;
+				List<StripOp> oOps;
 
-				if (calculateStringOps(out o_str, out o_ops, val - curr))
+				if (CalculateStringOps(out oStr, out oOps, val - curr))
 				{
-					str = o_str.ToList();
-					ops = o_ops.ToList();
+					str = oStr.ToList();
+					ops = oOps.ToList();
 
 					str.Insert(0, curr);
 					ops.Add(StripOp.Add);

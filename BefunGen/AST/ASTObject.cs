@@ -7,7 +7,7 @@ namespace BefunGen.AST
 {
 	public abstract class ASTObject
 	{
-		public static string[] keywords = 
+		public static string[] Keywords = 
 		{ 
 			"begin", "close", "const", "display", "do", 
 			"else", "elsif", "end", "false", "for", 
@@ -29,26 +29,26 @@ namespace BefunGen.AST
 			this.Position = pos;
 		}
 
-		protected string getDebugCommaStringForList<T>(List<T> ls) where T : ASTObject
+		protected string GetDebugCommaStringForList<T>(List<T> ls) where T : ASTObject
 		{
-			return string.Join(", ", ls.Select(p => p.getDebugString()));
+			return string.Join(", ", ls.Select(p => p.GetDebugString()));
 		}
 
-		protected string getDebugStringForList<T>(List<T> ls) where T : ASTObject
+		protected string GetDebugStringForList<T>(List<T> ls) where T : ASTObject
 		{
-			return string.Join("\n", ls.Select(p => p.getDebugString()));
+			return string.Join("\n", ls.Select(p => p.GetDebugString()));
 		}
 
-		protected string indent(string s)
+		protected string Indent(string s)
 		{
 			return string.Join("\n", s.Split(new string[] { "\n" }, StringSplitOptions.None).Select(p => "    " + p));
 		}
 
-		public abstract string getDebugString();
+		public abstract string GetDebugString();
 
-		public static bool isKeyword(string s)
+		public static bool IsKeyword(string s)
 		{
-			return keywords.Contains(s.ToLower());
+			return Keywords.Contains(s.ToLower());
 		}
 	}
 }

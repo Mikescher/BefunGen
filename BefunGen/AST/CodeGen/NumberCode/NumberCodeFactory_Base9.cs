@@ -2,17 +2,17 @@
 
 namespace BefunGen.AST.CodeGen.NumberCode
 {
-	public class NumberCodeFactory_Base9
+	public class NumberCodeFactoryBase9
 	{
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(long lit)
+		public static CodePiece GenerateCode(long lit)
 		{
 			CodePiece p = new CodePiece();
 
@@ -27,15 +27,15 @@ namespace BefunGen.AST.CodeGen.NumberCode
 
 			if (isneg)
 			{
-				p[pos++, 0] = BCHelper.Digit_0;
+				p[pos++, 0] = BCHelper.Digit0;
 			}
 
 			for (int i = 0; i < rep.Length; i++)
 			{
-				p[pos++, 0] = BCHelper.dig((byte)(rep[rep.Length - i - 1] - '0'));
+				p[pos++, 0] = BCHelper.Dig((byte)(rep[rep.Length - i - 1] - '0'));
 
 				if (i + 1 != rep.Length)
-					p[pos++, 0] = BCHelper.dig(9);
+					p[pos++, 0] = BCHelper.Dig(9);
 			}
 
 			int count = rep.Length - 1;
@@ -56,27 +56,27 @@ namespace BefunGen.AST.CodeGen.NumberCode
 
 		public static string ConvertToBase(long decimalNumber, int radix)
 		{
-			const int BitsInLong = 64;
-			const string Digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			const int bitsInLong = 64;
+			const string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-			if (radix < 2 || radix > Digits.Length)
-				throw new ArgumentException("The radix must be >= 2 and <= " + Digits.Length.ToString());
+			if (radix < 2 || radix > digits.Length)
+				throw new ArgumentException("The radix must be >= 2 and <= " + digits.Length.ToString());
 
 			if (decimalNumber == 0)
 				return "0";
 
-			int index = BitsInLong - 1;
+			int index = bitsInLong - 1;
 			long currentNumber = Math.Abs(decimalNumber);
-			char[] charArray = new char[BitsInLong];
+			char[] charArray = new char[bitsInLong];
 
 			while (currentNumber != 0)
 			{
 				int remainder = (int)(currentNumber % radix);
-				charArray[index--] = Digits[remainder];
+				charArray[index--] = digits[remainder];
 				currentNumber = currentNumber / radix;
 			}
 
-			string result = new String(charArray, index + 1, BitsInLong - index - 1);
+			string result = new String(charArray, index + 1, bitsInLong - index - 1);
 			if (decimalNumber < 0)
 			{
 				result = "-" + result;

@@ -14,7 +14,7 @@ namespace BefunGenTest
 		public static Program parseExpression_lr(string type, string expr)
 		{
 			string txt = String.Format("program b var {0} a; begin a = {1}; QUIT; end end", type, expr);
-			BefunGen.AST.Program p = GParser.generateAST(txt);
+			BefunGen.AST.Program p = GParser.GenerateAst(txt);
 
 			return p;
 		}
@@ -22,7 +22,7 @@ namespace BefunGenTest
 		public static Program parseExpression_rl(string type, string expr)
 		{
 			string txt = String.Format("program b var {0} a; begin OUT \"\"; a = {1}; QUIT; end end", type, expr);
-			BefunGen.AST.Program p = GParser.generateAST(txt);
+			BefunGen.AST.Program p = GParser.GenerateAst(txt);
 
 			return p;
 		}
@@ -30,7 +30,7 @@ namespace BefunGenTest
 		public static Program parseExpression_o_lr(string type, string expr)
 		{
 			string txt = String.Format("program b var {0} a; begin a = {1}; OUT a; end end", type, expr);
-			BefunGen.AST.Program p = GParser.generateAST(txt);
+			BefunGen.AST.Program p = GParser.GenerateAst(txt);
 
 			return p;
 		}
@@ -38,7 +38,7 @@ namespace BefunGenTest
 		public static Program parseExpression_o_rl(string type, string expr)
 		{
 			string txt = String.Format("program b var {0} a; begin OUT \"\"; a = {1}; OUT a; end end", type, expr);
-			BefunGen.AST.Program p = GParser.generateAST(txt);
+			BefunGen.AST.Program p = GParser.GenerateAst(txt);
 
 			return p;
 		}
@@ -46,7 +46,7 @@ namespace BefunGenTest
 		public static Program parseStatement(string stmt)
 		{
 			string txt = String.Format("program b var  bool a; begin {0} QUIT; end end", stmt);
-			BefunGen.AST.Program p = GParser.generateAST(txt);
+			BefunGen.AST.Program p = GParser.GenerateAst(txt);
 
 			return p;
 		}
@@ -54,14 +54,14 @@ namespace BefunGenTest
 		public static Program parseMethod(string call, string meth)
 		{
 			string txt = String.Format("program b : display[4,4] begin {0}; end {1} end", call, meth);
-			BefunGen.AST.Program p = GParser.generateAST(txt);
+			BefunGen.AST.Program p = GParser.GenerateAst(txt);
 
 			return p;
 		}
 
 		public static Program parseProgram(string meth)
 		{
-			BefunGen.AST.Program p = GParser.generateAST(meth);
+			BefunGen.AST.Program p = GParser.GenerateAst(meth);
 
 			return p;
 		}
@@ -77,8 +77,8 @@ namespace BefunGenTest
 			Program e_lr = parseExpression_lr(type, expr);
 			Program e_rl = parseExpression_rl(type, expr);
 
-			CodePiece pc_lr = e_lr.generateCode();
-			CodePiece pc_rl = e_rl.generateCode();
+			CodePiece pc_lr = e_lr.GenerateCode();
+			CodePiece pc_rl = e_rl.GenerateCode();
 
 			TestCP(pc_lr);
 			TestCP(pc_rl);
@@ -91,8 +91,8 @@ namespace BefunGenTest
 			Program e_lr = parseExpression_o_lr(type, expr);
 			Program e_rl = parseExpression_o_rl(type, expr);
 
-			CodePiece pc_lr = e_lr.generateCode();
-			CodePiece pc_rl = e_rl.generateCode();
+			CodePiece pc_lr = e_lr.GenerateCode();
+			CodePiece pc_rl = e_rl.GenerateCode();
 
 			TestCP_Output(pc_lr, o);
 			TestCP_Output(pc_rl, o);
@@ -103,7 +103,7 @@ namespace BefunGenTest
 			stmt = stmt.Replace(@"''", "\"");
 
 			Program e = parseStatement(stmt);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP(pc);
 		}
@@ -113,7 +113,7 @@ namespace BefunGenTest
 			stmt = stmt.Replace(@"''", "\"");
 
 			Program e = parseStatement(stmt);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP_Output(pc, op);
 		}
@@ -126,7 +126,7 @@ namespace BefunGenTest
 			meth = meth.Replace(@"''", "\"");
 
 			Program e = parseMethod(call, meth);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP(pc);
 		}
@@ -139,7 +139,7 @@ namespace BefunGenTest
 			meth = meth.Replace(@"''", "\"");
 
 			Program e = parseMethod(call, meth);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP_Output(pc, o);
 		}
@@ -149,7 +149,7 @@ namespace BefunGenTest
 			prog = prog.Replace(@"''", "\"");
 
 			Program e = parseProgram(prog);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP(pc);
 		}
@@ -159,7 +159,7 @@ namespace BefunGenTest
 			prog = prog.Replace(@"''", "\"");
 
 			Program e = parseProgram(prog);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP_Terminate(pc);
 		}
@@ -169,7 +169,7 @@ namespace BefunGenTest
 			prog = prog.Replace(@"''", "\"");
 
 			Program e = parseProgram(prog);
-			CodePiece pc = e.generateCode();
+			CodePiece pc = e.GenerateCode();
 
 			TestCP_Output(pc, p_out);
 		}

@@ -9,9 +9,9 @@ namespace BefunGen.AST.Exceptions
 			: base("Trying to access temporary AST-object", pos) { }
 	}
 
-	public class InvalidASTStateException : BefunGenInternalException
+	public class InvalidAstStateException : BefunGenInternalException
 	{
-		public InvalidASTStateException(SourceCodePosition pos)
+		public InvalidAstStateException(SourceCodePosition pos)
 			: base("AST is currently in an invalid state", pos) { }
 	}
 
@@ -69,9 +69,9 @@ namespace BefunGen.AST.Exceptions
 			: base("This should not be possible to happen ... I'm confused") { }
 	}
 
-	public class BGNotImplementedException : BefunGenInternalException
+	public class BgNotImplementedException : BefunGenInternalException
 	{
-		public BGNotImplementedException()
+		public BgNotImplementedException()
 			: base("Method not yet implemented.") { }
 	}
 

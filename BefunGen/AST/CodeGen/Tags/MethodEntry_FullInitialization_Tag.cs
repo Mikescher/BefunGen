@@ -1,9 +1,9 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class MethodEntry_FullInitialization_Tag : CodeTag
+	public class MethodEntryFullInitializationTag : CodeTag
 	{
-		public MethodEntry_FullInitialization_Tag(Method m)
+		public MethodEntryFullInitializationTag(Method m)
 			: base("MethodEntry_FullInitialization", m)
 		{
 			//NOP

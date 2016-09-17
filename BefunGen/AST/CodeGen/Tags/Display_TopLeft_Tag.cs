@@ -2,12 +2,12 @@
 using System;
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class Display_TopLeft_Tag : CodeTag
+	public class DisplayTopLeftTag : CodeTag
 	{
 		public readonly int Width;
 		public readonly int Height;
 
-		public Display_TopLeft_Tag(Program target, int w, int h)
+		public DisplayTopLeftTag(Program target, int w, int h)
 			: base("Display_TopLeft_Tag", target)
 		{
 			this.Width = w;

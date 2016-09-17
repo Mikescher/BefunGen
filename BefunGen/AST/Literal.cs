@@ -40,38 +40,38 @@ namespace BefunGen.AST
 			}
 		}
 
-		public abstract BType getBType();
+		public abstract BType GetBType();
 
-		public abstract CodePiece generateCode(bool reversed);
+		public abstract CodePiece GenerateCode(bool reversed);
 
 	}
 
 	#region Parents
 
-	public abstract class Literal_Value : Literal
+	public abstract class LiteralValue : Literal
 	{
-		public Literal_Value(SourceCodePosition pos)
+		public LiteralValue(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		public abstract bool ValueEquals(Literal_Value o);
+		public abstract bool ValueEquals(LiteralValue o);
 
 		public abstract long GetValueAsInt();
 	}
 
-	public abstract class Literal_Array : Literal
+	public abstract class LiteralArray : Literal
 	{
-		public int Count { get { return getCount(); } }
+		public int Count { get { return GetCount(); } }
 
-		public Literal_Array(SourceCodePosition pos)
+		public LiteralArray(SourceCodePosition pos)
 			: base(pos)
 		{
 			//--
 		}
 
-		protected abstract int getCount();
+		protected abstract int GetCount();
 		protected abstract void AppendDefaultValue();
 
 		public void AppendDefaultValues(int cnt)
@@ -80,43 +80,43 @@ namespace BefunGen.AST
 				AppendDefaultValue();
 		}
 
-		public abstract CodePiece generateCode(int pos, bool reversed);
+		public abstract CodePiece GenerateCode(int pos, bool reversed);
 
-		public abstract bool isUniform();
+		public abstract bool IsUniform();
 	}
 
 	#endregion Parents
 
 	#region Value Literals
 
-	public class Literal_Int : Literal_Value
+	public class LiteralInt : LiteralValue
 	{
 		public readonly long Value;
 
-		public Literal_Int(SourceCodePosition pos, long v)
+		public LiteralInt(SourceCodePosition pos, long v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return Value.ToString();
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_Int(new SourceCodePosition());
+			return new BTypeInt(new SourceCodePosition());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return NumberCodeHelper.generateCode(Value, reversed);
+			return NumberCodeHelper.GenerateCode(Value, reversed);
 		}
 
-		public override bool ValueEquals(Literal_Value o)
+		public override bool ValueEquals(LiteralValue o)
 		{
-			return (o is Literal_Int) && (o as Literal_Int).Value == this.Value;
+			return (o is LiteralInt) && (o as LiteralInt).Value == this.Value;
 		}
 
 		public override long GetValueAsInt()
@@ -125,34 +125,34 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Literal_Char : Literal_Value
+	public class LiteralChar : LiteralValue
 	{
 		public readonly char Value;
 
-		public Literal_Char(SourceCodePosition pos, char v)
+		public LiteralChar(SourceCodePosition pos, char v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return EscapeChar(Value);
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_Char(new SourceCodePosition());
+			return new BTypeChar(new SourceCodePosition());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return NumberCodeFactory_StringmodeChar.generateCode(Value, reversed) ?? NumberCodeHelper.generateCode(Value, reversed);
+			return NumberCodeFactoryStringmodeChar.GenerateCode(Value, reversed) ?? NumberCodeHelper.GenerateCode(Value, reversed);
 		}
 
-		public override bool ValueEquals(Literal_Value o)
+		public override bool ValueEquals(LiteralValue o)
 		{
-			return (o is Literal_Char) && (o as Literal_Char).Value == this.Value;
+			return (o is LiteralChar) && (o as LiteralChar).Value == this.Value;
 		}
 
 		public override long GetValueAsInt()
@@ -161,34 +161,34 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Literal_Bool : Literal_Value
+	public class LiteralBool : LiteralValue
 	{
 		public readonly bool Value;
 
-		public Literal_Bool(SourceCodePosition pos, bool v)
+		public LiteralBool(SourceCodePosition pos, bool v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return Value.ToString();
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_Bool(new SourceCodePosition());
+			return new BTypeBool(new SourceCodePosition());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return NumberCodeFactory_Boolean.generateCode(Value);
+			return NumberCodeFactoryBoolean.GenerateCode(Value);
 		}
 
-		public override bool ValueEquals(Literal_Value o)
+		public override bool ValueEquals(LiteralValue o)
 		{
-			return (o is Literal_Bool) && (o as Literal_Bool).Value == this.Value;
+			return (o is LiteralBool) && (o as LiteralBool).Value == this.Value;
 		}
 
 		public override long GetValueAsInt()
@@ -197,34 +197,34 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Literal_Digit : Literal_Value
+	public class LiteralDigit : LiteralValue
 	{
 		public readonly byte Value;
 
-		public Literal_Digit(SourceCodePosition pos, byte v)
+		public LiteralDigit(SourceCodePosition pos, byte v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return Value.ToString();
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_Digit(new SourceCodePosition());
+			return new BTypeDigit(new SourceCodePosition());
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return NumberCodeFactory_Digit.generateCode(Value);
+			return NumberCodeFactoryDigit.GenerateCode(Value);
 		}
 
-		public override bool ValueEquals(Literal_Value o)
+		public override bool ValueEquals(LiteralValue o)
 		{
-			return (o is Literal_Digit) && (o as Literal_Digit).Value == this.Value;
+			return (o is LiteralDigit) && (o as LiteralDigit).Value == this.Value;
 		}
 
 		public override long GetValueAsInt()
@@ -237,32 +237,32 @@ namespace BefunGen.AST
 
 	#region Array Literals
 
-	public class Literal_IntArr : Literal_Array
+	public class LiteralIntArr : LiteralArray
 	{
 		public List<long> Value = new List<long>();
 
-		public Literal_IntArr(SourceCodePosition pos, List<long> v)
+		public LiteralIntArr(SourceCodePosition pos, List<long> v)
 			: base(pos)
 		{
 			this.Value = v.ToList();
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "{" + string.Join(",", Value.Select(p => p.ToString())) + "}";
 		}
 
-		protected override int getCount()
+		protected override int GetCount()
 		{
 			return Value.Count;
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_IntArr(new SourceCodePosition(), Count);
+			return new BTypeIntArr(new SourceCodePosition(), Count);
 		}
 
-		public override bool isUniform()
+		public override bool IsUniform()
 		{
 			return Value.All(p => p == Value[0]);
 		}
@@ -272,63 +272,63 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultNumeralValue);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			foreach (int val in Value)
 			{
 				if (reversed)
-					p.AppendRight(NumberCodeHelper.generateCode(val, reversed));
+					p.AppendRight(NumberCodeHelper.GenerateCode(val, reversed));
 				else
-					p.AppendLeft(NumberCodeHelper.generateCode(val, reversed));
+					p.AppendLeft(NumberCodeHelper.GenerateCode(val, reversed));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		public override CodePiece generateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(int pos, bool reversed)
 		{
-			return NumberCodeHelper.generateCode(Value[pos], reversed);
+			return NumberCodeHelper.GenerateCode(Value[pos], reversed);
 		}
 	}
 
-	public class Literal_CharArr : Literal_Array
+	public class LiteralCharArr : LiteralArray
 	{
 		public List<char> Value = new List<char>();
 
-		public Literal_CharArr(SourceCodePosition pos, List<char> v)
+		public LiteralCharArr(SourceCodePosition pos, List<char> v)
 			: base(pos)
 		{
 			this.Value = v.ToList();
 		}
 
-		public Literal_CharArr(SourceCodePosition pos, string v)
+		public LiteralCharArr(SourceCodePosition pos, string v)
 			: base(pos)
 		{
 			this.Value = v.ToCharArray().ToList();
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return EscapeString(string.Join("", Value));
 		}
 
-		protected override int getCount()
+		protected override int GetCount()
 		{
 			return Value.Count;
 		}
 
-		public override bool isUniform()
+		public override bool IsUniform()
 		{
 			return Value.All(p => p == Value[0]);
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_CharArr(new SourceCodePosition(), Count);
+			return new BTypeCharArr(new SourceCodePosition(), Count);
 		}
 
 		protected override void AppendDefaultValue()
@@ -336,7 +336,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultCharacterValue);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -344,56 +344,56 @@ namespace BefunGen.AST
 			{
 				foreach (char val in Value.Reverse<char>()) // Reverse Value -> correct stack order
 				{
-					p.AppendLeft(NumberCodeFactory_StringmodeChar.generateCode(val, reversed) ?? NumberCodeHelper.generateCode(val, reversed));
+					p.AppendLeft(NumberCodeFactoryStringmodeChar.GenerateCode(val, reversed) ?? NumberCodeHelper.GenerateCode(val, reversed));
 				}
 			}
 			else
 			{
 				foreach (char val in Value.Reverse<char>())// Reverse Value -> correct stack order
 				{
-					p.AppendRight(NumberCodeFactory_StringmodeChar.generateCode(val, reversed) ?? NumberCodeHelper.generateCode(val, reversed));
+					p.AppendRight(NumberCodeFactoryStringmodeChar.GenerateCode(val, reversed) ?? NumberCodeHelper.GenerateCode(val, reversed));
 				}
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			p.TrimDoubleStringMode();
 
 			return p;
 		}
 
-		public override CodePiece generateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(int pos, bool reversed)
 		{
-			return NumberCodeFactory_StringmodeChar.generateCode(Value[pos], reversed) ?? NumberCodeHelper.generateCode(pos, reversed);
+			return NumberCodeFactoryStringmodeChar.GenerateCode(Value[pos], reversed) ?? NumberCodeHelper.GenerateCode(pos, reversed);
 		}
 	}
 
-	public class Literal_BoolArr : Literal_Array
+	public class LiteralBoolArr : LiteralArray
 	{
 		public List<bool> Value = new List<bool>();
 
-		public Literal_BoolArr(SourceCodePosition pos, List<bool> v)
+		public LiteralBoolArr(SourceCodePosition pos, List<bool> v)
 			: base(pos)
 		{
 			this.Value = v.ToList();
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "{" + string.Join(",", Value.Select(p => p.ToString())) + "}";
 		}
 
-		protected override int getCount()
+		protected override int GetCount()
 		{
 			return Value.Count;
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_BoolArr(new SourceCodePosition(), Count);
+			return new BTypeBoolArr(new SourceCodePosition(), Count);
 		}
 
-		public override bool isUniform()
+		public override bool IsUniform()
 		{
 			return Value.All(p => p == Value[0]);
 		}
@@ -403,7 +403,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultBooleanValue);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 			int i = 0;
@@ -412,54 +412,54 @@ namespace BefunGen.AST
 			{
 				foreach (bool val in Value)
 				{
-					p[i--, 0] = BCHelper.dig(val ? (byte)1 : (byte)0);
+					p[i--, 0] = BCHelper.Dig(val ? (byte)1 : (byte)0);
 				}
 			}
 			else
 			{
 				foreach (bool val in Value)
 				{
-					p[i++, 0] = BCHelper.dig(val ? (byte)1 : (byte)0);
+					p[i++, 0] = BCHelper.Dig(val ? (byte)1 : (byte)0);
 				}
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		public override CodePiece generateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(int pos, bool reversed)
 		{
-			return NumberCodeFactory_Boolean.generateCode(Value[pos]);
+			return NumberCodeFactoryBoolean.GenerateCode(Value[pos]);
 		}
 	}
 
-	public class Literal_DigitArr : Literal_Array
+	public class LiteralDigitArr : LiteralArray
 	{
 		public List<byte> Value = new List<byte>();
 
-		public Literal_DigitArr(SourceCodePosition pos, List<byte> v)
+		public LiteralDigitArr(SourceCodePosition pos, List<byte> v)
 			: base(pos)
 		{
 			this.Value = v.ToList();
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "{" + string.Join(",", Value.Select(p => p.ToString())) + "}";
 		}
 
-		protected override int getCount()
+		protected override int GetCount()
 		{
 			return Value.Count;
 		}
 
-		public override BType getBType()
+		public override BType GetBType()
 		{
-			return new BType_DigitArr(new SourceCodePosition(), Count);
+			return new BTypeDigitArr(new SourceCodePosition(), Count);
 		}
 
-		public override bool isUniform()
+		public override bool IsUniform()
 		{
 			return Value.All(p => p == Value[0]);
 		}
@@ -469,7 +469,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultNumeralValue);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 			int i = 0;
@@ -478,25 +478,25 @@ namespace BefunGen.AST
 			{
 				foreach (byte val in Value)
 				{
-					p[i--, 0] = BCHelper.dig(val);
+					p[i--, 0] = BCHelper.Dig(val);
 				}
 			}
 			else
 			{
 				foreach (byte val in Value)
 				{
-					p[i++, 0] = BCHelper.dig(val);
+					p[i++, 0] = BCHelper.Dig(val);
 				}
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		public override CodePiece generateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(int pos, bool reversed)
 		{
-			return NumberCodeFactory_Digit.generateCode(Value[pos]);
+			return NumberCodeFactoryDigit.GenerateCode(Value[pos]);
 		}
 	}
 

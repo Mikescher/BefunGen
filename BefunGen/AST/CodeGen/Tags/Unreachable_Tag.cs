@@ -1,9 +1,9 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class Unreachable_Tag : CodeTag
+	public class UnreachableTag : CodeTag
 	{
-		public Unreachable_Tag()
+		public UnreachableTag()
 			: base("Unreachable_Tag")
 		{
 

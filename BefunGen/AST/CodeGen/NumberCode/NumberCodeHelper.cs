@@ -8,23 +8,23 @@ namespace BefunGen.AST.CodeGen.NumberCode
 {
 	public static class NumberCodeHelper
 	{
-		public static NumberRep lastRep;
+		public static NumberRep LastRep;
 
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(long Value)
+		public static CodePiece GenerateCode(long value)
 		{
 			CodePiece p;
 
 			if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.Best)
 			{
-				List<Tuple<NumberRep, CodePiece>> representations = generateAllCode(Value, true);
+				List<Tuple<NumberRep, CodePiece>> representations = GenerateAllCode(value, true);
 
 				int min = representations.Min(lp => lp.Item2.Width);
 
@@ -32,7 +32,7 @@ namespace BefunGen.AST.CodeGen.NumberCode
 				{
 					if (rep.Item2.Width == min)
 					{
-						lastRep = rep.Item1;
+						LastRep = rep.Item1;
 						p = rep.Item2;
 
 						return p;
@@ -41,43 +41,43 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			}
 			else if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.StringmodeChar)
 			{
-				p = NumberCodeFactory_StringmodeChar.generateCode(Value);
-				lastRep = NumberRep.StringmodeChar;
+				p = NumberCodeFactoryStringmodeChar.GenerateCode(value);
+				LastRep = NumberRep.StringmodeChar;
 
 				return p;
 			}
 			else if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.Base9)
 			{
-				p = NumberCodeFactory_Base9.generateCode(Value);
-				lastRep = NumberRep.Base9;
+				p = NumberCodeFactoryBase9.GenerateCode(value);
+				LastRep = NumberRep.Base9;
 
 				return p;
 			}
 			else if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.Factorization)
 			{
-				p = NumberCodeFactory_Factorization.generateCode(Value);
-				lastRep = NumberRep.Factorization;
+				p = NumberCodeFactoryFactorization.GenerateCode(value);
+				LastRep = NumberRep.Factorization;
 
 				return p;
 			}
 			else if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.Stringify)
 			{
-				p = NumberCodeFactory_Stringify.generateCode(Value);
-				lastRep = NumberRep.Stringify;
+				p = NumberCodeFactoryStringify.GenerateCode(value);
+				LastRep = NumberRep.Stringify;
 
 				return p;
 			}
 			else if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.Digit)
 			{
-				p = NumberCodeFactory_Digit.generateCode(Value);
-				lastRep = NumberRep.Digit;
+				p = NumberCodeFactoryDigit.GenerateCode(value);
+				LastRep = NumberRep.Digit;
 
 				return p;
 			}
 			else if (ASTObject.CGO.NumberLiteralRepresentation == NumberRep.Boolean)
 			{
-				p = NumberCodeFactory_Boolean.generateCode(Value);
-				lastRep = NumberRep.Boolean;
+				p = NumberCodeFactoryBoolean.GenerateCode(value);
+				LastRep = NumberRep.Boolean;
 
 				return p;
 			}
@@ -85,18 +85,18 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			throw new WTFException();
 		}
 
-		public static List<Tuple<NumberRep, CodePiece>> generateAllCode(long Value, bool filter, bool reversed = false)
+		public static List<Tuple<NumberRep, CodePiece>> GenerateAllCode(long value, bool filter, bool reversed = false)
 		{
 			List<Tuple<NumberRep, CodePiece>> result = new List<Tuple<NumberRep, CodePiece>>();
 
 			// Order is Priority !!!
 
-			result.Add(Tuple.Create(NumberRep.Boolean, NumberCodeFactory_Boolean.generateCode(Value, reversed)));
-			result.Add(Tuple.Create(NumberRep.Digit, NumberCodeFactory_Digit.generateCode(Value, reversed)));
-			result.Add(Tuple.Create(NumberRep.Base9, NumberCodeFactory_Base9.generateCode(Value, reversed)));
-			result.Add(Tuple.Create(NumberRep.Factorization, NumberCodeFactory_Factorization.generateCode(Value, reversed)));
-			result.Add(Tuple.Create(NumberRep.StringmodeChar, NumberCodeFactory_StringmodeChar.generateCode(Value, reversed)));
-			result.Add(Tuple.Create(NumberRep.Stringify, NumberCodeFactory_Stringify.generateCode(Value, reversed)));
+			result.Add(Tuple.Create(NumberRep.Boolean, NumberCodeFactoryBoolean.GenerateCode(value, reversed)));
+			result.Add(Tuple.Create(NumberRep.Digit, NumberCodeFactoryDigit.GenerateCode(value, reversed)));
+			result.Add(Tuple.Create(NumberRep.Base9, NumberCodeFactoryBase9.GenerateCode(value, reversed)));
+			result.Add(Tuple.Create(NumberRep.Factorization, NumberCodeFactoryFactorization.GenerateCode(value, reversed)));
+			result.Add(Tuple.Create(NumberRep.StringmodeChar, NumberCodeFactoryStringmodeChar.GenerateCode(value, reversed)));
+			result.Add(Tuple.Create(NumberRep.Stringify, NumberCodeFactoryStringify.GenerateCode(value, reversed)));
 
 			if (filter)
 				return result.Where(p => p.Item2 != null).ToList();
@@ -105,12 +105,12 @@ namespace BefunGen.AST.CodeGen.NumberCode
 
 		}
 
-		public static string generateBenchmark(int cnt, bool doNeg)
+		public static string GenerateBenchmark(int cnt, bool doNeg)
 		{
 			ASTObject.CGO.NumberLiteralRepresentation = NumberRep.Best;
 
-			int MIN = (doNeg) ? -(cnt / 2) : (0);
-			int MAX = (doNeg) ? +(cnt / 2) : (cnt);
+			int min = (doNeg) ? -(cnt / 2) : (0);
+			int max = (doNeg) ? +(cnt / 2) : (cnt);
 
 			List<NumberRep> reps = Enum.GetValues(typeof(NumberRep)).Cast<NumberRep>().Where(p => p != NumberRep.Best).ToList();
 
@@ -129,11 +129,11 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			txt.AppendLine();
 
 			long ticks = Environment.TickCount;
-			for (int i = MIN; i <= MAX; i++)
+			for (int i = min; i <= max; i++)
 			{
-				List<Tuple<NumberRep, CodePiece>> all = generateAllCode(i, false);
-				CodePiece best = generateCode(i);
-				NumberRep rbest = lastRep;
+				List<Tuple<NumberRep, CodePiece>> all = GenerateAllCode(i, false);
+				CodePiece best = GenerateCode(i);
+				NumberRep rbest = LastRep;
 
 				count[reps.IndexOf(rbest)]++;
 

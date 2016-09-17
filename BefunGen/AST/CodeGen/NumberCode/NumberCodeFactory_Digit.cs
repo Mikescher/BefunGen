@@ -1,27 +1,27 @@
 ﻿
 namespace BefunGen.AST.CodeGen.NumberCode
 {
-	public class NumberCodeFactory_Digit
+	public class NumberCodeFactoryDigit
 	{
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 
 			if (p == null)
 				return null;
 
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(long d)
+		public static CodePiece GenerateCode(long d)
 		{
 			if (d < 0 || d > 9)
 				return null;
 
 			CodePiece p = new CodePiece();
-			p[0, 0] = BCHelper.dig((byte)d);
+			p[0, 0] = BCHelper.Dig((byte)d);
 			return p;
 		}
 	}

@@ -5,18 +5,18 @@ namespace BefunGen.AST
 {
 	public abstract class VarDeclaration : ASTObject
 	{
-		private static int _V_ID_COUNTER = 100;
-		protected static int V_ID_COUNTER { get { return _V_ID_COUNTER++; } }
+		private static int _vIDCounter = 100;
+		protected static int V_ID_COUNTER { get { return _vIDCounter++; } }
 
 		public readonly BType Type;
 		public readonly string Identifier;
 		public readonly Literal Initial;
 		public readonly int ID;
 
-		public bool hasCompleteUserDefiniedInitialValue;
+		public bool HasCompleteUserDefiniedInitialValue;
 		public bool IsConstant { get; private set; }
 
-		private int _CodePositionX = -1;
+		private int codePositionX = -1;
 		public int CodePositionX
 		{
 			get
@@ -24,10 +24,10 @@ namespace BefunGen.AST
 				if (IsConstant)
 					throw new ConstantValueChangedException(Position, Identifier);
 
-				if (_CodePositionX < 0)
+				if (codePositionX < 0)
 					throw new InternalCodeGenException();
 				else
-					return _CodePositionX;
+					return codePositionX;
 			}
 
 			set
@@ -35,11 +35,11 @@ namespace BefunGen.AST
 				if (IsConstant)
 					throw new ConstantValueChangedException(Position, Identifier);
 
-				_CodePositionX = value;
+				codePositionX = value;
 			}
 		}
 
-		private int _CodePositionY = -1;
+		private int codePositionY = -1;
 		public int CodePositionY
 		{
 			get
@@ -47,10 +47,10 @@ namespace BefunGen.AST
 				if (IsConstant)
 					throw new ConstantValueChangedException(Position, Identifier);
 
-				if (_CodePositionY < 0)
+				if (codePositionY < 0)
 					throw new InternalCodeGenException();
 				else
-					return _CodePositionY;
+					return codePositionY;
 			}
 
 			set
@@ -58,7 +58,7 @@ namespace BefunGen.AST
 				if (IsConstant)
 					throw new ConstantValueChangedException(Position, Identifier);
 
-				_CodePositionY = value;
+				codePositionY = value;
 			}
 		}
 
@@ -70,73 +70,73 @@ namespace BefunGen.AST
 			this.ID = V_ID_COUNTER;
 			this.IsConstant = false;
 
-			if (ASTObject.isKeyword(ident))
+			if (ASTObject.IsKeyword(ident))
 			{
 				throw new IllegalIdentifierException(Position, ident);
 			}
 
 			if (init == null)
 			{
-				this.Initial = t.getDefaultValue();
-				hasCompleteUserDefiniedInitialValue = false;
+				this.Initial = t.GetDefaultValue();
+				HasCompleteUserDefiniedInitialValue = false;
 			}
 			else
 			{
 				this.Initial = init;
-				hasCompleteUserDefiniedInitialValue = true;
+				HasCompleteUserDefiniedInitialValue = true;
 			}
 		}
 
-		public void setConstant()
+		public void SetConstant()
 		{
 			IsConstant = true;
 
-			if (this is VarDeclaration_Array)
+			if (this is VarDeclarationArray)
 				throw new ConstantArrayException(Position);
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("{0} {{{1}}} ::= {2}", Type.getDebugString(), ID, Initial == null ? "NULL" : Initial.getDebugString());
+			return string.Format("{0} {{{1}}} ::= {2}", Type.GetDebugString(), ID, Initial == null ? "NULL" : Initial.GetDebugString());
 		}
 
-		public string getWellFormattedDecalaration()
+		public string GetWellFormattedDecalaration()
 		{
-			return string.Format("{0} {1}", Type.getDebugString(), Identifier);
+			return string.Format("{0} {1}", Type.GetDebugString(), Identifier);
 		}
 
-		public string getShortDebugString()
+		public string GetShortDebugString()
 		{
 			return string.Format("{{{0}}}", ID);
 		}
 
-		public static void resetCounter()
+		public static void ResetCounter()
 		{
-			_V_ID_COUNTER = 1;
+			_vIDCounter = 1;
 		}
 
 		// Code for Variable Initialization
-		public abstract CodePiece generateCode(bool reversed);
-		public abstract CodePiece generateCode_SetToStackVal(bool reversed);
+		public abstract CodePiece GenerateCode(bool reversed);
+		public abstract CodePiece GenerateCode_SetToStackVal(bool reversed);
 	}
 
 	#region Children
 
-	public class VarDeclaration_Value : VarDeclaration
+	public class VarDeclarationValue : VarDeclaration
 	{
-		public VarDeclaration_Value(SourceCodePosition pos, BType_Value t, string id)
+		public VarDeclarationValue(SourceCodePosition pos, BTypeValue t, string id)
 			: base(pos, t, id, null)
 		{
 		}
 
-		public VarDeclaration_Value(SourceCodePosition pos, BType_Value t, string id, Literal_Value v)
+		public VarDeclarationValue(SourceCodePosition pos, BTypeValue t, string id, LiteralValue v)
 			: base(pos, t, id, v)
 		{
-			if (!v.getBType().isImplicitCastableTo(t))
-				throw new ImplicitCastException(pos, v.getBType(), t);
+			if (!v.GetBType().IsImplicitCastableTo(t))
+				throw new ImplicitCastException(pos, v.GetBType(), t);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (IsConstant)
 				throw new ConstantValueChangedException(Position, Identifier);
@@ -148,25 +148,25 @@ namespace BefunGen.AST
 
 			if (reversed)
 			{
-				p.AppendLeft((Initial as Literal_Value).generateCode(reversed));
-				p.AppendLeft(NumberCodeHelper.generateCode(varX, reversed));
-				p.AppendLeft(NumberCodeHelper.generateCode(varY, reversed));
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft((Initial as LiteralValue).GenerateCode(reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(varX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight((Initial as Literal_Value).generateCode(reversed));
-				p.AppendRight(NumberCodeHelper.generateCode(varX, reversed));
-				p.AppendRight(NumberCodeHelper.generateCode(varY, reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight((Initial as LiteralValue).GenerateCode(reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(varX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		public override CodePiece generateCode_SetToStackVal(bool reversed)
+		public override CodePiece GenerateCode_SetToStackVal(bool reversed)
 		{
 			if (IsConstant)
 				throw new ConstantValueChangedException(Position, Identifier);
@@ -178,30 +178,30 @@ namespace BefunGen.AST
 
 			if (reversed)
 			{
-				p.AppendLeft(NumberCodeHelper.generateCode(varX, reversed));
-				p.AppendLeft(NumberCodeHelper.generateCode(varY, reversed));
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(NumberCodeHelper.GenerateCode(varX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(NumberCodeHelper.generateCode(varX, reversed));
-				p.AppendRight(NumberCodeHelper.generateCode(varY, reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class VarDeclaration_Array : VarDeclaration
+	public class VarDeclarationArray : VarDeclaration
 	{
-		public BType_Value InternalType { get { return (Type as BType_Array).InternalType; } }
+		public BTypeValue InternalType { get { return (Type as BTypeArray).InternalType; } }
 
-		public int Size { get { return (Type as BType_Array).Size; } }
+		public int Size { get { return (Type as BTypeArray).Size; } }
 
-		public VarDeclaration_Array(SourceCodePosition pos, BType_Array t, string id)
+		public VarDeclarationArray(SourceCodePosition pos, BTypeArray t, string id)
 			: base(pos, t, id, null)
 		{
 			if (Size < 2)
@@ -210,46 +210,46 @@ namespace BefunGen.AST
 			}
 		}
 
-		public VarDeclaration_Array(SourceCodePosition pos, BType_Array t, string id, Literal_Array v)
+		public VarDeclarationArray(SourceCodePosition pos, BTypeArray t, string id, LiteralArray v)
 			: base(pos, t, id, v)
 		{
-			int LiteralSize = ((Literal_Array)Initial).Count;
+			int literalSize = ((LiteralArray)Initial).Count;
 
-			if (!v.getBType().isImplicitCastableTo(t))
-				throw new ImplicitCastException(pos, v.getBType(), t);
+			if (!v.GetBType().IsImplicitCastableTo(t))
+				throw new ImplicitCastException(pos, v.GetBType(), t);
 
-			if (LiteralSize > t.Size)
+			if (literalSize > t.Size)
 			{
 				throw new ArrayLiteralTooBigException(pos);
 			}
-			else if (LiteralSize < t.Size)
+			else if (literalSize < t.Size)
 			{
-				((Literal_Array)Initial).AppendDefaultValues(t.Size - LiteralSize);
-				hasCompleteUserDefiniedInitialValue = false;
+				((LiteralArray)Initial).AppendDefaultValues(t.Size - literalSize);
+				HasCompleteUserDefiniedInitialValue = false;
 			}
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (IsConstant)
 				throw new ConstantValueChangedException(Position, Identifier);
 
-			Literal_Array value = Initial as Literal_Array;
+			LiteralArray value = Initial as LiteralArray;
 
-			if (value.isUniform())
+			if (value.IsUniform())
 			{
-				return generateCode_Uniform(reversed, value);
+				return GenerateCode_Uniform(reversed, value);
 			}
 			else
 			{
-				return generateCode_Universal(reversed, value);
+				return GenerateCode_Universal(reversed, value);
 			}
 		}
 
-		private CodePiece generateCode_Uniform(bool reversed, Literal_Array value)
+		private CodePiece GenerateCode_Uniform(bool reversed, LiteralArray value)
 		{
-			int varX_start = CodePositionX;
-			int varX_end = CodePositionX + Size - 1;
+			int varXStart = CodePositionX;
+			int varXEnd = CodePositionX + Size - 1;
 			int varY = CodePositionY;
 
 			if (reversed)
@@ -258,36 +258,36 @@ namespace BefunGen.AST
 				//   >1+                ^
 				CodePiece p = new CodePiece();
 
-				p.AppendRight(BCHelper.Stack_Pop);
-				p.AppendRight(BCHelper.If_Horizontal);
+				p.AppendRight(BCHelper.StackPop);
+				p.AppendRight(BCHelper.IfHorizontal);
 
-				int bot_start = p.MaxX;
+				int botStart = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Down);
-				p.AppendRight(BCHelper.PC_Jump);
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.PCJump);
 				p.AppendRight(BCHelper.Not);
 				p.AppendRight(BCHelper.GreaterThan);
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(NumberCodeHelper.generateCode(varX_end, reversed));
-				p.AppendRight(BCHelper.Stack_Dup);
-				p.AppendRight(BCHelper.Reflect_Set);
-				p.AppendRight(NumberCodeHelper.generateCode(varY, reversed));
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(value.generateCode(0, reversed));
-				p.AppendRight(BCHelper.Stack_Dup);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varXEnd, reversed));
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.ReflectSet);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(value.GenerateCode(0, reversed));
+				p.AppendRight(BCHelper.StackDup);
 
-				int bot_end = p.MaxX;
+				int botEnd = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Left);
-				p.AppendRight(NumberCodeHelper.generateCode(varX_start, reversed));
+				p.AppendRight(BCHelper.PCLeft);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varXStart, reversed));
 
-				p[bot_start + 0, 1] = BCHelper.PC_Right;
-				p[bot_start + 1, 1] = BCHelper.Digit_1;
-				p[bot_start + 2, 1] = BCHelper.Add;
+				p[botStart + 0, 1] = BCHelper.PCRight;
+				p[botStart + 1, 1] = BCHelper.Digit1;
+				p[botStart + 2, 1] = BCHelper.Add;
 
-				p.FillRowWW(1, bot_start + 3, bot_end);
+				p.FillRowWw(1, botStart + 3, botEnd);
 
-				p[bot_end, 1] = BCHelper.PC_Up;
+				p[botEnd, 1] = BCHelper.PCUp;
 
 				return p;
 			}
@@ -297,41 +297,41 @@ namespace BefunGen.AST
 				//     ^+1               < 
 				CodePiece p = new CodePiece();
 
-				p.AppendRight(NumberCodeHelper.generateCode(varX_start, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(varXStart, reversed));
 
-				int bot_start = p.MaxX;
+				int botStart = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Right);
-				p.AppendRight(BCHelper.Stack_Dup);
-				p.AppendRight(value.generateCode(0, reversed));
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(NumberCodeHelper.generateCode(varY, reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
-				p.AppendRight(BCHelper.Stack_Dup);
-				p.AppendRight(NumberCodeHelper.generateCode(varX_end, reversed));
-				p.AppendRight(BCHelper.Stack_Swap);
+				p.AppendRight(BCHelper.PCRight);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(value.GenerateCode(0, reversed));
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendRight(BCHelper.ReflectSet);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varXEnd, reversed));
+				p.AppendRight(BCHelper.StackSwap);
 				p.AppendRight(BCHelper.GreaterThan);
-				p.AppendRight(BCHelper.PC_Jump);
+				p.AppendRight(BCHelper.PCJump);
 
-				int bot_end = p.MaxX;
+				int botEnd = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Down);
-				p.AppendRight(BCHelper.If_Horizontal);
-				p.AppendRight(BCHelper.Stack_Pop);
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
+				p.AppendRight(BCHelper.StackPop);
 
-				p[bot_start + 0, 1] = BCHelper.PC_Up;
-				p[bot_start + 1, 1] = BCHelper.Add;
-				p[bot_start + 2, 1] = BCHelper.Digit_1;
+				p[botStart + 0, 1] = BCHelper.PCUp;
+				p[botStart + 1, 1] = BCHelper.Add;
+				p[botStart + 2, 1] = BCHelper.Digit1;
 
-				p.FillRowWW(1, bot_start + 3, bot_end);
+				p.FillRowWw(1, botStart + 3, botEnd);
 
-				p[bot_end, 1] = BCHelper.PC_Left;
+				p[botEnd, 1] = BCHelper.PCLeft;
 
 				return p;
 			}
 		}
 
-		private CodePiece generateCode_Universal(bool reversed, Literal_Array value)
+		private CodePiece GenerateCode_Universal(bool reversed, LiteralArray value)
 		{
 			CodePiece p = new CodePiece();
 
@@ -340,12 +340,12 @@ namespace BefunGen.AST
 
 			if (reversed)
 			{
-				p.AppendLeft(BCHelper.Digit_0);
+				p.AppendLeft(BCHelper.Digit0);
 
 				for (int i = 0; i < Size; i++)
 				{
-					p.AppendLeft(value.generateCode(i, reversed));
-					p.AppendLeft(NumberCodeHelper.generateCode(i + 1, reversed));
+					p.AppendLeft(value.GenerateCode(i, reversed));
+					p.AppendLeft(NumberCodeHelper.GenerateCode(i + 1, reversed));
 				}
 
 				// ################################
@@ -354,22 +354,22 @@ namespace BefunGen.AST
 				// $_^#!:pY+X<
 				CodePiece op = new CodePiece();
 
-				op.AppendLeft(BCHelper.PC_Left);
-				op.AppendLeft(NumberCodeHelper.generateCode(varX, reversed));
+				op.AppendLeft(BCHelper.PCLeft);
+				op.AppendLeft(NumberCodeHelper.GenerateCode(varX, reversed));
 				op.AppendLeft(BCHelper.Add);
-				op.AppendLeft(NumberCodeHelper.generateCode(varY, reversed));
-				op.AppendLeft(BCHelper.Reflect_Set);
-				op.AppendLeft(BCHelper.Stack_Dup);
+				op.AppendLeft(NumberCodeHelper.GenerateCode(varY, reversed));
+				op.AppendLeft(BCHelper.ReflectSet);
+				op.AppendLeft(BCHelper.StackDup);
 				op.AppendLeft(BCHelper.Not);
-				op.AppendLeft(BCHelper.PC_Jump);
-				op.AppendLeft(BCHelper.PC_Up);
+				op.AppendLeft(BCHelper.PCJump);
+				op.AppendLeft(BCHelper.PCUp);
 
-				op[-1, -1] = BCHelper.PC_Down;
-				op.FillRowWW(-1, op.MinX + 1, -1);
-				op[op.MinX, -1] = BCHelper.PC_Right;
+				op[-1, -1] = BCHelper.PCDown;
+				op.FillRowWw(-1, op.MinX + 1, -1);
+				op[op.MinX, -1] = BCHelper.PCRight;
 
-				op.AppendLeft(BCHelper.If_Horizontal);
-				op.AppendLeft(BCHelper.Stack_Pop);
+				op.AppendLeft(BCHelper.IfHorizontal);
+				op.AppendLeft(BCHelper.StackPop);
 
 				// ################################
 
@@ -377,12 +377,12 @@ namespace BefunGen.AST
 			}
 			else
 			{
-				p.AppendRight(BCHelper.Digit_0);
+				p.AppendRight(BCHelper.Digit0);
 
 				for (int i = 0; i < Size; i++)
 				{
-					p.AppendRight(value.generateCode(i, reversed));
-					p.AppendRight(NumberCodeHelper.generateCode(i + 1, reversed));
+					p.AppendRight(value.GenerateCode(i, reversed));
+					p.AppendRight(NumberCodeHelper.GenerateCode(i + 1, reversed));
 				}
 
 				// ################################
@@ -391,21 +391,21 @@ namespace BefunGen.AST
 				// ^      <
 				CodePiece op = new CodePiece();
 
-				op.AppendRight(BCHelper.PC_Right);
-				op.AppendRight(NumberCodeHelper.generateCode(varX, reversed));
+				op.AppendRight(BCHelper.PCRight);
+				op.AppendRight(NumberCodeHelper.GenerateCode(varX, reversed));
 				op.AppendRight(BCHelper.Add);
-				op.AppendRight(NumberCodeHelper.generateCode(varY, reversed));
-				op.AppendRight(BCHelper.Reflect_Set);
-				op.AppendRight(BCHelper.Stack_Dup);
-				op.AppendRight(BCHelper.PC_Jump);
-				op.AppendRight(BCHelper.PC_Down);
+				op.AppendRight(NumberCodeHelper.GenerateCode(varY, reversed));
+				op.AppendRight(BCHelper.ReflectSet);
+				op.AppendRight(BCHelper.StackDup);
+				op.AppendRight(BCHelper.PCJump);
+				op.AppendRight(BCHelper.PCDown);
 
-				op[0, 1] = BCHelper.PC_Up;
-				op.FillRowWW(1, 1, op.MaxX - 1);
-				op[op.MaxX - 1, 1] = BCHelper.PC_Left;
+				op[0, 1] = BCHelper.PCUp;
+				op.FillRowWw(1, 1, op.MaxX - 1);
+				op[op.MaxX - 1, 1] = BCHelper.PCLeft;
 
-				op.AppendRight(BCHelper.If_Horizontal);
-				op.AppendRight(BCHelper.Stack_Pop);
+				op.AppendRight(BCHelper.IfHorizontal);
+				op.AppendRight(BCHelper.StackPop);
 
 				// ################################
 
@@ -415,7 +415,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public override CodePiece generateCode_SetToStackVal(bool reversed)
+		public override CodePiece GenerateCode_SetToStackVal(bool reversed)
 		{
 			if (IsConstant)
 				throw new ConstantValueChangedException(Position, Identifier);

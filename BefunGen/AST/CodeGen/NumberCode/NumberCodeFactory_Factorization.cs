@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 namespace BefunGen.AST.CodeGen.NumberCode
 {
-	public static class NumberCodeFactory_Factorization
+	public static class NumberCodeFactoryFactorization
 	{
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(long lit)
+		public static CodePiece GenerateCode(long lit)
 		{
 			bool isneg;
 			if (isneg = lit < 0)
@@ -25,16 +25,16 @@ namespace BefunGen.AST.CodeGen.NumberCode
 
 			if (lit == 0)
 			{
-				p[0, 0] = BCHelper.Digit_0;
+				p[0, 0] = BCHelper.Digit0;
 				return p;
 			}
 
 			if (isneg)
 			{
-				p.AppendRight(BCHelper.Digit_0);
+				p.AppendRight(BCHelper.Digit0);
 			}
 
-			getFactors(p, lit);
+			GetFactors(p, lit);
 
 			if (isneg)
 			{
@@ -44,13 +44,13 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			return p;
 		}
 
-		private static void getFactors(CodePiece p, long a) // Wenn nicht möglich so gut wie mögl und am ende add
+		private static void GetFactors(CodePiece p, long a) // Wenn nicht möglich so gut wie mögl und am ende add
 		{
 			List<int> result = new List<int>();
 
 			if (a < 10)
 			{
-				p.AppendRight(BCHelper.dig((byte)a));
+				p.AppendRight(BCHelper.Dig((byte)a));
 				return;
 			}
 
@@ -58,8 +58,8 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			{
 				if (a % i == 0)
 				{
-					getFactors(p, a / i);
-					p.AppendRight(BCHelper.dig(i));
+					GetFactors(p, a / i);
+					p.AppendRight(BCHelper.Dig(i));
 					p.AppendRight(BCHelper.Mult);
 					return;
 				}
@@ -69,8 +69,8 @@ namespace BefunGen.AST.CodeGen.NumberCode
 			{
 				if ((a - i) % 9 == 0)
 				{
-					getFactors(p, a - i);
-					p.AppendRight(BCHelper.dig(i));
+					GetFactors(p, a - i);
+					p.AppendRight(BCHelper.Dig(i));
 					p.AppendRight(BCHelper.Add);
 					return;
 				}

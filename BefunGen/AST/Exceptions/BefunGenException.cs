@@ -37,7 +37,7 @@ namespace BefunGen.AST.Exceptions
 			return Regex.Replace(base.ToString().Replace(" in ", Environment.NewLine + "      in "), @"in.*BefunGen\\", "in ");
 		}
 
-		public string getWellFormattedString()
+		public string GetWellFormattedString()
 		{
 			string result = null;
 			bool done = false;

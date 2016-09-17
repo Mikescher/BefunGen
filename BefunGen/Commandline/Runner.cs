@@ -10,10 +10,10 @@ namespace BefunGen.Commandline
 {
 	class Runner
 	{
-		private static string TITLE = "BefunGen";
+		private static string _title = "BefunGen";
 
 		// https://www.debuggex.com/r/e51Awdj5tCpvrP3E
-		private static Regex REX_FILENAME = new Regex(@"^(?:[a-zA-Z]\:|\\\\[\w\.\-\(\)]+\\[\w.$\-\(\)]+)\\(?:[\w\-\(\)]+\\)*\w([\w\-\(\)\.])+$");
+		private static Regex _rexFilename = new Regex(@"^(?:[a-zA-Z]\:|\\\\[\w\.\-\(\)]+\\[\w.$\-\(\)]+)\\(?:[\w\-\(\)]+\\)*\w([\w\-\(\)\.])+$");
 
 		private readonly CommandLineArguments cmda;
 
@@ -24,7 +24,7 @@ namespace BefunGen.Commandline
 				args[0] = "-file=" + args[0];
 			}
 
-			if (args.Length > 1 && REX_FILENAME.IsMatch(args[1]))
+			if (args.Length > 1 && _rexFilename.IsMatch(args[1]))
 			{
 				args[1] = "-out=" + args[1];
 			}
@@ -35,7 +35,7 @@ namespace BefunGen.Commandline
 		public int Run()
 		{
 			Console.WriteLine();
-			Console.WriteLine("" + TITLE + " (c) Mike Schwoerer @ mikescher.com");
+			Console.WriteLine("" + _title + " (c) Mike Schwoerer @ mikescher.com");
 
 			if (cmda.IsEmpty() || cmda.Contains("help"))
 			{
@@ -86,7 +86,7 @@ namespace BefunGen.Commandline
 
 				var parser = new TextFungeParser();
 
-				string outputCode = parser.generateCode(inputCode, TextFungeParser.ExtractDisplayFromTFFormat(inputCode), cmda.IsSet("debug"));
+				string outputCode = parser.GenerateCode(inputCode, TextFungeParser.ExtractDisplayFromTFFormat(inputCode), cmda.IsSet("debug"));
 
 				Console.Out.WriteLine("Writing to " + Path.GetFullPath(output));
 				File.WriteAllText(output, outputCode, Encoding.UTF8);

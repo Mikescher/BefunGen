@@ -48,7 +48,7 @@ namespace BefunGenTest
 		{
 			CodePiece p = new CodePiece();
 
-			p.forceNonEmpty(BCHelper.Add);
+			p.ForceNonEmpty(BCHelper.Add);
 			Assert.AreEqual(1, p.Size);
 		}
 
@@ -63,11 +63,11 @@ namespace BefunGenTest
 		[TestMethod]
 		public void CodePieceTest_ModificationDetection()
 		{
-			CodePiece p = new CodePiece(BCHelper.Digit_0);
+			CodePiece p = new CodePiece(BCHelper.Digit0);
 
 			try
 			{
-				p[0, 0] = BCHelper.Digit_1;
+				p[0, 0] = BCHelper.Digit1;
 			}
 			catch (InvalidCodeManipulationException)
 			{
@@ -82,11 +82,11 @@ namespace BefunGenTest
 			CodePiece p = CodePiece.ParseFromLine("  ", true);
 			;
 
-			p.SetTag(1, 0, new TemporaryCodeField_Tag());
+			p.SetTag(1, 0, new TemporaryCodeFieldTag());
 
-			p.replaceWalkway(0, 0, BCHelper.Sub_tagged(new TemporaryCodeField_Tag()), false);
+			p.ReplaceWalkway(0, 0, BCHelper.Sub_tagged(new TemporaryCodeFieldTag()), false);
 
-			p.replaceWalkway(1, 0, BCHelper.Add, true);
+			p.ReplaceWalkway(1, 0, BCHelper.Add, true);
 		}
 
 		[TestMethod]
@@ -98,19 +98,19 @@ namespace BefunGenTest
 		[TestMethod]
 		public void CodePieceTest_hasActiveTag()
 		{
-			CodePiece p = new CodePiece(BCHelper.PC_Down);
+			CodePiece p = new CodePiece(BCHelper.PCDown);
 
-			Assert.AreEqual(false, p.hasActiveTag(typeof(TemporaryCodeField_Tag)));
+			Assert.AreEqual(false, p.HasActiveTag(typeof(TemporaryCodeFieldTag)));
 		}
 
 		[TestMethod]
 		public void CodePieceTest_setTag()
 		{
-			CodePiece p = new CodePiece(BCHelper.PC_Down);
+			CodePiece p = new CodePiece(BCHelper.PCDown);
 
-			p.SetTag(0, 0, new TemporaryCodeField_Tag());
+			p.SetTag(0, 0, new TemporaryCodeFieldTag());
 
-			Assert.AreEqual(true, p.hasActiveTag(typeof(TemporaryCodeField_Tag)));
+			Assert.AreEqual(true, p.HasActiveTag(typeof(TemporaryCodeFieldTag)));
 		}
 
 		[TestMethod]
@@ -118,22 +118,22 @@ namespace BefunGenTest
 		{
 			CodePiece p = new CodePiece();
 
-			p[-1, -1] = BCHelper.PC_Down;
-			p[+1, +1] = BCHelper.PC_Down;
+			p[-1, -1] = BCHelper.PCDown;
+			p[+1, +1] = BCHelper.PCDown;
 
 			Assert.AreEqual(-1, p.MinX);
 			Assert.AreEqual(-1, p.MinY);
 			Assert.AreEqual(2, p.MaxX);
 			Assert.AreEqual(2, p.MaxY);
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			Assert.AreEqual(0, p.MinX);
 			Assert.AreEqual(-1, p.MinY);
 			Assert.AreEqual(3, p.MaxX);
 			Assert.AreEqual(2, p.MaxY);
 
-			p.normalizeY();
+			p.NormalizeY();
 
 			Assert.AreEqual(0, p.MinX);
 			Assert.AreEqual(0, p.MinY);
@@ -195,8 +195,8 @@ namespace BefunGenTest
 		{
 			CodePiece p = CodePiece.ParseFromLine("13373");
 
-			Assert.AreEqual(true, p.firstColumnIsSingle());
-			Assert.AreEqual(false, p.firstRowIsSingle());
+			Assert.AreEqual(true, p.FirstColumnIsSingle());
+			Assert.AreEqual(false, p.FirstRowIsSingle());
 		}
 
 		[TestMethod]
@@ -247,8 +247,8 @@ namespace BefunGenTest
 			CodePiece p1 = CodePiece.ParseFromLine("123**");
 			CodePiece p2 = CodePiece.ParseFromLine(">123**<");
 
-			p1.reverseX(false);
-			p2.reverseX(true);
+			p1.ReverseX(false);
+			p2.ReverseX(true);
 
 			Assert.AreEqual("**321", p1.ToSimpleString());
 			Assert.AreEqual(">**321<", p2.ToSimpleString());

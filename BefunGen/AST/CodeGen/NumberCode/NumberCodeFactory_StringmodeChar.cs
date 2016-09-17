@@ -1,58 +1,58 @@
 ﻿
 namespace BefunGen.AST.CodeGen.NumberCode
 {
-	public class NumberCodeFactory_StringmodeChar
+	public class NumberCodeFactoryStringmodeChar
 	{
-		public static CodePiece generateCode(long Value, bool reversed)
+		public static CodePiece GenerateCode(long value, bool reversed)
 		{
-			CodePiece p = generateCode(Value);
+			CodePiece p = GenerateCode(value);
 
 			if (p == null)
 				return null;
 
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 			return p;
 		}
 
-		public static CodePiece generateCode(long Value)
+		public static CodePiece GenerateCode(long value)
 		{
 			CodePiece p = new CodePiece();
 
-			if (Value == -(int)'"')
+			if (value == -(int)'"')
 			{
-				p[0, 0] = BCHelper.Digit_1;
+				p[0, 0] = BCHelper.Digit1;
 				p[1, 0] = BCHelper.Stringmode;
-				p[2, 0] = BCHelper.chr(-Value + 1);
+				p[2, 0] = BCHelper.Chr(-value + 1);
 				p[3, 0] = BCHelper.Stringmode;
 				p[4, 0] = BCHelper.Sub;
 
 				return p;
 			}
-			else if (Value == (int)'"')
+			else if (value == (int)'"')
 			{
-				p[0, 0] = BCHelper.Digit_1;
+				p[0, 0] = BCHelper.Digit1;
 				p[1, 0] = BCHelper.Stringmode;
-				p[2, 0] = BCHelper.chr(Value - 1);
+				p[2, 0] = BCHelper.Chr(value - 1);
 				p[3, 0] = BCHelper.Stringmode;
 				p[4, 0] = BCHelper.Add;
 
 				return p;
 			}
-			else if (Value <= -(int)' ' && Value >= -(int)'~')
+			else if (value <= -(int)' ' && value >= -(int)'~')
 			{
-				p[0, 0] = BCHelper.Digit_0;
+				p[0, 0] = BCHelper.Digit0;
 				p[1, 0] = BCHelper.Stringmode;
-				p[2, 0] = BCHelper.chr(-Value);
+				p[2, 0] = BCHelper.Chr(-value);
 				p[3, 0] = BCHelper.Stringmode;
 				p[4, 0] = BCHelper.Sub;
 
 				return p;
 			}
-			else if (Value >= (int)' ' && Value <= (int)'~')
+			else if (value >= (int)' ' && value <= (int)'~')
 			{
 				p[0, 0] = BCHelper.Stringmode;
-				p[1, 0] = BCHelper.chr(Value);
+				p[1, 0] = BCHelper.Chr(value);
 				p[2, 0] = BCHelper.Stringmode;
 
 				return p;

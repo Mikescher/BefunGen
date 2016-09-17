@@ -1,27 +1,27 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class MethodCall_HorizontalExit_Tag : CodeTag
+	public class MethodCallHorizontalExitTag : CodeTag
 	{
-		public MethodCall_HorizontalExit_Tag(Method target)
+		public MethodCallHorizontalExitTag(Method target)
 			: base("Horizontal_MethodCall_Exit", target)
 		{
 			//NOP
 		}
 
-		public MethodCall_HorizontalExit_Tag(Statement_Label target)
+		public MethodCallHorizontalExitTag(StatementLabel target)
 			: base("Horizontal_MethodCall_Exit (Label)", target)
 		{
 			//NOP
 		}
 
-		public MethodCall_HorizontalExit_Tag(object target)
+		public MethodCallHorizontalExitTag(object target)
 			: base("Horizontal_MethodCall_Exit ( ??? )", target)
 		{
 			//NOP
 		}
 
-		public MethodCall_HorizontalExit_Tag()
+		public MethodCallHorizontalExitTag()
 			: base("Vertical_MethodCall_Exit (PARAMLESS)")
 		{
 			//NOP

@@ -11,8 +11,8 @@ namespace BefunGen.AST
 {
 	public abstract class Statement : ASTObject
 	{
-		private static int _CODEPOINT_ADDRESS_COUNTER = 0;
-		protected static int CODEPOINT_ADDRESS_COUNTER { get { return _CODEPOINT_ADDRESS_COUNTER++; } }
+		private static int _codepointAddressCounter = 0;
+		protected static int CODEPOINT_ADDRESS_COUNTER { get { return _codepointAddressCounter++; } }
 
 		public Statement(SourceCodePosition pos)
 			: base(pos)
@@ -20,93 +20,93 @@ namespace BefunGen.AST
 			//--
 		}
 
-		public static void resetCounter()
+		public static void ResetCounter()
 		{
-			_CODEPOINT_ADDRESS_COUNTER = 0;
+			_codepointAddressCounter = 0;
 		}
 
-		public CodePiece extendVerticalMCTagsUpwards(CodePiece p)
+		public CodePiece ExtendVerticalMcTagsUpwards(CodePiece p)
 		{
-			List<TagLocation> entries = p.findAllActiveCodeTags(typeof(MethodCall_VerticalReEntry_Tag))
+			List<TagLocation> entries = p.FindAllActiveCodeTags(typeof(MethodCallVerticalReEntryTag))
 				.OrderByDescending(tp => (tp.Tag.TagParam as ICodeAddressTarget).CodePointAddr)
 				.ToList();
-			List<TagLocation> exits = p.findAllActiveCodeTags(typeof(MethodCall_VerticalExit_Tag))
+			List<TagLocation> exits = p.FindAllActiveCodeTags(typeof(MethodCallVerticalExitTag))
 				.OrderByDescending(tp => tp.X)
 				.ToList();
 
 			//########################
 
-			int pos_y_exitline = p.MinY - 1;
-			TagLocation last_exit = null;
+			int posYExitline = p.MinY - 1;
+			TagLocation lastExit = null;
 
 			foreach (TagLocation exit in exits)
 			{
-				MethodCall_VerticalExit_Tag tag_exit = exit.Tag as MethodCall_VerticalExit_Tag;
-				tag_exit.deactivate();
+				MethodCallVerticalExitTag tagExit = exit.Tag as MethodCallVerticalExitTag;
+				tagExit.Deactivate();
 
-				BefungeCommand curr_exit_cmd = BCHelper.PC_Right_tagged(new MethodCall_HorizontalExit_Tag(tag_exit.TagParam));
-				p[exit.X, pos_y_exitline] = curr_exit_cmd;
-				TagLocation curr_exit = new TagLocation(exit.X, pos_y_exitline, curr_exit_cmd);
+				BefungeCommand currExitCmd = BCHelper.PC_Right_tagged(new MethodCallHorizontalExitTag(tagExit.TagParam));
+				p[exit.X, posYExitline] = currExitCmd;
+				TagLocation currExit = new TagLocation(exit.X, posYExitline, currExitCmd);
 
 				try
 				{
-					p.CreateColWW(exit.X, pos_y_exitline + 1, exit.Y);
+					p.CreateColWw(exit.X, posYExitline + 1, exit.Y);
 				}
 				catch (InvalidCodeManipulationException ce)
 				{
 					throw new CommandPathFindingFailureException(ce.Message);
 				}
 
-				if (last_exit != null)
+				if (lastExit != null)
 				{
-					p.CreateRowWW(pos_y_exitline, curr_exit.X + 1, last_exit.X);
+					p.CreateRowWw(posYExitline, currExit.X + 1, lastExit.X);
 
-					curr_exit.Tag.deactivate();
+					currExit.Tag.Deactivate();
 				}
 
-				last_exit = curr_exit;
+				lastExit = currExit;
 			}
 
 			//########################
 
 			int entrycount = entries.Count;
-			int pos_y_entry = pos_y_exitline - entrycount * 3 + 2;
+			int posYEntry = posYExitline - entrycount * 3 + 2;
 
 			foreach (TagLocation entry in entries)
 			{
-				MethodCall_VerticalReEntry_Tag tag_entry = entry.Tag as MethodCall_VerticalReEntry_Tag;
-				tag_entry.deactivate();
+				MethodCallVerticalReEntryTag tagEntry = entry.Tag as MethodCallVerticalReEntryTag;
+				tagEntry.Deactivate();
 
-				p[entry.X, pos_y_entry] = BCHelper.PC_Down_tagged(new MethodCall_HorizontalReEntry_Tag((ICodeAddressTarget)tag_entry.TagParam));
+				p[entry.X, posYEntry] = BCHelper.PC_Down_tagged(new MethodCallHorizontalReEntryTag((ICodeAddressTarget)tagEntry.TagParam));
 
 				try
 				{
-					p.CreateColWW(entry.X, pos_y_entry + 1, entry.Y);
+					p.CreateColWw(entry.X, posYEntry + 1, entry.Y);
 				}
 				catch (InvalidCodeManipulationException ce)
 				{
 					throw new CommandPathFindingFailureException(ce.Message);
 				}
 
-				pos_y_entry -= 3;
+				posYEntry -= 3;
 			}
 
 			return p;
 		}
 
-		public abstract void integrateStatementLists();
-		public abstract void linkVariables(Method owner);
-		public abstract void inlineConstants();
-		public abstract void addressCodePoints();
-		public abstract void linkResultTypes(Method owner);
-		public abstract void linkMethods(Program owner);
-		public abstract bool allPathsReturn();
-		public abstract Statement_Return hasReturnStatement();
-		public abstract void evaluateExpressions();
+		public abstract void IntegrateStatementLists();
+		public abstract void LinkVariables(Method owner);
+		public abstract void InlineConstants();
+		public abstract void AddressCodePoints();
+		public abstract void LinkResultTypes(Method owner);
+		public abstract void LinkMethods(Program owner);
+		public abstract bool AllPathsReturn();
+		public abstract StatementReturn HasReturnStatement();
+		public abstract void EvaluateExpressions();
 
-		public abstract Statement_Label findLabelByIdentifier(string ident);
+		public abstract StatementLabel FindLabelByIdentifier(string ident);
 
-		public abstract CodePiece generateCode(bool reversed);
+		public abstract CodePiece GenerateCode(bool reversed);
 	}
 
 	#region Interfaces
@@ -124,93 +124,93 @@ namespace BefunGen.AST
 
 	#region Other
 
-	public class Statement_StatementList : Statement
+	public class StatementStatementList : Statement
 	{
 		public List<Statement> List;
 
-		public Statement_StatementList(SourceCodePosition pos, List<Statement> sl)
+		public StatementStatementList(SourceCodePosition pos, List<Statement> sl)
 			: base(pos)
 		{
 			List = sl.ToList();
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#StatementList\n[\n{0}\n]", indent(getDebugStringForList(List)));
+			return string.Format("#StatementList\n[\n{0}\n]", Indent(GetDebugStringForList(List)));
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
-			List<Statement> List_new = new List<Statement>();
+			List<Statement> listNew = new List<Statement>();
 
 			for (int i = 0; i < List.Count; i++)
 			{
-				List[i].integrateStatementLists();
+				List[i].IntegrateStatementLists();
 
-				if (List[i] is Statement_NOP)
+				if (List[i] is StatementNOP)
 				{
 					// Do nothing
 				}
-				else if (List[i] is Statement_StatementList)
+				else if (List[i] is StatementStatementList)
 				{
-					if ((List[i] as Statement_StatementList).List.Count > 0)
+					if ((List[i] as StatementStatementList).List.Count > 0)
 					{
-						foreach (Statement stmt in (List[i] as Statement_StatementList).List)
+						foreach (Statement stmt in (List[i] as StatementStatementList).List)
 						{
-							List_new.Add(stmt);
+							listNew.Add(stmt);
 						}
 					}
 				}
 				else
 				{
-					List_new.Add(List[i]);
+					listNew.Add(List[i]);
 				}
 			}
 
-			List = List_new;
+			List = listNew;
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			foreach (Statement s in List)
-				s.linkVariables(owner);
+				s.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			for (int i = 0; i < List.Count; i++)
-				List[i].inlineConstants();
+				List[i].InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			for (int i = 0; i < List.Count; i++)
 			{
-				List[i].addressCodePoints();
+				List[i].AddressCodePoints();
 			}
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			foreach (Statement s in List)
 			{
-				s.linkMethods(owner);
+				s.LinkMethods(owner);
 			}
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			foreach (Statement s in List)
-				s.linkResultTypes(owner);
+				s.LinkResultTypes(owner);
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
-			Statement_Label result = null;
+			StatementLabel result = null;
 
 			foreach (Statement s in List)
 			{
-				Statement_Label found = s.findLabelByIdentifier(ident);
+				StatementLabel found = s.FindLabelByIdentifier(ident);
 				if (found != null && result != null)
 					return null;
 				if (found != null && result == null)
@@ -220,34 +220,34 @@ namespace BefunGen.AST
 			return result;
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			for (int i = 0; i < List.Count; i++)
 			{
-				if (List[i].allPathsReturn())
+				if (List[i].AllPathsReturn())
 					return true;
 			}
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			for (int i = 0; i < List.Count; i++)
 			{
-				Statement_Return r;
-				if ((r = List[i].hasReturnStatement()) != null)
+				StatementReturn r;
+				if ((r = List[i].HasReturnStatement()) != null)
 					return r;
 			}
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			foreach (Statement s in List)
-				s.evaluateExpressions();
+				s.EvaluateExpressions();
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -259,7 +259,7 @@ namespace BefunGen.AST
 			}
 			else if (List.Count == 1)
 			{
-				return extendVerticalMCTagsUpwards(List[0].generateCode(reversed));
+				return ExtendVerticalMcTagsUpwards(List[0].GenerateCode(reversed));
 			}
 
 			#endregion
@@ -268,7 +268,7 @@ namespace BefunGen.AST
 
 			List<Statement> stmts = List.ToList();
 			if (stmts.Count % 2 == 0)
-				stmts.Add(new Statement_NOP(Position));
+				stmts.Add(new StatementNOP(Position));
 
 			#endregion
 
@@ -277,8 +277,8 @@ namespace BefunGen.AST
 			List<CodePiece> cps = new List<CodePiece>();
 			for (int i = 0; i < stmts.Count; i++)
 			{
-				cps.Add(extendVerticalMCTagsUpwards(stmts[i].generateCode(reversed ^ (i % 2 != 0))));
-				cps[i].normalizeX();
+				cps.Add(ExtendVerticalMcTagsUpwards(stmts[i].GenerateCode(reversed ^ (i % 2 != 0))));
+				cps[i].NormalizeX();
 
 				if (cps[i].Height == 0) // No total empty statements
 					cps[i][0, 0] = BCHelper.Walkway;
@@ -314,20 +314,20 @@ namespace BefunGen.AST
 					bool first = (i == 0);
 					bool last = (i == cps.Count - 1);
 
-					int w_a;
-					int w_b;
+					int wA;
+					int wB;
 
 					if (first)
-						w_a = 0;
+						wA = 0;
 					else
-						w_a = cps[a].Width;
+						wA = cps[a].Width;
 
 					if (last)
-						w_b = cps[b].Width - 1;
+						wB = cps[b].Width - 1;
 					else
-						w_b = cps[b].Width;
+						wB = cps[b].Width;
 
-					int w = Math.Max(w_a, w_b);
+					int w = Math.Max(wA, wB);
 
 					if (!first)
 						widths.Add(w);
@@ -340,27 +340,27 @@ namespace BefunGen.AST
 
 				for (int i = 0; i < cps.Count; i++)
 				{
-					bool curr_rev = (i % 2 == 0);
+					bool currRev = (i % 2 == 0);
 					bool first = (i == 0);
 					bool last = (i == cps.Count - 1);
 
 					if (first)
 					{
-						p[-1, ypos[i]] = BCHelper.PC_Down;
+						p[-1, ypos[i]] = BCHelper.PCDown;
 					}
 					else if (last)
 					{
-						p[widths[i], ypos[i]] = BCHelper.PC_Left;
+						p[widths[i], ypos[i]] = BCHelper.PCLeft;
 					}
-					else if (curr_rev) // Reversed
+					else if (currRev) // Reversed
 					{
-						p[-1, ypos[i]] = BCHelper.PC_Down;
-						p[widths[i], ypos[i]] = BCHelper.PC_Left;
+						p[-1, ypos[i]] = BCHelper.PCDown;
+						p[widths[i], ypos[i]] = BCHelper.PCLeft;
 					}
 					else // Normal
 					{
-						p[-1, ypos[i]] = BCHelper.PC_Right;
-						p[widths[i], ypos[i]] = BCHelper.PC_Down;
+						p[-1, ypos[i]] = BCHelper.PCRight;
+						p[widths[i], ypos[i]] = BCHelper.PCDown;
 					}
 				}
 
@@ -368,33 +368,33 @@ namespace BefunGen.AST
 
 				for (int i = 0; i < cps.Count; i++)
 				{
-					bool curr_rev = (i % 2 == 0);
+					bool currRev = (i % 2 == 0);
 					bool first = (i == 0);
 					bool last = (i == cps.Count - 1);
 
 					if (first)
 					{
-						p.FillRowWW(ypos[i], cps[i].Width, maxwidth + 1);
-						p.FillColWW(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
+						p.FillRowWw(ypos[i], cps[i].Width, maxwidth + 1);
+						p.FillColWw(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
 					}
 					else if (last)
 					{
-						p.FillRowWW(ypos[i], cps[i].Width - 1, widths[i]);
-						p.FillColWW(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
+						p.FillRowWw(ypos[i], cps[i].Width - 1, widths[i]);
+						p.FillColWw(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
 					}
 					else
 					{
-						p.FillRowWW(ypos[i], cps[i].Width, widths[i]);
+						p.FillRowWw(ypos[i], cps[i].Width, widths[i]);
 
-						if (curr_rev) // Reversed
+						if (currRev) // Reversed
 						{
-							p.FillColWW(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
-							p.FillColWW(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
+							p.FillColWw(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
+							p.FillColWw(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
 						}
 						else
 						{
-							p.FillColWW(-1, ypos[i] + cps[i].MinY, ypos[i]);
-							p.FillColWW(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
+							p.FillColWw(-1, ypos[i] + cps[i].MinY, ypos[i]);
+							p.FillColWw(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
 						}
 					}
 				}
@@ -402,10 +402,10 @@ namespace BefunGen.AST
 				// ##### Outer-Walkway ######
 
 				int lastypos = ypos[ypos.Count - 1];
-				p[-2, lastypos] = BCHelper.PC_Up;
-				p[-2, 0] = BCHelper.PC_Left;
+				p[-2, lastypos] = BCHelper.PCUp;
+				p[-2, 0] = BCHelper.PCLeft;
 
-				p.FillColWW(-2, 1, lastypos);
+				p.FillColWw(-2, 1, lastypos);
 
 				// ##### Statements ######
 
@@ -436,20 +436,20 @@ namespace BefunGen.AST
 					bool first = (i == 0);
 					bool last = (i == cps.Count - 1);
 
-					int w_a;
-					int w_b;
+					int wA;
+					int wB;
 
 					if (first)
-						w_a = cps[a].Width - 1;
+						wA = cps[a].Width - 1;
 					else
-						w_a = cps[a].Width;
+						wA = cps[a].Width;
 
 					if (last)
-						w_b = 0;
+						wB = 0;
 					else
-						w_b = cps[b].Width;
+						wB = cps[b].Width;
 
-					int w = Math.Max(w_a, w_b);
+					int w = Math.Max(wA, wB);
 
 					widths.Add(w);
 					if (!last)
@@ -462,27 +462,27 @@ namespace BefunGen.AST
 
 				for (int i = 0; i < cps.Count; i++)
 				{
-					bool curr_rev = (i % 2 != 0);
+					bool currRev = (i % 2 != 0);
 					bool first = (i == 0);
 					bool last = (i == cps.Count - 1);
 
 					if (first)
 					{
-						p[widths[i], ypos[i]] = BCHelper.PC_Down;
+						p[widths[i], ypos[i]] = BCHelper.PCDown;
 					}
 					else if (last)
 					{
-						p[-1, ypos[i]] = BCHelper.PC_Right;
+						p[-1, ypos[i]] = BCHelper.PCRight;
 					}
-					else if (curr_rev) // Reversed
+					else if (currRev) // Reversed
 					{
-						p[-1, ypos[i]] = BCHelper.PC_Down;
-						p[widths[i], ypos[i]] = BCHelper.PC_Left;
+						p[-1, ypos[i]] = BCHelper.PCDown;
+						p[widths[i], ypos[i]] = BCHelper.PCLeft;
 					}
 					else // Normal
 					{
-						p[-1, ypos[i]] = BCHelper.PC_Right;
-						p[widths[i], ypos[i]] = BCHelper.PC_Down;
+						p[-1, ypos[i]] = BCHelper.PCRight;
+						p[widths[i], ypos[i]] = BCHelper.PCDown;
 					}
 				}
 
@@ -490,33 +490,33 @@ namespace BefunGen.AST
 
 				for (int i = 0; i < cps.Count; i++)
 				{
-					bool curr_rev = (i % 2 != 0);
+					bool currRev = (i % 2 != 0);
 					bool first = (i == 0);
 					bool last = (i == cps.Count - 1);
 
 					if (first)
 					{
-						p.FillRowWW(ypos[i], cps[i].Width - 1, widths[i]);
-						p.FillColWW(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
+						p.FillRowWw(ypos[i], cps[i].Width - 1, widths[i]);
+						p.FillColWw(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
 					}
 					else if (last)
 					{
-						p.FillRowWW(ypos[i], cps[i].Width, right);
-						p.FillColWW(-1, ypos[i] + cps[i].MinY, ypos[i]);
+						p.FillRowWw(ypos[i], cps[i].Width, right);
+						p.FillColWw(-1, ypos[i] + cps[i].MinY, ypos[i]);
 					}
 					else
 					{
-						p.FillRowWW(ypos[i], cps[i].Width, widths[i]);
+						p.FillRowWw(ypos[i], cps[i].Width, widths[i]);
 
-						if (curr_rev) // Reversed
+						if (currRev) // Reversed
 						{
-							p.FillColWW(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
-							p.FillColWW(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
+							p.FillColWw(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
+							p.FillColWw(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
 						}
 						else
 						{
-							p.FillColWW(-1, ypos[i] + cps[i].MinY, ypos[i]);
-							p.FillColWW(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
+							p.FillColWw(-1, ypos[i] + cps[i].MinY, ypos[i]);
+							p.FillColWw(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
 						}
 					}
 				}
@@ -524,10 +524,10 @@ namespace BefunGen.AST
 				// ##### Outer-Walkway ######
 
 				int lastypos = ypos[ypos.Count - 1];
-				p[right, lastypos] = BCHelper.PC_Up;
-				p[right, 0] = BCHelper.PC_Right;
+				p[right, lastypos] = BCHelper.PCUp;
+				p[right, 0] = BCHelper.PCRight;
 
-				p.FillColWW(right, 1, lastypos);
+				p.FillColWw(right, 1, lastypos);
 
 				// ##### Statements ######
 
@@ -545,35 +545,35 @@ namespace BefunGen.AST
 
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			#endregion
 
 			#region Extend MehodCall-Tags
 
-			List<TagLocation> entries = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalReEntry_Tag));
-			List<TagLocation> exits = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalExit_Tag));
+			List<TagLocation> entries = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalReEntryTag));
+			List<TagLocation> exits = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalExitTag));
 
 			foreach (TagLocation entry in entries)
 			{
-				MethodCall_HorizontalReEntry_Tag tag_entry = entry.Tag as MethodCall_HorizontalReEntry_Tag;
+				MethodCallHorizontalReEntryTag tagEntry = entry.Tag as MethodCallHorizontalReEntryTag;
 
-				p.CreateRowWW(entry.Y, p.MinX, entry.X);
+				p.CreateRowWw(entry.Y, p.MinX, entry.X);
 
-				tag_entry.deactivate();
+				tagEntry.Deactivate();
 
-				p.SetTag(p.MinX, entry.Y, new MethodCall_HorizontalReEntry_Tag(tag_entry.TagParam as ICodeAddressTarget), true);
+				p.SetTag(p.MinX, entry.Y, new MethodCallHorizontalReEntryTag(tagEntry.TagParam as ICodeAddressTarget), true);
 			}
 
 			foreach (TagLocation exit in exits)
 			{
-				MethodCall_HorizontalExit_Tag tag_exit = exit.Tag as MethodCall_HorizontalExit_Tag;
+				MethodCallHorizontalExitTag tagExit = exit.Tag as MethodCallHorizontalExitTag;
 
-				p.CreateRowWW(exit.Y, exit.X + 1, p.MaxX);
+				p.CreateRowWw(exit.Y, exit.X + 1, p.MaxX);
 
-				tag_exit.deactivate();
+				tagExit.Deactivate();
 
-				p.SetTag(p.MaxX - 1, exit.Y, new MethodCall_HorizontalExit_Tag(tag_exit.TagParam), true);
+				p.SetTag(p.MaxX - 1, exit.Y, new MethodCallHorizontalExitTag(tagExit.TagParam), true);
 			}
 
 			#endregion
@@ -581,7 +581,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public CodePiece generateStrippedCode()
+		public CodePiece GenerateStrippedCode()
 		{
 			// Always normal direction
 
@@ -595,7 +595,7 @@ namespace BefunGen.AST
 			}
 			else if (List.Count == 1)
 			{
-				return extendVerticalMCTagsUpwards(List[0].generateCode(false));
+				return ExtendVerticalMcTagsUpwards(List[0].GenerateCode(false));
 			}
 
 			#endregion
@@ -604,7 +604,7 @@ namespace BefunGen.AST
 
 			List<Statement> stmts = List.ToList();
 			if (stmts.Count % 2 == 0)
-				stmts.Add(new Statement_NOP(Position));
+				stmts.Add(new StatementNOP(Position));
 
 			#endregion
 
@@ -613,8 +613,8 @@ namespace BefunGen.AST
 			List<CodePiece> cps = new List<CodePiece>();
 			for (int i = 0; i < stmts.Count; i++)
 			{
-				cps.Add(extendVerticalMCTagsUpwards(stmts[i].generateCode(i % 2 != 0)));
-				cps[i].normalizeX();
+				cps.Add(ExtendVerticalMcTagsUpwards(stmts[i].GenerateCode(i % 2 != 0)));
+				cps[i].NormalizeX();
 
 				if (cps[i].Height == 0) // No total empty statements
 					cps[i][0, 0] = BCHelper.Walkway;
@@ -646,20 +646,20 @@ namespace BefunGen.AST
 				bool first = (i == 0);
 				bool last = (i == cps.Count - 1);
 
-				int w_a;
-				int w_b;
+				int wA;
+				int wB;
 
 				if (first)
-					w_a = cps[a].Width - 1;
+					wA = cps[a].Width - 1;
 				else
-					w_a = cps[a].Width;
+					wA = cps[a].Width;
 
 				if (last)
-					w_b = 0;
+					wB = 0;
 				else
-					w_b = cps[b].Width;
+					wB = cps[b].Width;
 
-				int w = Math.Max(w_a, w_b);
+				int w = Math.Max(wA, wB);
 
 				widths.Add(w);
 				if (!last)
@@ -672,27 +672,27 @@ namespace BefunGen.AST
 
 			for (int i = 0; i < cps.Count; i++)
 			{
-				bool curr_rev = (i % 2 != 0);
+				bool currRev = (i % 2 != 0);
 				bool first = (i == 0);
 				bool last = (i == cps.Count - 1);
 
 				if (first)
 				{
-					p[widths[i], ypos[i]] = BCHelper.PC_Down;
+					p[widths[i], ypos[i]] = BCHelper.PCDown;
 				}
 				else if (last)
 				{
-					p[-1, ypos[i]] = BCHelper.PC_Right;
+					p[-1, ypos[i]] = BCHelper.PCRight;
 				}
-				else if (curr_rev) // Reversed
+				else if (currRev) // Reversed
 				{
-					p[-1, ypos[i]] = BCHelper.PC_Down;
-					p[widths[i], ypos[i]] = BCHelper.PC_Left;
+					p[-1, ypos[i]] = BCHelper.PCDown;
+					p[widths[i], ypos[i]] = BCHelper.PCLeft;
 				}
 				else // Normal
 				{
-					p[-1, ypos[i]] = BCHelper.PC_Right;
-					p[widths[i], ypos[i]] = BCHelper.PC_Down;
+					p[-1, ypos[i]] = BCHelper.PCRight;
+					p[widths[i], ypos[i]] = BCHelper.PCDown;
 				}
 			}
 
@@ -700,33 +700,33 @@ namespace BefunGen.AST
 
 			for (int i = 0; i < cps.Count; i++)
 			{
-				bool curr_rev = (i % 2 != 0);
+				bool currRev = (i % 2 != 0);
 				bool first = (i == 0);
 				bool last = (i == cps.Count - 1);
 
 				if (first)
 				{
-					p.FillRowWW(ypos[i], cps[i].Width - 1, widths[i]);
-					p.FillColWW(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
+					p.FillRowWw(ypos[i], cps[i].Width - 1, widths[i]);
+					p.FillColWw(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
 				}
 				else if (last)
 				{
-					p.FillRowWW(ypos[i], cps[i].Width, right);
-					p.FillColWW(-1, ypos[i] + cps[i].MinY, ypos[i]);
+					p.FillRowWw(ypos[i], cps[i].Width, right);
+					p.FillColWw(-1, ypos[i] + cps[i].MinY, ypos[i]);
 				}
 				else
 				{
-					p.FillRowWW(ypos[i], cps[i].Width, widths[i]);
+					p.FillRowWw(ypos[i], cps[i].Width, widths[i]);
 
-					if (curr_rev) // Reversed
+					if (currRev) // Reversed
 					{
-						p.FillColWW(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
-						p.FillColWW(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
+						p.FillColWw(widths[i], ypos[i] + cps[i].MinY, ypos[i]);
+						p.FillColWw(-1, ypos[i] + 1, ypos[i] + cps[i].MaxY);
 					}
 					else
 					{
-						p.FillColWW(-1, ypos[i] + cps[i].MinY, ypos[i]);
-						p.FillColWW(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
+						p.FillColWw(-1, ypos[i] + cps[i].MinY, ypos[i]);
+						p.FillColWw(widths[i], ypos[i] + 1, ypos[i] + cps[i].MaxY);
 					}
 				}
 			}
@@ -743,42 +743,42 @@ namespace BefunGen.AST
 				p.SetAt(x, y, c);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			#endregion
 
 			#region Extend MehodCall-Tags
 
-			List<TagLocation> entries = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalReEntry_Tag));
-			List<TagLocation> exits = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalExit_Tag));
+			List<TagLocation> entries = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalReEntryTag));
+			List<TagLocation> exits = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalExitTag));
 
 			foreach (TagLocation entry in entries)
 			{
-				MethodCall_HorizontalReEntry_Tag tag_entry = entry.Tag as MethodCall_HorizontalReEntry_Tag;
+				MethodCallHorizontalReEntryTag tagEntry = entry.Tag as MethodCallHorizontalReEntryTag;
 
-				p.CreateRowWW(entry.Y, p.MinX, entry.X);
+				p.CreateRowWw(entry.Y, p.MinX, entry.X);
 
-				tag_entry.deactivate();
+				tagEntry.Deactivate();
 
-				p.SetTag(p.MinX, entry.Y, new MethodCall_HorizontalReEntry_Tag(tag_entry.TagParam as ICodeAddressTarget), true);
+				p.SetTag(p.MinX, entry.Y, new MethodCallHorizontalReEntryTag(tagEntry.TagParam as ICodeAddressTarget), true);
 			}
 
 			foreach (TagLocation exit in exits)
 			{
-				MethodCall_HorizontalExit_Tag tag_exit = exit.Tag as MethodCall_HorizontalExit_Tag;
+				MethodCallHorizontalExitTag tagExit = exit.Tag as MethodCallHorizontalExitTag;
 
-				p.CreateRowWW(exit.Y, exit.X + 1, p.MaxX);
+				p.CreateRowWw(exit.Y, exit.X + 1, p.MaxX);
 
-				tag_exit.deactivate();
+				tagExit.Deactivate();
 
-				p.SetTag(p.MaxX - 1, exit.Y, new MethodCall_HorizontalExit_Tag(tag_exit.TagParam), true);
+				p.SetTag(p.MaxX - 1, exit.Y, new MethodCallHorizontalExitTag(tagExit.TagParam), true);
 			}
 
 			#endregion
 
 			#region Strip LastLine
 
-			if (List.Count % 2 == 0 && p.lastRowIsSingle(true))
+			if (List.Count % 2 == 0 && p.LastRowIsSingle(true))
 			{
 				p.RemoveRow(p.MaxY - 1);
 			}
@@ -789,21 +789,21 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Statement_MethodCall : Statement, ICodeAddressTarget
+	public class StatementMethodCall : Statement, ICodeAddressTarget
 	{
 		public readonly List<Expression> CallParameter;
 
 		public string Identifier; // Temporary -- before linking;
 		public Method Target;
 
-		public Method owner;
+		public Method Owner;
 
-		private int _CodePointAddr = -1;
+		private int codePointAddr = -1;
 		public int CodePointAddr
 		{
 			get
 			{
-				return _CodePointAddr;
+				return codePointAddr;
 			}
 			set
 			{
@@ -811,61 +811,61 @@ namespace BefunGen.AST
 			}
 		}
 
-		public Statement_MethodCall(SourceCodePosition pos, string id)
+		public StatementMethodCall(SourceCodePosition pos, string id)
 			: base(pos)
 		{
 			this.Identifier = id;
 			this.CallParameter = new List<Expression>();
 		}
 
-		public Statement_MethodCall(SourceCodePosition pos, string id, List<Expression> cp)
+		public StatementMethodCall(SourceCodePosition pos, string id, List<Expression> cp)
 			: base(pos)
 		{
 			this.Identifier = id;
 			this.CallParameter = cp.ToList();
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#MethodCall {{{0}}} ::{1}:: --> #Parameter: ({2})", Target.MethodAddr, CodePointAddr, getDebugCommaStringForList(CallParameter));
+			return string.Format("#MethodCall {{{0}}} ::{1}:: --> #Parameter: ({2})", Target.MethodAddr, CodePointAddr, GetDebugCommaStringForList(CallParameter));
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			this.owner = owner;
+			this.Owner = owner;
 
 			foreach (Expression e in CallParameter)
-				e.linkVariables(owner);
+				e.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			for (int i = 0; i < CallParameter.Count; i++)
-				CallParameter[i] = CallParameter[i].inlineConstants();
+				CallParameter[i] = CallParameter[i].InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			foreach (Expression e in CallParameter)
-				e.addressCodePoints();
+				e.AddressCodePoints();
 
-			_CodePointAddr = CODEPOINT_ADDRESS_COUNTER;
+			codePointAddr = CODEPOINT_ADDRESS_COUNTER;
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			foreach (Expression e in CallParameter)
-				e.linkMethods(owner);
+				e.LinkMethods(owner);
 
 			if (Target != null) // Already linked
 				return;
 
-			Target = owner.findMethodByIdentifier(Identifier) as Method;
+			Target = owner.FindMethodByIdentifier(Identifier) as Method;
 
 			if (Target == null)
 				throw new UnresolvableReferenceException(Identifier, Position);
@@ -873,61 +873,61 @@ namespace BefunGen.AST
 			Target.AddReference(this);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			foreach (Expression e in CallParameter)
-				e.linkResultTypes(owner);
+				e.LinkResultTypes(owner);
 
 			if (CallParameter.Count != Target.Parameter.Count)
 				throw new WrongParameterCountException(CallParameter.Count, Target.Parameter.Count, Position);
 
 			for (int i = 0; i < CallParameter.Count; i++)
 			{
-				BType present = CallParameter[i].getResultType();
+				BType present = CallParameter[i].GetResultType();
 				BType expected = Target.Parameter[i].Type;
 
 				if (present != expected)
 				{
-					if (present.isImplicitCastableTo(expected))
-						CallParameter[i] = new Expression_Cast(CallParameter[i].Position, expected, CallParameter[i]);
+					if (present.IsImplicitCastableTo(expected))
+						CallParameter[i] = new ExpressionCast(CallParameter[i].Position, expected, CallParameter[i]);
 					else
 						throw new ImplicitCastException(CallParameter[i].Position, present, expected);
 				}
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			for (int i = 0; i < CallParameter.Count; i++)
 			{
-				CallParameter[i] = CallParameter[i].evaluateExpressions();
+				CallParameter[i] = CallParameter[i].EvaluateExpressions();
 			}
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			return generateCode(reversed, true);
+			return GenerateCode(reversed, true);
 		}
 
-		public CodePiece generateCode(bool reversed, bool popResult)
+		public CodePiece GenerateCode(bool reversed, bool popResult)
 		{
 			if (CodePointAddr < 0)
-				throw new InvalidASTStateException(Position);
+				throw new InvalidAstStateException(Position);
 
 			CodePiece p = new CodePiece();
 
@@ -941,33 +941,33 @@ namespace BefunGen.AST
 
 				// Put own Variables on Stack
 
-				p.AppendLeft(generateCode_varFrame_JumpIn(reversed));
+				p.AppendLeft(GenerateCode_varFrame_JumpIn(reversed));
 
 				// Put own JumpBack-Adress on Stack
 
-				p.AppendLeft(NumberCodeHelper.generateCode(CodePointAddr, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(CodePointAddr, reversed));
 
 				// Put Parameter on Stack
 
 				for (int i = 0; i < CallParameter.Count; i++)
 				{
-					p.AppendLeft(CallParameter[i].generateCode(reversed));
+					p.AppendLeft(CallParameter[i].GenerateCode(reversed));
 				}
 
 				// Put TargetAdress on Stack
 
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.MethodAddr, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.MethodAddr, reversed));
 
 				// Put Lane Switch on Stack
 
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(BCHelper.Digit1);
 
 				#endregion
 
 				// ######## JUMPS ########
 
-				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag(Target)));
-				p.AppendLeft(BCHelper.PC_Left_tagged(new MethodCall_VerticalReEntry_Tag(this)));
+				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag(Target)));
+				p.AppendLeft(BCHelper.PC_Left_tagged(new MethodCallVerticalReEntryTag(this)));
 
 				// ######## AFTER ENTRY::JUMP-BACK ########
 
@@ -977,36 +977,36 @@ namespace BefunGen.AST
 
 				if (popResult)
 				{
-					if (Target.ResultType is BType_Void)
+					if (Target.ResultType is BTypeVoid)
 					{
-						p.AppendLeft(BCHelper.Stack_Pop);
+						p.AppendLeft(BCHelper.StackPop);
 					}
-					else if (Target.ResultType is BType_Value)
+					else if (Target.ResultType is BTypeValue)
 					{
-						p.AppendLeft(BCHelper.Stack_Pop);
+						p.AppendLeft(BCHelper.StackPop);
 					}
-					else if (Target.ResultType is BType_Array)
+					else if (Target.ResultType is BTypeArray)
 					{
-						p.AppendLeft(CodePieceStore.PopMultipleStackValues((Target.ResultType as BType_Array).Size, reversed));
+						p.AppendLeft(CodePieceStore.PopMultipleStackValues((Target.ResultType as BTypeArray).Size, reversed));
 					}
 					else
 						throw new WTFException();
 				}
-				else if (Target.ResultType is BType_Void)
+				else if (Target.ResultType is BTypeVoid)
 				{
-					p.AppendLeft(BCHelper.Stack_Pop); // Nobody cares about the result ...
+					p.AppendLeft(BCHelper.StackPop); // Nobody cares about the result ...
 				}
-				else if (Target.ResultType is BType_Value)
+				else if (Target.ResultType is BTypeValue)
 				{
-					p.AppendLeft(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendLeft(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
+					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
+					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
 
-					p.AppendLeft(BCHelper.Reflect_Set);
+					p.AppendLeft(BCHelper.ReflectSet);
 				}
-				else if (Target.ResultType is BType_Array)
+				else if (Target.ResultType is BTypeArray)
 				{
 					p.AppendLeft(CodePieceStore.WriteArrayFromStack((
-						Target.ResultType as BType_Array).Size,
+						Target.ResultType as BTypeArray).Size,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
 						reversed));
@@ -1016,7 +1016,7 @@ namespace BefunGen.AST
 
 				// Restore Variables
 
-				p.AppendLeft(generateCode_varFrame_JumpBack(reversed));
+				p.AppendLeft(GenerateCode_varFrame_JumpBack(reversed));
 
 				// Put ReturnValue Back to Stack
 
@@ -1024,21 +1024,21 @@ namespace BefunGen.AST
 				{
 					// Do nothing - no really ...
 				}
-				else if (Target.ResultType is BType_Void)
+				else if (Target.ResultType is BTypeVoid)
 				{
 					// DO nothing - Nobody cares about the result ...
 				}
-				else if (Target.ResultType is BType_Value)
+				else if (Target.ResultType is BTypeValue)
 				{
-					p.AppendLeft(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendLeft(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
+					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
+					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
 
-					p.AppendLeft(BCHelper.Reflect_Get);
+					p.AppendLeft(BCHelper.ReflectGet);
 				}
-				else if (Target.ResultType is BType_Array)
+				else if (Target.ResultType is BTypeArray)
 				{
 					p.AppendLeft(CodePieceStore.ReadArrayToStack((
-						Target.ResultType as BType_Array).Size,
+						Target.ResultType as BTypeArray).Size,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
 						reversed));
@@ -1060,33 +1060,33 @@ namespace BefunGen.AST
 
 				// Put own Variables on Stack
 
-				p.AppendRight(generateCode_varFrame_JumpIn(reversed));
+				p.AppendRight(GenerateCode_varFrame_JumpIn(reversed));
 
 				// Put own JumpBack-Adress on Stack
 
-				p.AppendRight(NumberCodeHelper.generateCode(CodePointAddr, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(CodePointAddr, reversed));
 
 				// Put Parameter on Stack
 
 				for (int i = 0; i < CallParameter.Count; i++)
 				{
-					p.AppendRight(CallParameter[i].generateCode(reversed));
+					p.AppendRight(CallParameter[i].GenerateCode(reversed));
 				}
 
 				// Put TargetAdress on Stack
 
-				p.AppendRight(NumberCodeHelper.generateCode(Target.MethodAddr, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.MethodAddr, reversed));
 
 				// Put Lane Switch on Stack
 
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(BCHelper.Digit1);
 
 				#endregion
 
 				// ######## JUMPS ########
 
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag(Target)));
-				p.AppendRight(BCHelper.PC_Right_tagged(new MethodCall_VerticalReEntry_Tag(this)));
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag(Target)));
+				p.AppendRight(BCHelper.PC_Right_tagged(new MethodCallVerticalReEntryTag(this)));
 
 				// ######## AFTER ENTRY::JUMP-BACK ########
 
@@ -1096,37 +1096,37 @@ namespace BefunGen.AST
 
 				if (popResult)
 				{
-					if (Target.ResultType is BType_Void)
+					if (Target.ResultType is BTypeVoid)
 					{
-						p.AppendRight(BCHelper.Stack_Pop);
+						p.AppendRight(BCHelper.StackPop);
 					}
-					else if (Target.ResultType is BType_Value)
+					else if (Target.ResultType is BTypeValue)
 					{
-						p.AppendRight(BCHelper.Stack_Pop);
+						p.AppendRight(BCHelper.StackPop);
 					}
-					else if (Target.ResultType is BType_Array)
+					else if (Target.ResultType is BTypeArray)
 					{
-						p.AppendRight(CodePieceStore.PopMultipleStackValues((Target.ResultType as BType_Array).Size, reversed));
+						p.AppendRight(CodePieceStore.PopMultipleStackValues((Target.ResultType as BTypeArray).Size, reversed));
 
 					}
 					else
 						throw new WTFException();
 				}
-				else if (Target.ResultType is BType_Void)
+				else if (Target.ResultType is BTypeVoid)
 				{
-					p.AppendRight(BCHelper.Stack_Pop); // Nobody cares about the result ...
+					p.AppendRight(BCHelper.StackPop); // Nobody cares about the result ...
 				}
-				else if (Target.ResultType is BType_Value)
+				else if (Target.ResultType is BTypeValue)
 				{
-					p.AppendRight(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendRight(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
+					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
+					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
 
-					p.AppendRight(BCHelper.Reflect_Set);
+					p.AppendRight(BCHelper.ReflectSet);
 				}
-				else if (Target.ResultType is BType_Array)
+				else if (Target.ResultType is BTypeArray)
 				{
 					p.AppendRight(CodePieceStore.WriteArrayFromStack((
-						Target.ResultType as BType_Array).Size,
+						Target.ResultType as BTypeArray).Size,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
 						reversed));
@@ -1136,7 +1136,7 @@ namespace BefunGen.AST
 
 				// Restore Variables
 
-				p.AppendRight(generateCode_varFrame_JumpBack(reversed));
+				p.AppendRight(GenerateCode_varFrame_JumpBack(reversed));
 
 				// Put ReturnValue Back to Stack
 
@@ -1144,21 +1144,21 @@ namespace BefunGen.AST
 				{
 					// Do nothing - no really ...
 				}
-				else if (Target.ResultType is BType_Void)
+				else if (Target.ResultType is BTypeVoid)
 				{
 					// Do nothing - Nobody cares about the result ...
 				}
-				else if (Target.ResultType is BType_Value)
+				else if (Target.ResultType is BTypeValue)
 				{
-					p.AppendRight(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendRight(NumberCodeHelper.generateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
+					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
+					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
 
-					p.AppendRight(BCHelper.Reflect_Get);
+					p.AppendRight(BCHelper.ReflectGet);
 				}
-				else if (Target.ResultType is BType_Array)
+				else if (Target.ResultType is BTypeArray)
 				{
 					p.AppendRight(CodePieceStore.ReadArrayToStack((
-						Target.ResultType as BType_Array).Size,
+						Target.ResultType as BTypeArray).Size,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
 						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
 						reversed));
@@ -1171,33 +1171,33 @@ namespace BefunGen.AST
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 
 		}
 
-		private CodePiece generateCode_varFrame_JumpIn(bool initial_reversed)
+		private CodePiece GenerateCode_varFrame_JumpIn(bool initialReversed)
 		{
 			List<CodePiece> pieces = new List<CodePiece>();
 			CodePiece current = new CodePiece();
 
-			bool reversed = initial_reversed;
+			bool reversed = initialReversed;
 
-			for (int i = 0; i < owner.Variables.Count; i++)
+			for (int i = 0; i < Owner.Variables.Count; i++)
 			{
-				if (owner.Variables[i] is VarDeclaration_Value)
+				if (Owner.Variables[i] is VarDeclarationValue)
 				{
-					VarDeclaration_Value var = owner.Variables[i] as VarDeclaration_Value;
+					VarDeclarationValue var = Owner.Variables[i] as VarDeclarationValue;
 
 					if (reversed)
-						current.AppendLeft(new Expression_DirectValuePointer(Position, var).generateCode(reversed));
+						current.AppendLeft(new ExpressionDirectValuePointer(Position, var).GenerateCode(reversed));
 					else
-						current.AppendRight(new Expression_DirectValuePointer(Position, var).generateCode(reversed));
+						current.AppendRight(new ExpressionDirectValuePointer(Position, var).GenerateCode(reversed));
 				}
-				else if (owner.Variables[i] is VarDeclaration_Array)
+				else if (Owner.Variables[i] is VarDeclarationArray)
 				{
-					VarDeclaration_Array var = owner.Variables[i] as VarDeclaration_Array;
+					VarDeclarationArray var = Owner.Variables[i] as VarDeclarationArray;
 
 					if (reversed)
 						current.AppendLeft(CodePieceStore.ReadArrayToStack(var, reversed));
@@ -1228,24 +1228,24 @@ namespace BefunGen.AST
 			int maxlen = pieces.Max(lp => lp.Width);
 
 			pieces.ForEach(lp => lp.ExtendWithWalkwayLeft(maxlen));
-			pieces.ForEach(lp => lp.normalize());
+			pieces.ForEach(lp => lp.Normalize());
 
 
-			if (initial_reversed)
+			if (initialReversed)
 			{
 				#region Reversed
 
 				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PC_Down : BCHelper.PC_Right;
+					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCRight;
 
 				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PC_Left : BCHelper.PC_Down;
+					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCLeft : BCHelper.PCDown;
 
 
 				pieces[0][maxlen, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][-2, 0] = BCHelper.PC_Up;
+				pieces[pieces.Count - 1][-2, 0] = BCHelper.PCUp;
 				pieces[pieces.Count - 1][-1, 0] = BCHelper.Walkway;
-				pieces[0][-2, 0] = BCHelper.PC_Left;
+				pieces[0][-2, 0] = BCHelper.PCLeft;
 
 				for (int i = 1; i < (pieces.Count - 1); i++)
 					pieces[i][-2, 0] = BCHelper.Walkway;
@@ -1257,15 +1257,15 @@ namespace BefunGen.AST
 				#region Normal
 
 				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PC_Down : BCHelper.PC_Left;
+					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCLeft;
 
 				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PC_Right : BCHelper.PC_Down;
+					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCRight : BCHelper.PCDown;
 
 				pieces[0][-1, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PC_Up;
+				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PCUp;
 				pieces[pieces.Count - 1][maxlen, 0] = BCHelper.Walkway;
-				pieces[0][maxlen + 1, 0] = BCHelper.PC_Right;
+				pieces[0][maxlen + 1, 0] = BCHelper.PCRight;
 
 				for (int i = 1; i < (pieces.Count - 1); i++)
 					pieces[i][maxlen + 1, 0] = BCHelper.Walkway;
@@ -1276,19 +1276,19 @@ namespace BefunGen.AST
 			return CodePiece.CreateFromVerticalList(pieces);
 		}
 
-		private CodePiece generateCode_varFrame_JumpBack(bool initial_reversed)
+		private CodePiece GenerateCode_varFrame_JumpBack(bool initialReversed)
 		{
 			List<CodePiece> pieces = new List<CodePiece>();
 			CodePiece current = new CodePiece();
 
-			bool reversed = initial_reversed;
+			bool reversed = initialReversed;
 
-			for (int i = owner.Variables.Count - 1; i >= 0; i--)
+			for (int i = Owner.Variables.Count - 1; i >= 0; i--)
 			{
 				if (reversed)
-					current.AppendLeft(owner.Variables[i].generateCode_SetToStackVal(reversed));
+					current.AppendLeft(Owner.Variables[i].GenerateCode_SetToStackVal(reversed));
 				else
-					current.AppendRight(owner.Variables[i].generateCode_SetToStackVal(reversed));
+					current.AppendRight(Owner.Variables[i].GenerateCode_SetToStackVal(reversed));
 
 				if (current.Width >= CodeGenConstants.MAX_JUMPIN_VARFRAME_LENGTH)
 				{
@@ -1311,24 +1311,24 @@ namespace BefunGen.AST
 			int maxlen = pieces.Max(lp => lp.Width);
 
 			pieces.ForEach(lp => lp.ExtendWithWalkwayLeft(maxlen));
-			pieces.ForEach(lp => lp.normalize());
+			pieces.ForEach(lp => lp.Normalize());
 
 
-			if (initial_reversed)
+			if (initialReversed)
 			{
 				#region Reversed
 
 				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PC_Down : BCHelper.PC_Right;
+					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCRight;
 
 				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PC_Left : BCHelper.PC_Down;
+					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCLeft : BCHelper.PCDown;
 
 
 				pieces[0][maxlen, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][-2, 0] = BCHelper.PC_Up;
+				pieces[pieces.Count - 1][-2, 0] = BCHelper.PCUp;
 				pieces[pieces.Count - 1][-1, 0] = BCHelper.Walkway;
-				pieces[0][-2, 0] = BCHelper.PC_Left;
+				pieces[0][-2, 0] = BCHelper.PCLeft;
 
 				for (int i = 1; i < (pieces.Count - 1); i++)
 					pieces[i][-2, 0] = BCHelper.Walkway;
@@ -1340,15 +1340,15 @@ namespace BefunGen.AST
 				#region Normal
 
 				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PC_Down : BCHelper.PC_Left;
+					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCLeft;
 
 				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PC_Right : BCHelper.PC_Down;
+					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCRight : BCHelper.PCDown;
 
 				pieces[0][-1, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PC_Up;
+				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PCUp;
 				pieces[pieces.Count - 1][maxlen, 0] = BCHelper.Walkway;
-				pieces[0][maxlen + 1, 0] = BCHelper.PC_Right;
+				pieces[0][maxlen + 1, 0] = BCHelper.PCRight;
 
 				for (int i = 1; i < (pieces.Count - 1); i++)
 					pieces[i][maxlen + 1, 0] = BCHelper.Walkway;
@@ -1364,16 +1364,16 @@ namespace BefunGen.AST
 
 	#region Keywords
 
-	public class Statement_Label : Statement, ICodeAddressTarget
+	public class StatementLabel : Statement, ICodeAddressTarget
 	{
 		public readonly string Identifier;
 
-		private int _CodePointAddr = -1;
+		private int codePointAddr = -1;
 		public int CodePointAddr
 		{
 			get
 			{
-				return _CodePointAddr;
+				return codePointAddr;
 			}
 			set
 			{
@@ -1381,10 +1381,10 @@ namespace BefunGen.AST
 			}
 		}
 
-		public Statement_Label(SourceCodePosition pos, string ident)
+		public StatementLabel(SourceCodePosition pos, string ident)
 			: base(pos)
 		{
-			if (ASTObject.isKeyword(ident))
+			if (ASTObject.IsKeyword(ident))
 			{
 				throw new IllegalIdentifierException(Position, ident);
 			}
@@ -1392,229 +1392,229 @@ namespace BefunGen.AST
 			this.Identifier = ident;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("#LABEL: {{{0}}}", CodePointAddr);
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			_CodePointAddr = CODEPOINT_ADDRESS_COUNTER;
+			codePointAddr = CODEPOINT_ADDRESS_COUNTER;
 		}
 
-		public override void linkVariables(Method owner)
-		{
-			//NOP
-		}
-
-		public override void inlineConstants()
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override bool allPathsReturn()
+		public override void LinkResultTypes(Method owner)
+		{
+			//NOP
+		}
+
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return ident.ToLower() == Identifier.ToLower() ? this : null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (reversed)
 			{
-				return new CodePiece(BCHelper.PC_Left_tagged(new MethodCall_VerticalReEntry_Tag(this)));
+				return new CodePiece(BCHelper.PC_Left_tagged(new MethodCallVerticalReEntryTag(this)));
 			}
 			else
 			{
-				return new CodePiece(BCHelper.PC_Right_tagged(new MethodCall_VerticalReEntry_Tag(this)));
+				return new CodePiece(BCHelper.PC_Right_tagged(new MethodCallVerticalReEntryTag(this)));
 			}
 		}
 	}
 
-	public class Statement_Goto : Statement
+	public class StatementGoto : Statement
 	{
 		public string TargetIdentifier; // Temporary - before linking
-		public Statement_Label Target;
+		public StatementLabel Target;
 
-		public Statement_Goto(SourceCodePosition pos, string id)
+		public StatementGoto(SourceCodePosition pos, string id)
 			: base(pos)
 		{
 			this.TargetIdentifier = id;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("#GOTO: {{{0}}}", Target.CodePointAddr);
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Target = owner.findLabelByIdentifier(TargetIdentifier);
+			Target = owner.FindLabelByIdentifier(TargetIdentifier);
 			if (Target == null)
 				throw new UnresolvableReferenceException(TargetIdentifier, Position);
 			TargetIdentifier = null;
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(NumberCodeHelper.generateCode(Target.CodePointAddr, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePointAddr, reversed));
 
-				p.AppendLeft(BCHelper.Digit_0); // Right Lane
+				p.AppendLeft(BCHelper.Digit0); // Right Lane
 
-				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag(Target)));
+				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag(Target)));
 			}
 			else
 			{
-				p.AppendRight(NumberCodeHelper.generateCode(Target.CodePointAddr, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePointAddr, reversed));
 
-				p.AppendRight(BCHelper.Digit_0); // Right Lane
+				p.AppendRight(BCHelper.Digit0); // Right Lane
 
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag(Target)));
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag(Target)));
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Statement_Return : Statement
+	public class StatementReturn : Statement
 	{
 		public Expression Value;
 
 		public BType ResultType;
 
-		public Statement_Return(SourceCodePosition pos)
+		public StatementReturn(SourceCodePosition pos)
 			: base(pos)
 		{
-			this.Value = new Expression_VoidValuePointer(pos);
+			this.Value = new ExpressionVoidValuePointer(pos);
 		}
 
-		public Statement_Return(SourceCodePosition pos, Expression v)
+		public StatementReturn(SourceCodePosition pos, Expression v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#RETURN: {0}", Value.getDebugString());
+			return string.Format("#RETURN: {0}", Value.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Value.linkVariables(owner);
+			Value.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Value = Value.inlineConstants();
+			Value = Value.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Value.addressCodePoints();
+			Value.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Value.linkMethods(owner);
+			Value.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Value.linkResultTypes(owner);
+			Value.LinkResultTypes(owner);
 
-			BType present = Value.getResultType();
+			BType present = Value.GetResultType();
 			BType expected = owner.ResultType;
 
 			if (present != expected)
 			{
-				if (present.isImplicitCastableTo(expected))
-					Value = new Expression_Cast(Value.Position, expected, Value);
+				if (present.IsImplicitCastableTo(expected))
+					Value = new ExpressionCast(Value.Position, expected, Value);
 				else
 					throw new ImplicitCastException(Value.Position, present, expected);
 			}
@@ -1622,58 +1622,58 @@ namespace BefunGen.AST
 			ResultType = owner.ResultType;
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return true;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Value = Value.evaluateExpressions();
+			Value = Value.EvaluateExpressions();
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return this;
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (ResultType is BType_Void)
+			if (ResultType is BTypeVoid)
 			{
-				return generateCode_Void(reversed);
+				return GenerateCode_Void(reversed);
 			}
-			else if (ResultType is BType_Value)
+			else if (ResultType is BTypeValue)
 			{
-				return generateCode_Value(reversed);
+				return GenerateCode_Value(reversed);
 			}
-			else if (ResultType is BType_Array)
+			else if (ResultType is BTypeArray)
 			{
-				return generateCode_Array(reversed);
+				return GenerateCode_Array(reversed);
 			}
 			else
 				throw new WTFException();
 		}
 
-		private CodePiece generateCode_Void(bool reversed)
+		private CodePiece GenerateCode_Void(bool reversed)
 		{
 			CodePiece p = CodePiece.ParseFromLine(@"0\0");
 
-			p.AppendRight(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag()));
+			p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
 
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 
 			return p;
 
 		}
 
-		private CodePiece generateCode_Value(bool reversed)
+		private CodePiece GenerateCode_Value(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -1681,13 +1681,13 @@ namespace BefunGen.AST
 			{
 				#region Reversed
 
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag()));
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
 
-				p.AppendRight(BCHelper.Digit_0); // Right Lane
+				p.AppendRight(BCHelper.Digit0); // Right Lane
 
-				p.AppendRight(BCHelper.Stack_Swap); // Swap BackjumpAddr back to Stack-Front
+				p.AppendRight(BCHelper.StackSwap); // Swap BackjumpAddr back to Stack-Front
 
-				p.AppendRight(Value.generateCode(reversed));
+				p.AppendRight(Value.GenerateCode(reversed));
 
 				#endregion
 			}
@@ -1695,47 +1695,47 @@ namespace BefunGen.AST
 			{
 				#region Normal
 
-				p.AppendRight(Value.generateCode(reversed));
+				p.AppendRight(Value.GenerateCode(reversed));
 
-				p.AppendRight(BCHelper.Stack_Swap); // Swap BackjumpAddr back to Stack-Front
+				p.AppendRight(BCHelper.StackSwap); // Swap BackjumpAddr back to Stack-Front
 
-				p.AppendRight(BCHelper.Digit_0); // Right Lane
+				p.AppendRight(BCHelper.Digit0); // Right Lane
 
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag()));
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
 
 				#endregion
 
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 			return p;
 		}
 
-		private CodePiece generateCode_Array(bool reversed)
+		private CodePiece GenerateCode_Array(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			BType_Array r_type = ResultType as BType_Array;
+			BTypeArray rType = ResultType as BTypeArray;
 
 			if (reversed)
 			{
 				#region Reversed
 
-				p.AppendLeft(Value.generateCode(reversed));
+				p.AppendLeft(Value.GenerateCode(reversed));
 
 
 				// Switch ReturnValue (Array)  and  BackJumpAddr
 
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(r_type.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendLeft(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
-				p.AppendLeft(CodePieceStore.ReadArrayToStack(r_type.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.ReadArrayToStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendLeft(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
 
-				p.AppendLeft(BCHelper.Digit_0); // Right Lane
+				p.AppendLeft(BCHelper.Digit0); // Right Lane
 
-				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag()));
+				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
 
 				#endregion
 			}
@@ -1743,196 +1743,196 @@ namespace BefunGen.AST
 			{
 				#region Normal
 
-				p.AppendRight(Value.generateCode(reversed));
+				p.AppendRight(Value.GenerateCode(reversed));
 
 
 				// Switch ReturnValue (Array)  and  BackJumpAddr
 
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(r_type.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendRight(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
-				p.AppendRight(CodePieceStore.ReadArrayToStack(r_type.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.ReadArrayToStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendRight(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
 
-				p.AppendRight(BCHelper.Digit_0); // Right Lane
+				p.AppendRight(BCHelper.Digit0); // Right Lane
 
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCall_VerticalExit_Tag()));
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
 
 				#endregion
 
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 			return p;
 		}
 	}
 
-	public class Statement_Out : Statement
+	public class StatementOut : Statement
 	{
-		public enum Out_Mode { OUT_INT, OUT_CHAR, OUT_CHAR_ARR };
+		public enum OutMode { OUT_INT, OUT_CHAR, OUT_CHAR_ARR };
 
 		public Expression Value;
 
-		public Out_Mode Mode;
+		public OutMode Mode;
 
-		public Statement_Out(SourceCodePosition pos, Expression v)
+		public StatementOut(SourceCodePosition pos, Expression v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#OUT {0}", Value.getDebugString());
+			return string.Format("#OUT {0}", Value.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Value.linkVariables(owner);
+			Value.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Value = Value.inlineConstants();
+			Value = Value.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Value.addressCodePoints();
+			Value.AddressCodePoints();
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Value.linkResultTypes(owner);
+			Value.LinkResultTypes(owner);
 
-			BType r = Value.getResultType();
+			BType r = Value.GetResultType();
 
-			BType_Char t_char = new BType_Char(Position);
-			BType_Int t_int = new BType_Int(Position);
-			BType_CharArr t_chararr = (r is BType_Array) ? new BType_CharArr(Position, (r as BType_Array).Size) : new BType_CharArr(Position, 0);
+			BTypeChar tChar = new BTypeChar(Position);
+			BTypeInt tInt = new BTypeInt(Position);
+			BTypeCharArr tChararr = (r is BTypeArray) ? new BTypeCharArr(Position, (r as BTypeArray).Size) : new BTypeCharArr(Position, 0);
 
-			bool implToChar = r.isImplicitCastableTo(t_char);
-			bool implToInt = r.isImplicitCastableTo(t_int);
-			bool implToCharArr = (r is BType_Array) && r.isImplicitCastableTo(t_chararr);
+			bool implToChar = r.IsImplicitCastableTo(tChar);
+			bool implToInt = r.IsImplicitCastableTo(tInt);
+			bool implToCharArr = (r is BTypeArray) && r.IsImplicitCastableTo(tChararr);
 
 			if (implToInt)
 			{
-				Mode = Out_Mode.OUT_INT;
+				Mode = OutMode.OUT_INT;
 
-				if (r != t_int)
+				if (r != tInt)
 				{
-					Value = new Expression_Cast(Position, t_int, Value);
+					Value = new ExpressionCast(Position, tInt, Value);
 				}
 			}
 			else if (implToChar)
 			{
-				Mode = Out_Mode.OUT_CHAR;
+				Mode = OutMode.OUT_CHAR;
 
-				if (r != t_int)
+				if (r != tInt)
 				{
-					Value = new Expression_Cast(Position, t_char, Value);
+					Value = new ExpressionCast(Position, tChar, Value);
 				}
 			}
 			else if (implToCharArr)
 			{
-				Mode = Out_Mode.OUT_CHAR_ARR;
+				Mode = OutMode.OUT_CHAR_ARR;
 
-				if (r != t_int)
+				if (r != tInt)
 				{
-					Value = new Expression_Cast(Position, t_chararr, Value);
+					Value = new ExpressionCast(Position, tChararr, Value);
 				}
 			}
 			else
 			{
-				throw new ImplicitCastException(Position, r, t_int, t_char, t_chararr);
+				throw new ImplicitCastException(Position, r, tInt, tChar, tChararr);
 			}
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Value.linkMethods(owner);
+			Value.LinkMethods(owner);
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Value = Value.evaluateExpressions();
+			Value = Value.EvaluateExpressions();
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			switch (Mode)
 			{
-				case Out_Mode.OUT_INT:
-					return generateCode_Int(reversed);
-				case Out_Mode.OUT_CHAR:
-					return generateCode_Char(reversed);
-				case Out_Mode.OUT_CHAR_ARR:
-					return generateCode_CharArr(reversed);
+				case OutMode.OUT_INT:
+					return GenerateCode_Int(reversed);
+				case OutMode.OUT_CHAR:
+					return GenerateCode_Char(reversed);
+				case OutMode.OUT_CHAR_ARR:
+					return GenerateCode_CharArr(reversed);
 				default:
 					throw new WTFException();
 			}
 		}
 
-		private CodePiece generateCode_Int(bool reversed)
+		private CodePiece GenerateCode_Int(bool reversed)
 		{
-			CodePiece p = Value.generateCode(reversed);
+			CodePiece p = Value.GenerateCode(reversed);
 
 			if (reversed)
-				p.AppendLeft(BCHelper.Out_Int);
+				p.AppendLeft(BCHelper.OutInt);
 			else
-				p.AppendRight(BCHelper.Out_Int);
+				p.AppendRight(BCHelper.OutInt);
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		private CodePiece generateCode_Char(bool reversed)
+		private CodePiece GenerateCode_Char(bool reversed)
 		{
-			CodePiece p = Value.generateCode(reversed);
+			CodePiece p = Value.GenerateCode(reversed);
 
 			if (reversed)
-				p.AppendLeft(BCHelper.Out_ASCII);
+				p.AppendLeft(BCHelper.OutASCII);
 			else
-				p.AppendRight(BCHelper.Out_ASCII);
+				p.AppendRight(BCHelper.OutASCII);
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		private CodePiece generateCode_CharArr(bool reversed)
+		private CodePiece GenerateCode_CharArr(bool reversed)
 		{
-			BType_CharArr type_right = Value.getResultType() as BType_CharArr;
+			BTypeCharArr typeRight = Value.GetResultType() as BTypeCharArr;
 
-			CodePiece p_len = NumberCodeHelper.generateCode(type_right.Size - 1, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(typeRight.Size - 1, reversed);
 
-			CodePiece p_tpx = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.X, reversed);
-			CodePiece p_tpy = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.Y, reversed);
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.Y, reversed);
 
-			CodePiece p_tpx_r = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.X, !reversed);
-			CodePiece p_tpy_r = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.Y, !reversed);
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.Y, !reversed);
 
 
 			if (reversed)
@@ -1943,58 +1943,58 @@ namespace BefunGen.AST
 
 				#region Reversed
 
-				p.AppendRight(BCHelper.Stack_Pop);
-				p.AppendRight(BCHelper.If_Horizontal);
+				p.AppendRight(BCHelper.StackPop);
+				p.AppendRight(BCHelper.IfHorizontal);
 
-				p.AppendRight(BCHelper.PC_Down);
-				p[p.MaxX - 1, 1] = BCHelper.PC_Right;
+				p.AppendRight(BCHelper.PCDown);
+				p[p.MaxX - 1, 1] = BCHelper.PCRight;
 
-				CodePiece p_top = new CodePiece();
+				CodePiece pTop = new CodePiece();
 				{
-					p_top.AppendRight(BCHelper.PC_Jump);
-					p_top.AppendRight(BCHelper.Not);
-					p_top.AppendRight(BCHelper.Reflect_Get);
+					pTop.AppendRight(BCHelper.PCJump);
+					pTop.AppendRight(BCHelper.Not);
+					pTop.AppendRight(BCHelper.ReflectGet);
 
-					p_top.AppendRight(p_tpy);
-					p_top.AppendRight(BCHelper.Stack_Dup);
-					p_top.AppendRight(p_tpx);
-					p_top.AppendRight(BCHelper.Out_ASCII);
+					pTop.AppendRight(pTpy);
+					pTop.AppendRight(BCHelper.StackDup);
+					pTop.AppendRight(pTpx);
+					pTop.AppendRight(BCHelper.OutASCII);
 				}
 
-				CodePiece p_bot = new CodePiece();
+				CodePiece pBot = new CodePiece();
 				{
-					p_bot.AppendRight(BCHelper.Stack_Dup);
+					pBot.AppendRight(BCHelper.StackDup);
 
-					p_bot.AppendRight(p_tpy_r);
-					p_bot.AppendRight(BCHelper.Reflect_Get);
-					p_bot.AppendRight(BCHelper.Digit_1);
-					p_bot.AppendRight(BCHelper.Sub);
-					p_bot.AppendRight(BCHelper.Stack_Swap);
+					pBot.AppendRight(pTpyR);
+					pBot.AppendRight(BCHelper.ReflectGet);
+					pBot.AppendRight(BCHelper.Digit1);
+					pBot.AppendRight(BCHelper.Sub);
+					pBot.AppendRight(BCHelper.StackSwap);
 
-					p_bot.AppendRight(p_tpy_r);
+					pBot.AppendRight(pTpyR);
 
-					p_bot.AppendRight(BCHelper.Reflect_Set);
+					pBot.AppendRight(BCHelper.ReflectSet);
 				}
 
-				int top_bot_start = p.MaxX;
-				int top_bot_end = top_bot_start + Math.Max(p_top.Width, p_bot.Width);
+				int topBotStart = p.MaxX;
+				int topBotEnd = topBotStart + Math.Max(pTop.Width, pBot.Width);
 
-				p[top_bot_end + 0, 1] = BCHelper.PC_Up;
+				p[topBotEnd + 0, 1] = BCHelper.PCUp;
 
-				p[top_bot_end + 0, 0] = BCHelper.PC_Left;
-				p[top_bot_end + 1, 0] = BCHelper.Reflect_Set;
+				p[topBotEnd + 0, 0] = BCHelper.PCLeft;
+				p[topBotEnd + 1, 0] = BCHelper.ReflectSet;
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_len);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pLen);
 
-				p.SetAt(top_bot_start, 0, p_top);
-				p.SetAt(top_bot_start, 1, p_bot);
+				p.SetAt(topBotStart, 0, pTop);
+				p.SetAt(topBotStart, 1, pBot);
 
-				p.FillRowWW(0, top_bot_start + p_top.Width, top_bot_end);
-				p.FillRowWW(1, top_bot_start + p_bot.Width, top_bot_end);
+				p.FillRowWw(0, topBotStart + pTop.Width, topBotEnd);
+				p.FillRowWw(1, topBotStart + pBot.Width, topBotEnd);
 
-				p.AppendRight(Value.generateCode(reversed));
+				p.AppendRight(Value.GenerateCode(reversed));
 
 				#endregion
 
@@ -2004,56 +2004,56 @@ namespace BefunGen.AST
 			{
 				// {M}{TX}{TY}p>,{TX}:{TY}g  #v_$
 				//             ^p{TY}\-1g{TY}:<
-				CodePiece p = Value.generateCode(reversed);
+				CodePiece p = Value.GenerateCode(reversed);
 
 				#region Normal
 
-				p.AppendRight(p_len);
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(pLen);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(BCHelper.PC_Right);
-				p[p.MaxX - 1, 1] = BCHelper.PC_Up;
+				p.AppendRight(BCHelper.PCRight);
+				p[p.MaxX - 1, 1] = BCHelper.PCUp;
 
-				CodePiece p_top = new CodePiece();
+				CodePiece pTop = new CodePiece();
 				{
-					p_top.AppendRight(BCHelper.Out_ASCII);
-					p_top.AppendRight(p_tpx);
-					p_top.AppendRight(BCHelper.Stack_Dup);
-					p_top.AppendRight(p_tpy);
-					p_top.AppendRight(BCHelper.Reflect_Get);
+					pTop.AppendRight(BCHelper.OutASCII);
+					pTop.AppendRight(pTpx);
+					pTop.AppendRight(BCHelper.StackDup);
+					pTop.AppendRight(pTpy);
+					pTop.AppendRight(BCHelper.ReflectGet);
 				}
 
-				CodePiece p_bot = new CodePiece();
+				CodePiece pBot = new CodePiece();
 				{
-					p_bot.AppendRight(BCHelper.Reflect_Set);
+					pBot.AppendRight(BCHelper.ReflectSet);
 
-					p_bot.AppendRight(p_tpy_r);
+					pBot.AppendRight(pTpyR);
 
-					p_bot.AppendRight(BCHelper.Stack_Swap);
-					p_bot.AppendRight(BCHelper.Sub);
-					p_bot.AppendRight(BCHelper.Digit_1);
-					p_bot.AppendRight(BCHelper.Reflect_Get);
-					p_bot.AppendRight(p_tpy_r);
+					pBot.AppendRight(BCHelper.StackSwap);
+					pBot.AppendRight(BCHelper.Sub);
+					pBot.AppendRight(BCHelper.Digit1);
+					pBot.AppendRight(BCHelper.ReflectGet);
+					pBot.AppendRight(pTpyR);
 				}
 
-				int top_bot_start = p.MaxX;
-				int top_bot_end = top_bot_start + Math.Max(p_top.Width, p_bot.Width);
+				int topBotStart = p.MaxX;
+				int topBotEnd = topBotStart + Math.Max(pTop.Width, pBot.Width);
 
-				p[top_bot_end + 0, 1] = BCHelper.Stack_Dup;
-				p[top_bot_end + 1, 1] = BCHelper.PC_Left;
+				p[topBotEnd + 0, 1] = BCHelper.StackDup;
+				p[topBotEnd + 1, 1] = BCHelper.PCLeft;
 
-				p[top_bot_end + 0, 0] = BCHelper.PC_Jump;
-				p[top_bot_end + 1, 0] = BCHelper.PC_Down;
-				p[top_bot_end + 2, 0] = BCHelper.If_Horizontal;
-				p[top_bot_end + 3, 0] = BCHelper.Stack_Pop;
+				p[topBotEnd + 0, 0] = BCHelper.PCJump;
+				p[topBotEnd + 1, 0] = BCHelper.PCDown;
+				p[topBotEnd + 2, 0] = BCHelper.IfHorizontal;
+				p[topBotEnd + 3, 0] = BCHelper.StackPop;
 
-				p.SetAt(top_bot_start, 0, p_top);
-				p.SetAt(top_bot_start, 1, p_bot);
+				p.SetAt(topBotStart, 0, pTop);
+				p.SetAt(topBotStart, 1, pBot);
 
-				p.FillRowWW(0, top_bot_start + p_top.Width, top_bot_end);
-				p.FillRowWW(1, top_bot_start + p_bot.Width, top_bot_end);
+				p.FillRowWw(0, topBotStart + pTop.Width, topBotEnd);
+				p.FillRowWw(1, topBotStart + pBot.Width, topBotEnd);
 
 				#endregion
 
@@ -2062,72 +2062,72 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Statement_Out_CharArrLiteral : Statement
+	public class StatementOutCharArrLiteral : Statement
 	{
-		public readonly Literal_CharArr Value;
+		public readonly LiteralCharArr Value;
 
-		public Statement_Out_CharArrLiteral(SourceCodePosition pos, Literal_CharArr v)
+		public StatementOutCharArrLiteral(SourceCodePosition pos, LiteralCharArr v)
 			: base(pos)
 		{
 			this.Value = v;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#OUT {0}", Value.getDebugString());
+			return string.Format("#OUT {0}", Value.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
-		{
-			//NOP
-		}
-
-		public override void linkVariables(Method owner)
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void inlineConstants()
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override bool allPathsReturn()
+		public override void LinkMethods(Program owner)
+		{
+			//NOP
+		}
+
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			if (Value.Count == 0)
 				return new CodePiece();
@@ -2142,28 +2142,28 @@ namespace BefunGen.AST
 				{
 					// ,,,,,"???"
 					for (int i = 0; i < Value.Value.Count; i++)
-						p.AppendRight(BCHelper.Out_ASCII);
+						p.AppendRight(BCHelper.OutASCII);
 
-					p.AppendRight(Value.generateCode(reversed));
+					p.AppendRight(Value.GenerateCode(reversed));
 				}
 				else
 				{
 					// $_>#!,#:<"???"0
-					p.AppendLeft(BCHelper.Digit_0);
+					p.AppendLeft(BCHelper.Digit0);
 
-					p.AppendLeft(Value.generateCode(reversed));
+					p.AppendLeft(Value.GenerateCode(reversed));
 
-					p.AppendLeft(BCHelper.PC_Left);
-					p.AppendLeft(BCHelper.Stack_Dup);
-					p.AppendLeft(BCHelper.PC_Jump);
-					p.AppendLeft(BCHelper.Out_ASCII);
+					p.AppendLeft(BCHelper.PCLeft);
+					p.AppendLeft(BCHelper.StackDup);
+					p.AppendLeft(BCHelper.PCJump);
+					p.AppendLeft(BCHelper.OutASCII);
 					p.AppendLeft(BCHelper.Not);
-					p.AppendLeft(BCHelper.PC_Jump);
-					p.AppendLeft(BCHelper.PC_Right);
-					p.AppendLeft(BCHelper.If_Horizontal);
-					p.AppendLeft(BCHelper.Stack_Pop);
+					p.AppendLeft(BCHelper.PCJump);
+					p.AppendLeft(BCHelper.PCRight);
+					p.AppendLeft(BCHelper.IfHorizontal);
+					p.AppendLeft(BCHelper.StackPop);
 
-					p.normalizeX();
+					p.NormalizeX();
 				}
 
 				#endregion
@@ -2179,26 +2179,26 @@ namespace BefunGen.AST
 				if (Value.Value.Count <= 7)
 				{
 					// "???",,,,,
-					p.AppendRight(Value.generateCode(reversed));
+					p.AppendRight(Value.GenerateCode(reversed));
 
 					for (int i = 0; i < Value.Value.Count; i++)
-						p.AppendRight(BCHelper.Out_ASCII);
+						p.AppendRight(BCHelper.OutASCII);
 				}
 				else
 				{
 					// 0"???">:#,_$
-					p.AppendRight(BCHelper.Digit_0);
+					p.AppendRight(BCHelper.Digit0);
 
-					p.AppendRight(Value.generateCode(reversed));
+					p.AppendRight(Value.GenerateCode(reversed));
 
-					p.AppendRight(BCHelper.PC_Right);
-					p.AppendRight(BCHelper.Stack_Dup);
-					p.AppendRight(BCHelper.PC_Jump);
-					p.AppendRight(BCHelper.Out_ASCII);
-					p.AppendRight(BCHelper.If_Horizontal);
-					p.AppendRight(BCHelper.Stack_Pop);
+					p.AppendRight(BCHelper.PCRight);
+					p.AppendRight(BCHelper.StackDup);
+					p.AppendRight(BCHelper.PCJump);
+					p.AppendRight(BCHelper.OutASCII);
+					p.AppendRight(BCHelper.IfHorizontal);
+					p.AppendRight(BCHelper.StackPop);
 
-					p.normalizeX();
+					p.NormalizeX();
 				}
 
 				#endregion
@@ -2208,180 +2208,180 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Statement_In : Statement
+	public class StatementIn : Statement
 	{
-		public enum In_Mode { IN_INT, IN_CHAR, IN_CHAR_ARR, IN_INT_ARR };
+		public enum InMode { IN_INT, IN_CHAR, IN_CHAR_ARR, IN_INT_ARR };
 
-		public readonly Expression_ValuePointer ValueTarget;
+		public readonly ExpressionValuePointer ValueTarget;
 
-		public In_Mode Mode;
+		public InMode Mode;
 
-		public Statement_In(SourceCodePosition pos, Expression_ValuePointer vt)
+		public StatementIn(SourceCodePosition pos, ExpressionValuePointer vt)
 			: base(pos)
 		{
 			this.ValueTarget = vt;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#IN {0}", ValueTarget.getDebugString());
+			return string.Format("#IN {0}", ValueTarget.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			ValueTarget.linkVariables(owner);
+			ValueTarget.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			ValueTarget.addressCodePoints();
+			ValueTarget.AddressCodePoints();
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			ValueTarget.linkResultTypes(owner);
+			ValueTarget.LinkResultTypes(owner);
 
-			BType present = ValueTarget.getResultType();
+			BType present = ValueTarget.GetResultType();
 
-			BType expec_int = new BType_Int(Position);
-			BType expec_char = new BType_Char(Position);
-			BType expec_chararr = (present is BType_Array) ? new BType_CharArr(Position, (present as BType_Array).Size) : new BType_CharArr(Position, 0);
-			BType expec_intarr = (present is BType_Array) ? new BType_IntArr(Position, (present as BType_Array).Size) : new BType_IntArr(Position, 0);
+			BType expecInt = new BTypeInt(Position);
+			BType expecChar = new BTypeChar(Position);
+			BType expecChararr = (present is BTypeArray) ? new BTypeCharArr(Position, (present as BTypeArray).Size) : new BTypeCharArr(Position, 0);
+			BType expecIntarr = (present is BTypeArray) ? new BTypeIntArr(Position, (present as BTypeArray).Size) : new BTypeIntArr(Position, 0);
 
-			if (present == expec_char)
+			if (present == expecChar)
 			{
-				Mode = In_Mode.IN_CHAR;
+				Mode = InMode.IN_CHAR;
 			}
-			else if (present == expec_int)
+			else if (present == expecInt)
 			{
-				Mode = In_Mode.IN_INT;
+				Mode = InMode.IN_INT;
 			}
-			else if (present == expec_chararr)
+			else if (present == expecChararr)
 			{
-				Mode = In_Mode.IN_CHAR_ARR;
+				Mode = InMode.IN_CHAR_ARR;
 			}
-			else if (present == expec_intarr)
+			else if (present == expecIntarr)
 			{
-				Mode = In_Mode.IN_INT_ARR;
+				Mode = InMode.IN_INT_ARR;
 			}
 			else
 			{
-				throw new WrongTypeException(ValueTarget.Position, present, expec_char, expec_int, expec_chararr, expec_intarr);
+				throw new WrongTypeException(ValueTarget.Position, present, expecChar, expecInt, expecChararr, expecIntarr);
 			}
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			ValueTarget.linkMethods(owner);
+			ValueTarget.LinkMethods(owner);
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			switch (Mode)
 			{
-				case In_Mode.IN_INT:
-					return generateCode_Int(reversed);
-				case In_Mode.IN_CHAR:
-					return generateCode_Char(reversed);
-				case In_Mode.IN_CHAR_ARR:
-					return generateCode_CharArr(reversed);
-				case In_Mode.IN_INT_ARR:
-					return generateCode_IntArr(reversed);
+				case InMode.IN_INT:
+					return GenerateCode_Int(reversed);
+				case InMode.IN_CHAR:
+					return GenerateCode_Char(reversed);
+				case InMode.IN_CHAR_ARR:
+					return GenerateCode_CharArr(reversed);
+				case InMode.IN_INT_ARR:
+					return GenerateCode_IntArr(reversed);
 				default:
 					throw new WTFException();
 			}
 		}
 
-		private CodePiece generateCode_Int(bool reversed)
+		private CodePiece GenerateCode_Int(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			p[0, 0] = BCHelper.In_Int;
+			p[0, 0] = BCHelper.InInt;
 
 			if (reversed)
 			{
-				p.AppendLeft(ValueTarget.generateCodeSingle(reversed));
-				p.AppendLeft(BCHelper.Reflect_Set);
-				p.normalizeX();
+				p.AppendLeft(ValueTarget.GenerateCodeSingle(reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
+				p.NormalizeX();
 			}
 			else
 			{
-				p.AppendRight(ValueTarget.generateCodeSingle(reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
-				p.normalizeX();
+				p.AppendRight(ValueTarget.GenerateCodeSingle(reversed));
+				p.AppendRight(BCHelper.ReflectSet);
+				p.NormalizeX();
 			}
 
 			return p;
 		}
 
-		private CodePiece generateCode_Char(bool reversed)
+		private CodePiece GenerateCode_Char(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			p[0, 0] = BCHelper.In_ASCII;
+			p[0, 0] = BCHelper.InASCII;
 
 			if (reversed)
 			{
-				p.AppendLeft(ValueTarget.generateCodeSingle(reversed));
-				p.AppendLeft(BCHelper.Reflect_Set);
-				p.normalizeX();
+				p.AppendLeft(ValueTarget.GenerateCodeSingle(reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
+				p.NormalizeX();
 			}
 			else
 			{
-				p.AppendRight(ValueTarget.generateCodeSingle(reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
-				p.normalizeX();
+				p.AppendRight(ValueTarget.GenerateCodeSingle(reversed));
+				p.AppendRight(BCHelper.ReflectSet);
+				p.NormalizeX();
 			}
 
 			return p;
 		}
 
-		private CodePiece generateCode_CharArr(bool reversed)
+		private CodePiece GenerateCode_CharArr(bool reversed)
 		{
-			Expression_DirectValuePointer vp = ValueTarget as Expression_DirectValuePointer;
-			int len = (ValueTarget.getResultType() as BType_Array).Size;
+			ExpressionDirectValuePointer vp = ValueTarget as ExpressionDirectValuePointer;
+			int len = (ValueTarget.GetResultType() as BTypeArray).Size;
 
-			CodePiece p_len = NumberCodeHelper.generateCode(len, reversed);
-			CodePiece p_write = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(len, reversed);
+			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
 
 			if (reversed)
 			{
 				CodePiece p = CodePiece.ParseFromLine(@"$_>#!:$#-\#1\>#~<");
 
-				p.AppendRight(p_len);
-				p.AppendLeft(p_write);
+				p.AppendRight(pLen);
+				p.AppendLeft(pWrite);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
@@ -2389,31 +2389,31 @@ namespace BefunGen.AST
 			{
 				CodePiece p = CodePiece.ParseFromLine(@">~#<\1#\-#$:_$");
 
-				p.AppendLeft(p_len);
-				p.AppendRight(p_write);
+				p.AppendLeft(pLen);
+				p.AppendRight(pWrite);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
 		}
 
-		private CodePiece generateCode_IntArr(bool reversed)
+		private CodePiece GenerateCode_IntArr(bool reversed)
 		{
-			Expression_DirectValuePointer vp = ValueTarget as Expression_DirectValuePointer;
-			int len = (ValueTarget.getResultType() as BType_Array).Size;
+			ExpressionDirectValuePointer vp = ValueTarget as ExpressionDirectValuePointer;
+			int len = (ValueTarget.GetResultType() as BTypeArray).Size;
 
-			CodePiece p_len = NumberCodeHelper.generateCode(len, reversed);
-			CodePiece p_write = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(len, reversed);
+			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
 
 			if (reversed)
 			{
 				CodePiece p = CodePiece.ParseFromLine(@"$_>#!:$#-\#1\>#&<");
 
-				p.AppendRight(p_len);
-				p.AppendLeft(p_write);
+				p.AppendRight(pLen);
+				p.AppendLeft(pWrite);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
@@ -2421,79 +2421,79 @@ namespace BefunGen.AST
 			{
 				CodePiece p = CodePiece.ParseFromLine(@">&#<\1#\-#$:_$");
 
-				p.AppendLeft(p_len);
-				p.AppendRight(p_write);
+				p.AppendLeft(pLen);
+				p.AppendRight(pWrite);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
 		}
 	}
 
-	public class Statement_Quit : Statement
+	public class StatementQuit : Statement
 	{
-		public Statement_Quit(SourceCodePosition pos)
+		public StatementQuit(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "#QUIT";
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return true;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -2503,69 +2503,69 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Statement_NOP : Statement // NO OPERATION
+	public class StatementNOP : Statement // NO OPERATION
 	{
-		public Statement_NOP(SourceCodePosition pos)
+		public StatementNOP(SourceCodePosition pos)
 			: base(pos)
 		{
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return "#NOP";
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
 			//NOP
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
 			//NOP
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
 			//NOP
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			return new CodePiece(); // easy as that ¯\_(ツ)_/¯
 		}
@@ -2575,357 +2575,357 @@ namespace BefunGen.AST
 
 	#region Operations
 
-	public class Statement_Inc : Statement
+	public class StatementInc : Statement
 	{
-		public readonly Expression_ValuePointer Target;
+		public readonly ExpressionValuePointer Target;
 
-		public Statement_Inc(SourceCodePosition pos, Expression_ValuePointer id)
+		public StatementInc(SourceCodePosition pos, ExpressionValuePointer id)
 			: base(pos)
 		{
 			this.Target = id;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#INC {0}", Target.getDebugString());
+			return string.Format("#INC {0}", Target.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Target.linkVariables(owner);
+			Target.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Target.addressCodePoints();
+			Target.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Target.linkMethods(owner);
+			Target.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Target.linkResultTypes(owner);
+			Target.LinkResultTypes(owner);
 
-			BType present = Target.getResultType();
+			BType present = Target.GetResultType();
 
-			if (!(present == new BType_Int(Position) || present == new BType_Digit(Position) || present == new BType_Char(Position)))
+			if (!(present == new BTypeInt(Position) || present == new BTypeDigit(Position) || present == new BTypeChar(Position)))
 			{
-				throw new WrongTypeException(Target.Position, present, new BType_Int(Position), new BType_Digit(Position), new BType_Char(Position));
+				throw new WrongTypeException(Target.Position, present, new BTypeInt(Position), new BTypeDigit(Position), new BTypeChar(Position));
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.generateCodeDoubleX(reversed));
-				p.AppendLeft(BCHelper.Reflect_Get);
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(Target.GenerateCodeDoubleX(reversed));
+				p.AppendLeft(BCHelper.ReflectGet);
+				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(BCHelper.Stack_Swap);
-				p.AppendLeft(Target.generateCodeSingleY(reversed));
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.StackSwap);
+				p.AppendLeft(Target.GenerateCodeSingleY(reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.generateCodeDoubleX(reversed));
-				p.AppendRight(BCHelper.Reflect_Get);
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(Target.GenerateCodeDoubleX(reversed));
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(Target.generateCodeSingleY(reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(Target.GenerateCodeSingleY(reversed));
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Statement_Dec : Statement
+	public class StatementDec : Statement
 	{
-		public readonly Expression_ValuePointer Target;
+		public readonly ExpressionValuePointer Target;
 
-		public Statement_Dec(SourceCodePosition pos, Expression_ValuePointer id)
+		public StatementDec(SourceCodePosition pos, ExpressionValuePointer id)
 			: base(pos)
 		{
 			this.Target = id;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#DEC {0}", Target.getDebugString());
+			return string.Format("#DEC {0}", Target.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Target.linkVariables(owner);
+			Target.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
 			//NOP
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Target.addressCodePoints();
+			Target.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Target.linkMethods(owner);
+			Target.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Target.linkResultTypes(owner);
+			Target.LinkResultTypes(owner);
 
-			BType present = Target.getResultType();
+			BType present = Target.GetResultType();
 
-			if (!(present == new BType_Int(Position) || present == new BType_Digit(Position) || present == new BType_Char(Position)))
+			if (!(present == new BTypeInt(Position) || present == new BTypeDigit(Position) || present == new BTypeChar(Position)))
 			{
-				throw new WrongTypeException(Target.Position, present, new BType_Int(Position), new BType_Digit(Position), new BType_Char(Position));
+				throw new WrongTypeException(Target.Position, present, new BTypeInt(Position), new BTypeDigit(Position), new BTypeChar(Position));
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
 			//NOP
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.generateCodeDoubleX(reversed));
-				p.AppendLeft(BCHelper.Reflect_Get);
-				p.AppendLeft(BCHelper.Digit_1);
+				p.AppendLeft(Target.GenerateCodeDoubleX(reversed));
+				p.AppendLeft(BCHelper.ReflectGet);
+				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Sub);
-				p.AppendLeft(BCHelper.Stack_Swap);
-				p.AppendLeft(Target.generateCodeSingleY(reversed));
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.StackSwap);
+				p.AppendLeft(Target.GenerateCodeSingleY(reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.generateCodeDoubleX(reversed));
-				p.AppendRight(BCHelper.Reflect_Get);
-				p.AppendRight(BCHelper.Digit_1);
+				p.AppendRight(Target.GenerateCodeDoubleX(reversed));
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(Target.generateCodeSingleY(reversed));
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(Target.GenerateCodeSingleY(reversed));
+				p.AppendRight(BCHelper.ReflectSet);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 	}
 
-	public class Statement_Assignment : Statement
+	public class StatementAssignment : Statement
 	{
-		public Expression_ValuePointer Target;
+		public ExpressionValuePointer Target;
 		public Expression Expr;
 
-		public Statement_Assignment(SourceCodePosition pos, Expression_ValuePointer t, Expression e)
+		public StatementAssignment(SourceCodePosition pos, ExpressionValuePointer t, Expression e)
 			: base(pos)
 		{
 			this.Target = t;
 			this.Expr = e;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#ASSIGN {0} = ({1})", Target.getDebugString(), Expr.getDebugString());
+			return string.Format("#ASSIGN {0} = ({1})", Target.GetDebugString(), Expr.GetDebugString());
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
 			//NOP
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Target.linkVariables(owner);
-			Expr.linkVariables(owner);
+			Target.LinkVariables(owner);
+			Expr.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Target = (Expression_ValuePointer)Target.inlineConstants();
-			Expr = Expr.inlineConstants();
+			Target = (ExpressionValuePointer)Target.InlineConstants();
+			Expr = Expr.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Target.addressCodePoints();
-			Expr.addressCodePoints();
+			Target.AddressCodePoints();
+			Expr.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Target.linkMethods(owner);
-			Expr.linkMethods(owner);
+			Target.LinkMethods(owner);
+			Expr.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Target.linkResultTypes(owner);
-			Expr.linkResultTypes(owner);
+			Target.LinkResultTypes(owner);
+			Expr.LinkResultTypes(owner);
 
-			BType t_left = Target.getResultType();
-			BType t_right = Expr.getResultType();
+			BType tLeft = Target.GetResultType();
+			BType tRight = Expr.GetResultType();
 
-			if (t_left != t_right)
+			if (tLeft != tRight)
 			{
-				if (t_right.isImplicitCastableTo(t_left))
-					Expr = new Expression_Cast(Expr.Position, t_left, Expr);
+				if (tRight.IsImplicitCastableTo(tLeft))
+					Expr = new ExpressionCast(Expr.Position, tLeft, Expr);
 				else
-					throw new ImplicitCastException(Expr.Position, t_right, t_left);
+					throw new ImplicitCastException(Expr.Position, tRight, tLeft);
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false;
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Expr = Expr.evaluateExpressions();
+			Expr = Expr.EvaluateExpressions();
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
 			return null;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (Target.getResultType() is BType_Array)
+			if (Target.GetResultType() is BTypeArray)
 			{
-				return generateCode_Array(reversed);
+				return GenerateCode_Array(reversed);
 			}
-			else if (Target.getResultType() is BType_Value)
+			else if (Target.GetResultType() is BTypeValue)
 			{
-				return generateCode_Value(reversed);
+				return GenerateCode_Value(reversed);
 			}
 			else
 			{
-				throw new InvalidASTStateException(Position);
+				throw new InvalidAstStateException(Position);
 			}
 		}
 
-		private CodePiece generateCode_Value(bool reversed)
+		private CodePiece GenerateCode_Value(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Expr.generateCode(reversed));
-				p.AppendLeft(Target.generateCodeSingle(reversed));
+				p.AppendLeft(Expr.GenerateCode(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(reversed));
 
-				p.AppendLeft(BCHelper.Reflect_Set);
+				p.AppendLeft(BCHelper.ReflectSet);
 
-				p.normalizeX();
+				p.NormalizeX();
 			}
 			else
 			{
-				p.AppendRight(Expr.generateCode(reversed));
-				p.AppendRight(Target.generateCodeSingle(reversed));
+				p.AppendRight(Expr.GenerateCode(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(reversed));
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.normalizeX();
+				p.NormalizeX();
 			}
 
 			return p;
 		}
 
-		private CodePiece generateCode_Array(bool reversed)
+		private CodePiece GenerateCode_Array(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			BType_Array type = Target.getResultType() as BType_Array;
-			Expression_DirectValuePointer vPointer = Target as Expression_DirectValuePointer;
+			BTypeArray type = Target.GetResultType() as BTypeArray;
+			ExpressionDirectValuePointer vPointer = Target as ExpressionDirectValuePointer;
 
 			if (reversed)
 			{
-				p.AppendLeft(Expr.generateCode(reversed));
+				p.AppendLeft(Expr.GenerateCode(reversed));
 				p.AppendLeft(CodePieceStore.WriteArrayFromStack(type.Size, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
 
-				p.normalizeX();
+				p.NormalizeX();
 			}
 			else
 			{
-				p.AppendRight(Expr.generateCode(reversed));
+				p.AppendRight(Expr.GenerateCode(reversed));
 				p.AppendRight(CodePieceStore.WriteArrayFromStack(type.Size, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
 
-				p.normalizeX();
+				p.NormalizeX();
 			}
 
 			return p;
@@ -2936,21 +2936,21 @@ namespace BefunGen.AST
 
 	#region Constructs
 
-	public class Statement_If : Statement
+	public class StatementIf : Statement
 	{
 		public Expression Condition;
-		public readonly Statement_StatementList Body;
+		public readonly StatementStatementList Body;
 		public readonly Statement Else;
 
-		public Statement_If(SourceCodePosition pos, Expression c, Statement_StatementList b)
+		public StatementIf(SourceCodePosition pos, Expression c, StatementStatementList b)
 			: base(pos)
 		{
 			this.Condition = c;
 			this.Body = b;
-			this.Else = new Statement_NOP(new SourceCodePosition());
+			this.Else = new StatementNOP(new SourceCodePosition());
 		}
 
-		public Statement_If(SourceCodePosition pos, Expression c, Statement_StatementList b, Statement e)
+		public StatementIf(SourceCodePosition pos, Expression c, StatementStatementList b, Statement e)
 			: base(pos)
 		{
 			this.Condition = c;
@@ -2958,113 +2958,113 @@ namespace BefunGen.AST
 			this.Else = e;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#IF ({0})\n{1}\n#IFELSE\n{2}", Condition.getDebugString(), indent(Body.getDebugString()), Else == null ? "  NULL" : indent(Else.getDebugString()));
+			return string.Format("#IF ({0})\n{1}\n#IFELSE\n{2}", Condition.GetDebugString(), Indent(Body.GetDebugString()), Else == null ? "  NULL" : Indent(Else.GetDebugString()));
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
-			Body.integrateStatementLists();
-			Else.integrateStatementLists();
+			Body.IntegrateStatementLists();
+			Else.IntegrateStatementLists();
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Condition.linkVariables(owner);
-			Body.linkVariables(owner);
-			Else.linkVariables(owner);
+			Condition.LinkVariables(owner);
+			Body.LinkVariables(owner);
+			Else.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Condition = Condition.inlineConstants();
-			Body.inlineConstants();
-			Else.inlineConstants();
+			Condition = Condition.InlineConstants();
+			Body.InlineConstants();
+			Else.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Condition.addressCodePoints();
-			Body.addressCodePoints();
-			Else.addressCodePoints();
+			Condition.AddressCodePoints();
+			Body.AddressCodePoints();
+			Else.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Condition.linkMethods(owner);
-			Body.linkMethods(owner);
-			Else.linkMethods(owner);
+			Condition.LinkMethods(owner);
+			Body.LinkMethods(owner);
+			Else.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Condition.linkResultTypes(owner);
-			Body.linkResultTypes(owner);
-			Else.linkResultTypes(owner);
+			Condition.LinkResultTypes(owner);
+			Body.LinkResultTypes(owner);
+			Else.LinkResultTypes(owner);
 
-			BType present = Condition.getResultType();
-			BType expected = new BType_Bool(Position);
+			BType present = Condition.GetResultType();
+			BType expected = new BTypeBool(Position);
 
 			if (present != expected)
 			{
-				if (present.isImplicitCastableTo(expected))
-					Condition = new Expression_Cast(Condition.Position, expected, Condition);
+				if (present.IsImplicitCastableTo(expected))
+					Condition = new ExpressionCast(Condition.Position, expected, Condition);
 				else
 					throw new ImplicitCastException(Condition.Position, present, expected);
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
-			return Body.allPathsReturn() && Else.allPathsReturn();
+			return Body.AllPathsReturn() && Else.AllPathsReturn();
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
-			return Body.hasReturnStatement() ?? Else.hasReturnStatement();
+			return Body.HasReturnStatement() ?? Else.HasReturnStatement();
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Condition = Condition.evaluateExpressions();
+			Condition = Condition.EvaluateExpressions();
 
-			Body.evaluateExpressions();
+			Body.EvaluateExpressions();
 
-			Else.evaluateExpressions();
+			Else.EvaluateExpressions();
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
-			Statement_Label l_body = Body.findLabelByIdentifier(ident);
-			Statement_Label l_else = Else.findLabelByIdentifier(ident);
+			StatementLabel lBody = Body.FindLabelByIdentifier(ident);
+			StatementLabel lElse = Else.FindLabelByIdentifier(ident);
 
-			if (l_body != null && l_else != null)
+			if (lBody != null && lElse != null)
 				return null;
 
-			return l_body ?? l_else;
+			return lBody ?? lElse;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p;
 
-			if (Else.GetType() == typeof(Statement_NOP))
+			if (Else.GetType() == typeof(StatementNOP))
 			{
-				p = generateCode_If(reversed);
+				p = GenerateCode_If(reversed);
 			}
 			else
 			{
-				p = generateCode_IfElse(reversed);
+				p = GenerateCode_IfElse(reversed);
 			}
 
 			#region Extend MehodCall-Tags
 
 			#region Entries
 
-			p.normalizeX();
+			p.NormalizeX();
 
-			List<TagLocation> entries = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalReEntry_Tag));
+			List<TagLocation> entries = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalReEntryTag));
 
 			// Cant generate Path - because it would collide on the left side at X==0
 			bool hasLeftOutCollisions = entries.Any(x => p[0, x.Y].Type == BefungeCommandType.Walkway || p[0, x.Y].Type == BefungeCommandType.NOP);
@@ -3075,40 +3075,40 @@ namespace BefunGen.AST
 				p[-1, 0] = BCHelper.Walkway;
 				foreach (TagLocation entry in entries)
 				{
-					MethodCall_HorizontalReEntry_Tag tag_entry = entry.Tag as MethodCall_HorizontalReEntry_Tag;
+					MethodCallHorizontalReEntryTag tagEntry = entry.Tag as MethodCallHorizontalReEntryTag;
 
 					if (p[0, entry.Y].Type == BefungeCommandType.Walkway || p[0, entry.Y].Type == BefungeCommandType.NOP)
 					{
-						p.CreateRowWW(entry.Y, -1, entry.X);
+						p.CreateRowWw(entry.Y, -1, entry.X);
 
-						tag_entry.deactivate();
+						tagEntry.Deactivate();
 
-						p.SetTag(-1, entry.Y, new MethodCall_HorizontalReEntry_Tag(tag_entry.TagParam as ICodeAddressTarget), true);
+						p.SetTag(-1, entry.Y, new MethodCallHorizontalReEntryTag(tagEntry.TagParam as ICodeAddressTarget), true);
 					}
 					else
 					{
-						p.CreateRowWW(entry.Y, 1, entry.X);
-						p[-1, entry.Y] = BCHelper.PC_Jump;
+						p.CreateRowWw(entry.Y, 1, entry.X);
+						p[-1, entry.Y] = BCHelper.PCJump;
 
-						tag_entry.deactivate();
+						tagEntry.Deactivate();
 
-						p.SetTag(-1, entry.Y, new MethodCall_HorizontalReEntry_Tag(tag_entry.TagParam as ICodeAddressTarget), true);
+						p.SetTag(-1, entry.Y, new MethodCallHorizontalReEntryTag(tagEntry.TagParam as ICodeAddressTarget), true);
 					}
 				}
-				p.normalizeX();
+				p.NormalizeX();
 			}
 			else
 			{
 				foreach (TagLocation entry in entries)
 				{
-					MethodCall_HorizontalReEntry_Tag tag_entry = entry.Tag as MethodCall_HorizontalReEntry_Tag;
+					MethodCallHorizontalReEntryTag tagEntry = entry.Tag as MethodCallHorizontalReEntryTag;
 
-					p.CreateRowWW(entry.Y, 0, entry.X);
-					p[0, entry.Y] = BCHelper.PC_Jump;
+					p.CreateRowWw(entry.Y, 0, entry.X);
+					p[0, entry.Y] = BCHelper.PCJump;
 
-					tag_entry.deactivate();
+					tagEntry.Deactivate();
 
-					p.SetTag(0, entry.Y, new MethodCall_HorizontalReEntry_Tag(tag_entry.TagParam as ICodeAddressTarget), true);
+					p.SetTag(0, entry.Y, new MethodCallHorizontalReEntryTag(tagEntry.TagParam as ICodeAddressTarget), true);
 				}
 			}
 
@@ -3116,29 +3116,29 @@ namespace BefunGen.AST
 
 			#region Exits
 
-			List<TagLocation> exits = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalExit_Tag));
+			List<TagLocation> exits = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalExitTag));
 
 			foreach (TagLocation exit in exits)
 			{
-				MethodCall_HorizontalExit_Tag tag_exit = exit.Tag as MethodCall_HorizontalExit_Tag;
+				MethodCallHorizontalExitTag tagExit = exit.Tag as MethodCallHorizontalExitTag;
 
 				if (p[p.MaxX - 1, exit.Y].Type == BefungeCommandType.Walkway || p[p.MaxX - 1, exit.Y].Type == BefungeCommandType.NOP)
 				{
-					p.CreateRowWW(exit.Y, exit.X + 1, p.MaxX);
+					p.CreateRowWw(exit.Y, exit.X + 1, p.MaxX);
 
-					tag_exit.deactivate();
+					tagExit.Deactivate();
 
-					p.SetTag(p.MaxX - 1, exit.Y, new MethodCall_HorizontalExit_Tag(tag_exit.TagParam), true);
+					p.SetTag(p.MaxX - 1, exit.Y, new MethodCallHorizontalExitTag(tagExit.TagParam), true);
 				}
 				else
 				{
-					p.CreateRowWW(exit.Y, exit.X + 1, p.MaxX - 2);
+					p.CreateRowWw(exit.Y, exit.X + 1, p.MaxX - 2);
 
-					p.replaceWalkway(p.MaxX - 2, exit.Y, BCHelper.PC_Jump, true);
+					p.ReplaceWalkway(p.MaxX - 2, exit.Y, BCHelper.PCJump, true);
 
-					tag_exit.deactivate();
+					tagExit.Deactivate();
 
-					p.SetTag(p.MaxX - 1, exit.Y, new MethodCall_HorizontalExit_Tag(tag_exit.TagParam), true);
+					p.SetTag(p.MaxX - 1, exit.Y, new MethodCallHorizontalExitTag(tagExit.TagParam), true);
 				}
 
 
@@ -3151,13 +3151,13 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public CodePiece generateCode_If(bool reversed)
+		public CodePiece GenerateCode_If(bool reversed)
 		{
-			CodePiece cp_cond = Condition.generateCode(reversed);
-			cp_cond.normalizeX();
+			CodePiece cpCond = Condition.GenerateCode(reversed);
+			cpCond.NormalizeX();
 
-			CodePiece cp_body_if = Body.generateCode(reversed);
-			cp_body_if.normalizeX();
+			CodePiece cpBodyIf = Body.GenerateCode(reversed);
+			cpBodyIf.NormalizeX();
 
 			CodePiece p = new CodePiece();
 
@@ -3171,44 +3171,44 @@ namespace BefunGen.AST
 				// 
 				// ^      IF      <
 
-				int right = Math.Max(cp_cond.Width + 1, cp_body_if.Width);
-				int mid = cp_cond.MaxY;
-				int bot = (mid + 1) - cp_body_if.MinY;
+				int right = Math.Max(cpCond.Width + 1, cpBodyIf.Width);
+				int mid = cpCond.MaxY;
+				int bot = (mid + 1) - cpBodyIf.MinY;
 
 				// Top-Left '_v#!'
-				p[-1, 0] = BCHelper.If_Horizontal;
-				p[0, 0] = BCHelper.PC_Down;
-				p[1, 0] = BCHelper.PC_Jump;
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p[1, 0] = BCHelper.PCJump;
 				p[2, 0] = BCHelper.Not;
 				// Mid_Left '0>'
-				p[-1, mid] = BCHelper.Digit_1;
-				p[0, mid] = BCHelper.PC_Right;
+				p[-1, mid] = BCHelper.Digit1;
+				p[0, mid] = BCHelper.PCRight;
 				// Mid-Right 'v'
-				p[right, mid] = BCHelper.PC_Down;
+				p[right, mid] = BCHelper.PCDown;
 				// Bottom-Left '^'
-				p[-1, bot] = BCHelper.PC_Up;
+				p[-1, bot] = BCHelper.PCUp;
 				// Bottom-right '<'
-				p[right, bot] = BCHelper.PC_Left;
+				p[right, bot] = BCHelper.PCLeft;
 
 				// Walkway Top (Condition -> end)
-				p.FillRowWW(0, cp_cond.Width + 3, right + 1);
+				p.FillRowWw(0, cpCond.Width + 3, right + 1);
 				// Walkway Mid ('0>' -> 'v')
-				p.FillRowWW(mid, 1, right);
+				p.FillRowWw(mid, 1, right);
 				// Walkway Bot (Body_If -> '<')
-				p.FillRowWW(bot, cp_body_if.Width, right);
+				p.FillRowWw(bot, cpBodyIf.Width, right);
 				// Walkway Left-Upper_1 ('_' -> '0')
-				p.FillColWW(-1, 1, mid);
+				p.FillColWw(-1, 1, mid);
 				// Walkway Left-Upper_2 ('v' -> '>')
-				p.FillColWW(0, 1, mid);
+				p.FillColWw(0, 1, mid);
 				// Walkway Left-Lower ('0' -> '^')
-				p.FillColWW(-1, mid + 1, bot);
+				p.FillColWw(-1, mid + 1, bot);
 				// Walkway Right-Lower ('v' -> '<')
-				p.FillColWW(right, mid + 1, bot);
+				p.FillColWw(right, mid + 1, bot);
 
 				// Set Condition
-				p.SetAt(3, 0, cp_cond);
+				p.SetAt(3, 0, cpCond);
 				// Set Body
-				p.SetAt(0, bot, cp_body_if);
+				p.SetAt(0, bot, cpBodyIf);
 
 				#endregion
 			}
@@ -3222,43 +3222,43 @@ namespace BefunGen.AST
 				// 
 				// >   IF        ^
 
-				int right = Math.Max(cp_cond.Width, cp_body_if.Width - 1);
-				int mid = cp_cond.MaxY;
-				int bot = (mid + 1) - cp_body_if.MinY;
+				int right = Math.Max(cpCond.Width, cpBodyIf.Width - 1);
+				int mid = cpCond.MaxY;
+				int bot = (mid + 1) - cpBodyIf.MinY;
 
 				// Top-Right '#v_'
-				p[right - 1, 0] = BCHelper.PC_Jump;
-				p[right, 0] = BCHelper.PC_Down;
-				p[right + 1, 0] = BCHelper.If_Horizontal;
+				p[right - 1, 0] = BCHelper.PCJump;
+				p[right, 0] = BCHelper.PCDown;
+				p[right + 1, 0] = BCHelper.IfHorizontal;
 				// Mid-Left 'v'
-				p[-1, mid] = BCHelper.PC_Down;
+				p[-1, mid] = BCHelper.PCDown;
 				// Mid-Right '<0'
-				p[right, mid] = BCHelper.PC_Left;
-				p[right + 1, mid] = BCHelper.Digit_0;
+				p[right, mid] = BCHelper.PCLeft;
+				p[right + 1, mid] = BCHelper.Digit0;
 				// Bottom-Left '>'
-				p[-1, bot] = BCHelper.PC_Right;
+				p[-1, bot] = BCHelper.PCRight;
 				// Bottom-Right '^'
-				p[right + 1, bot] = BCHelper.PC_Up;
+				p[right + 1, bot] = BCHelper.PCUp;
 
 				// Walkway Top  (Condition -> '#v_')
-				p.FillRowWW(0, cp_cond.Width - 1, right - 1);
+				p.FillRowWw(0, cpCond.Width - 1, right - 1);
 				// Walkway Mid  ('v' -> '<0')
-				p.FillRowWW(mid, 0, right);
+				p.FillRowWw(mid, 0, right);
 				// Walkway Bot  (Body_If -> '^')
-				p.FillRowWW(bot, cp_body_if.Width, right + 1);
+				p.FillRowWw(bot, cpBodyIf.Width, right + 1);
 				// Walkway Left-Lower  ('v' -> '>')
-				p.FillColWW(-1, mid + 1, bot);
+				p.FillColWw(-1, mid + 1, bot);
 				// Walkway Right-Upper_1  ('v' -> '<')
-				p.FillColWW(right, 1, mid);
+				p.FillColWw(right, 1, mid);
 				// Walkway Right-Upper_2  ('_' -> '0')
-				p.FillColWW(right + 1, 1, mid);
+				p.FillColWw(right + 1, 1, mid);
 				// Walkway Right-Lower  ('0' -> '^')
-				p.FillColWW(right + 1, mid + 1, bot);
+				p.FillColWw(right + 1, mid + 1, bot);
 
 				// Set Condition
-				p.SetAt(-1, 0, cp_cond);
+				p.SetAt(-1, 0, cpCond);
 				// Set Body
-				p.SetAt(0, bot, cp_body_if);
+				p.SetAt(0, bot, cpBodyIf);
 
 				#endregion
 			}
@@ -3266,16 +3266,16 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public CodePiece generateCode_IfElse(bool reversed)
+		public CodePiece GenerateCode_IfElse(bool reversed)
 		{
-			CodePiece cp_cond = Condition.generateCode(reversed);
-			cp_cond.normalizeX();
+			CodePiece cpCond = Condition.GenerateCode(reversed);
+			cpCond.NormalizeX();
 
-			CodePiece cp_if = Body.generateCode(reversed);
-			cp_if.normalizeX();
+			CodePiece cpIf = Body.GenerateCode(reversed);
+			cpIf.NormalizeX();
 
-			CodePiece cp_else = Else.generateCode(reversed);
-			cp_else.normalizeX();
+			CodePiece cpElse = Else.GenerateCode(reversed);
+			cpElse.NormalizeX();
 
 			CodePiece p = new CodePiece();
 
@@ -3293,54 +3293,54 @@ namespace BefunGen.AST
 				// 
 				// ^    ELSE   <
 
-				int right = MathExt.Max(cp_cond.Width, cp_if.Width, cp_else.Width) - 1;
-				int mid = cp_cond.MaxY;
-				int yif = mid + MathExt.Max(-cp_if.MinY + 1, 2);
-				int yelse = yif + MathExt.Max(cp_if.MaxY + -cp_else.MinY, 2);
+				int right = MathExt.Max(cpCond.Width, cpIf.Width, cpElse.Width) - 1;
+				int mid = cpCond.MaxY;
+				int yif = mid + MathExt.Max(-cpIf.MinY + 1, 2);
+				int yelse = yif + MathExt.Max(cpIf.MaxY + -cpElse.MinY, 2);
 
 				// Top-Left '<v'
-				p[-2, 0] = BCHelper.PC_Left;
-				p[-1, 0] = BCHelper.PC_Down;
+				p[-2, 0] = BCHelper.PCLeft;
+				p[-1, 0] = BCHelper.PCDown;
 				// Mid-Left '>'
-				p[-1, mid] = BCHelper.PC_Right;
+				p[-1, mid] = BCHelper.PCRight;
 				// Mid-Right 'v'
-				p[right, mid] = BCHelper.PC_Down;
+				p[right, mid] = BCHelper.PCDown;
 				// yif-Left '^'
-				p[-2, yif] = BCHelper.PC_Up;
+				p[-2, yif] = BCHelper.PCUp;
 				// yif-Right '#' '<' '|'
-				p[right, yif - 1] = BCHelper.PC_Jump;
-				p[right, yif] = BCHelper.PC_Left;
-				p[right, yif + 1] = BCHelper.If_Vertical;
+				p[right, yif - 1] = BCHelper.PCJump;
+				p[right, yif] = BCHelper.PCLeft;
+				p[right, yif + 1] = BCHelper.IfVertical;
 				// yelse-Left '^'
-				p[-2, yelse] = BCHelper.PC_Up;
+				p[-2, yelse] = BCHelper.PCUp;
 				// yelse-Right '<'
-				p[right, yelse] = BCHelper.PC_Left;
+				p[right, yelse] = BCHelper.PCLeft;
 
 				// Walkway Top (Condition -> end)
-				p.FillRowWW(0, cp_cond.Width, right + 1);
+				p.FillRowWw(0, cpCond.Width, right + 1);
 				// Walkway Mid ('>' -> 'v')
-				p.FillRowWW(mid, 0, right);
+				p.FillRowWw(mid, 0, right);
 				// Walkway yif (If -> '<')
-				p.FillRowWW(yif, cp_if.Width - 1, right);
+				p.FillRowWw(yif, cpIf.Width - 1, right);
 				// Walkway yelse (Else -> '<')
-				p.FillRowWW(yelse, cp_else.Width - 1, right);
+				p.FillRowWw(yelse, cpElse.Width - 1, right);
 				// Walkway Left-Upper_1 ('<' -> '^')
-				p.FillColWW(-2, 1, yif);
+				p.FillColWw(-2, 1, yif);
 				// Walkway Left-Upper_2 ('v' -> '>')
-				p.FillColWW(-1, 1, mid);
+				p.FillColWw(-1, 1, mid);
 				// Walkway Left-Lower ('^' -> '^')
-				p.FillColWW(-2, yif + 1, yelse);
+				p.FillColWw(-2, yif + 1, yelse);
 				// Walkway Right-Upper ('v' -> '<')
-				p.FillColWW(right, mid + 1, yif - 1);
+				p.FillColWw(right, mid + 1, yif - 1);
 				// Walkway Right-Lower ('<' -> '<')
-				p.FillColWW(right, yif + 2, yelse);
+				p.FillColWw(right, yif + 2, yelse);
 
 				// Insert Condition
-				p.SetAt(0, 0, cp_cond);
+				p.SetAt(0, 0, cpCond);
 				// Insert If
-				p.SetAt(-1, yif, cp_if);
+				p.SetAt(-1, yif, cpIf);
 				// Insert Else
-				p.SetAt(-1, yelse, cp_else);
+				p.SetAt(-1, yelse, cpElse);
 
 				#endregion
 			}
@@ -3358,54 +3358,54 @@ namespace BefunGen.AST
 				// 
 				// >    ELSE    ^
 
-				int right = MathExt.Max(cp_cond.Width, cp_if.Width, cp_else.Width) - 1;
-				int mid = cp_cond.MaxY;
-				int yif = mid + MathExt.Max(-cp_if.MinY + 1, 2);
-				int yelse = yif + MathExt.Max(cp_if.MaxY + -cp_else.MinY, 2);
+				int right = MathExt.Max(cpCond.Width, cpIf.Width, cpElse.Width) - 1;
+				int mid = cpCond.MaxY;
+				int yif = mid + MathExt.Max(-cpIf.MinY + 1, 2);
+				int yelse = yif + MathExt.Max(cpIf.MaxY + -cpElse.MinY, 2);
 
 				// Top-Right 'v>'
-				p[right, 0] = BCHelper.PC_Down;
-				p[right + 1, 0] = BCHelper.PC_Right;
+				p[right, 0] = BCHelper.PCDown;
+				p[right + 1, 0] = BCHelper.PCRight;
 				// Mid-Left 'v'
-				p[-1, mid] = BCHelper.PC_Down;
+				p[-1, mid] = BCHelper.PCDown;
 				// Mid-Right '<'
-				p[right, mid] = BCHelper.PC_Left;
+				p[right, mid] = BCHelper.PCLeft;
 				// yif-Left '#' '>' '|'
-				p[-1, yif - 1] = BCHelper.PC_Jump;
-				p[-1, yif] = BCHelper.PC_Right;
-				p[-1, yif + 1] = BCHelper.If_Vertical;
+				p[-1, yif - 1] = BCHelper.PCJump;
+				p[-1, yif] = BCHelper.PCRight;
+				p[-1, yif + 1] = BCHelper.IfVertical;
 				// yif-Right '^'
-				p[right + 1, yif] = BCHelper.PC_Up;
+				p[right + 1, yif] = BCHelper.PCUp;
 				// yelse-Left '>'
-				p[-1, yelse] = BCHelper.PC_Right;
+				p[-1, yelse] = BCHelper.PCRight;
 				// yelse-Right '^'
-				p[right + 1, yelse] = BCHelper.PC_Up;
+				p[right + 1, yelse] = BCHelper.PCUp;
 
 				// Walkway Top (Condition -> 'v>')
-				p.FillRowWW(0, cp_cond.Width - 1, right);
+				p.FillRowWw(0, cpCond.Width - 1, right);
 				// Walkway Mid ('v' -> '>')
-				p.FillRowWW(mid, 0, right);
+				p.FillRowWw(mid, 0, right);
 				// Walkway yif (If -> '^')
-				p.FillRowWW(yif, cp_if.Width, right + 1);
+				p.FillRowWw(yif, cpIf.Width, right + 1);
 				// Walkway yelse (Else -> '^')
-				p.FillRowWW(yelse, cp_else.Width, right + 1);
+				p.FillRowWw(yelse, cpElse.Width, right + 1);
 				// Walkway Left-Upper ('v' -> '#')
-				p.FillColWW(-1, mid + 1, yif - 1);
+				p.FillColWw(-1, mid + 1, yif - 1);
 				// Walkway Left-Lower ('|' -> '>')
-				p.FillColWW(-1, yif + 2, yelse);
+				p.FillColWw(-1, yif + 2, yelse);
 				// Walkway Right-Upper_1 ('v' -> '<')
-				p.FillColWW(right, 1, mid);
+				p.FillColWw(right, 1, mid);
 				// Walkway Right-Upper_2 ('>' -> '^')
-				p.FillColWW(right + 1, 1, yif);
+				p.FillColWw(right + 1, 1, yif);
 				// Walkway Right-Lower ('^' -> '^')
-				p.FillColWW(right + 1, yif + 1, yelse);
+				p.FillColWw(right + 1, yif + 1, yelse);
 
 				// Insert Condition
-				p.SetAt(-1, 0, cp_cond);
+				p.SetAt(-1, 0, cpCond);
 				// Insert If
-				p.SetAt(0, yif, cp_if);
+				p.SetAt(0, yif, cpIf);
 				// Insert Else
-				p.SetAt(0, yelse, cp_else);
+				p.SetAt(0, yelse, cpElse);
 
 				#endregion
 			}
@@ -3414,98 +3414,98 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class Statement_While : Statement
+	public class StatementWhile : Statement
 	{
 		public Expression Condition;
-		public readonly Statement_StatementList Body;
+		public readonly StatementStatementList Body;
 
-		public Statement_While(SourceCodePosition pos, Expression c, Statement_StatementList b)
+		public StatementWhile(SourceCodePosition pos, Expression c, StatementStatementList b)
 			: base(pos)
 		{
 			this.Condition = c;
 			this.Body = b;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#WHILE ({0})\n{1}", Condition.getDebugString(), indent(Body.getDebugString()));
+			return string.Format("#WHILE ({0})\n{1}", Condition.GetDebugString(), Indent(Body.GetDebugString()));
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
-			Body.integrateStatementLists();
+			Body.IntegrateStatementLists();
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Condition.linkVariables(owner);
-			Body.linkVariables(owner);
+			Condition.LinkVariables(owner);
+			Body.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Condition = Condition.inlineConstants();
-			Body.inlineConstants();
+			Condition = Condition.InlineConstants();
+			Body.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Condition.addressCodePoints();
-			Body.addressCodePoints();
+			Condition.AddressCodePoints();
+			Body.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Condition.linkMethods(owner);
-			Body.linkMethods(owner);
+			Condition.LinkMethods(owner);
+			Body.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Condition.linkResultTypes(owner);
-			Body.linkResultTypes(owner);
+			Condition.LinkResultTypes(owner);
+			Body.LinkResultTypes(owner);
 
-			BType present = Condition.getResultType();
-			BType expected = new BType_Bool(Position);
+			BType present = Condition.GetResultType();
+			BType expected = new BTypeBool(Position);
 
 			if (present != expected)
 			{
-				if (present.isImplicitCastableTo(expected))
-					Condition = new Expression_Cast(Condition.Position, expected, Condition);
+				if (present.IsImplicitCastableTo(expected))
+					Condition = new ExpressionCast(Condition.Position, expected, Condition);
 				else
 					throw new ImplicitCastException(Condition.Position, present, expected);
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			return false; // Its possible that the Body isnt executed at all
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
-			return Body.hasReturnStatement();
+			return Body.HasReturnStatement();
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Condition = Condition.evaluateExpressions();
+			Condition = Condition.EvaluateExpressions();
 
-			Body.evaluateExpressions();
+			Body.EvaluateExpressions();
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
-			return Body.findLabelByIdentifier(ident);
+			return Body.FindLabelByIdentifier(ident);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece cp_body = Body.generateCode(!reversed);
-			cp_body.normalizeX();
+			CodePiece cpBody = Body.GenerateCode(!reversed);
+			cpBody.NormalizeX();
 
-			CodePiece cp_cond = Condition.generateCode(reversed);
-			cp_cond.normalizeX();
+			CodePiece cpCond = Condition.GenerateCode(reversed);
+			cpCond.NormalizeX();
 
 			if (reversed)
 			{
@@ -3513,37 +3513,37 @@ namespace BefunGen.AST
 				//  >  STATEMENT  ^
 				CodePiece p = new CodePiece();
 
-				int top = cp_body.MinY - cp_cond.MaxY;
-				int right = Math.Max(cp_body.Width, cp_cond.Width + 2);
+				int top = cpBody.MinY - cpCond.MaxY;
+				int right = Math.Max(cpBody.Width, cpCond.Width + 2);
 
 				// Bottom-Left '>'
-				p[-1, 0] = BCHelper.PC_Right;
+				p[-1, 0] = BCHelper.PCRight;
 				// Top-Left '_v#!'
-				p[-2, top] = BCHelper.If_Horizontal;
-				p[-1, top] = BCHelper.PC_Down;
-				p[0, top] = BCHelper.PC_Jump;
+				p[-2, top] = BCHelper.IfHorizontal;
+				p[-1, top] = BCHelper.PCDown;
+				p[0, top] = BCHelper.PCJump;
 				p[1, top] = BCHelper.Not;
 				// Top-Right '<'
-				p[right, top] = BCHelper.PC_Left;
+				p[right, top] = BCHelper.PCLeft;
 				// Bottom Right '^'
-				p[right, 0] = BCHelper.PC_Up;
+				p[right, 0] = BCHelper.PCUp;
 
 				// Fill Walkway between condition and Left
-				p.FillRowWW(top, cp_cond.Width + 2, right);
+				p.FillRowWw(top, cpCond.Width + 2, right);
 				// Fill Walkway between body and '<'
-				p.FillRowWW(0, cp_body.Width, right);
+				p.FillRowWw(0, cpBody.Width, right);
 				// Walkway Leftside Up
-				p.FillColWW(-1, top + 1, 0);
+				p.FillColWw(-1, top + 1, 0);
 				// Walkway righside down
-				p.FillColWW(right, top + 1, 0);
+				p.FillColWw(right, top + 1, 0);
 
 
 				// Insert Condition
-				p.SetAt(2, top, cp_cond);
+				p.SetAt(2, top, cpCond);
 				// Insert Body
-				p.SetAt(0, 0, cp_body);
+				p.SetAt(0, 0, cpBody);
 
-				p.normalizeX();
+				p.NormalizeX();
 				p.AddYOffset(-top); // Set Offset relative to condition (and to insert/exit Points)
 
 				return p;
@@ -3554,143 +3554,143 @@ namespace BefunGen.AST
 				// ^  STATEMENT <
 				CodePiece p = new CodePiece();
 
-				int top = cp_body.MinY - cp_cond.MaxY;
-				int right = Math.Max(cp_body.Width, cp_cond.Width + 1);
+				int top = cpBody.MinY - cpCond.MaxY;
+				int right = Math.Max(cpBody.Width, cpCond.Width + 1);
 
 				// Bottom-Left '^'
-				p[-1, 0] = BCHelper.PC_Up;
+				p[-1, 0] = BCHelper.PCUp;
 				// Top-Left '>'
-				p[-1, top] = BCHelper.PC_Right;
+				p[-1, top] = BCHelper.PCRight;
 				// Tester Top-Right '#v_'
-				p[right - 1, top] = BCHelper.PC_Jump;
-				p[right, top] = BCHelper.PC_Down;
-				p[right + 1, top] = BCHelper.If_Horizontal;
+				p[right - 1, top] = BCHelper.PCJump;
+				p[right, top] = BCHelper.PCDown;
+				p[right + 1, top] = BCHelper.IfHorizontal;
 				// Bottom Right '<'
-				p[right, 0] = BCHelper.PC_Left;
+				p[right, 0] = BCHelper.PCLeft;
 
 				// Fill Walkway between condition and Tester
-				p.FillRowWW(top, cp_cond.Width, right - 1);
+				p.FillRowWw(top, cpCond.Width, right - 1);
 				// Fill Walkway between body and '<'
-				p.FillRowWW(0, cp_body.Width, right);
+				p.FillRowWw(0, cpBody.Width, right);
 				// Walkway Leftside Up
-				p.FillColWW(-1, top + 1, 0);
+				p.FillColWw(-1, top + 1, 0);
 				// Walkway righside down
-				p.FillColWW(right, top + 1, 0);
+				p.FillColWw(right, top + 1, 0);
 
 				// Insert Condition
-				p.SetAt(0, top, cp_cond);
+				p.SetAt(0, top, cpCond);
 				// Insert Body
-				p.SetAt(0, 0, cp_body);
+				p.SetAt(0, 0, cpBody);
 
-				p.normalizeX();
+				p.NormalizeX();
 				p.AddYOffset(-top); // Set Offset relative to condition (and to insert/exit Points)
 
 				return p;
 			}
 		}
 
-		public static Statement_StatementList GenerateForLoop(SourceCodePosition p, Statement init, Expression cond, Statement op, Statement_StatementList body)
+		public static StatementStatementList GenerateForLoop(SourceCodePosition p, Statement init, Expression cond, Statement op, StatementStatementList body)
 		{
 			body.List.Add(op);
 
-			Statement_While s_while = new Statement_While(p, cond, body);
+			StatementWhile sWhile = new StatementWhile(p, cond, body);
 
-			return new Statement_StatementList(p, new List<Statement>() { init, s_while });
+			return new StatementStatementList(p, new List<Statement>() { init, sWhile });
 		}
 	}
 
-	public class Statement_RepeatUntil : Statement
+	public class StatementRepeatUntil : Statement
 	{
 		public Expression Condition;
-		public readonly Statement_StatementList Body;
+		public readonly StatementStatementList Body;
 
-		public Statement_RepeatUntil(SourceCodePosition pos, Expression c, Statement_StatementList b)
+		public StatementRepeatUntil(SourceCodePosition pos, Expression c, StatementStatementList b)
 			: base(pos)
 		{
 			this.Condition = c;
 			this.Body = b;
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			return string.Format("#REPEAT-UNTIL ({0})\n{1}", Condition.getDebugString(), indent(Body.getDebugString()));
+			return string.Format("#REPEAT-UNTIL ({0})\n{1}", Condition.GetDebugString(), Indent(Body.GetDebugString()));
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
-			Body.integrateStatementLists();
+			Body.IntegrateStatementLists();
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Body.linkVariables(owner);
-			Condition.linkVariables(owner);
+			Body.LinkVariables(owner);
+			Condition.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Body.inlineConstants();
-			Condition = Condition.inlineConstants();
+			Body.InlineConstants();
+			Condition = Condition.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Body.addressCodePoints();
-			Condition.addressCodePoints();
+			Body.AddressCodePoints();
+			Condition.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Body.linkMethods(owner);
-			Condition.linkMethods(owner);
+			Body.LinkMethods(owner);
+			Condition.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Body.linkResultTypes(owner);
-			Condition.linkResultTypes(owner);
+			Body.LinkResultTypes(owner);
+			Condition.LinkResultTypes(owner);
 
-			BType present = Condition.getResultType();
-			BType expected = new BType_Bool(Position);
+			BType present = Condition.GetResultType();
+			BType expected = new BTypeBool(Position);
 
 			if (present != expected)
 			{
-				if (present.isImplicitCastableTo(expected))
-					Condition = new Expression_Cast(Condition.Position, expected, Condition);
+				if (present.IsImplicitCastableTo(expected))
+					Condition = new ExpressionCast(Condition.Position, expected, Condition);
 				else
 					throw new ImplicitCastException(Condition.Position, present, expected);
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
-			return Body.allPathsReturn(); // Body is executed at least once
+			return Body.AllPathsReturn(); // Body is executed at least once
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
-			return Body.hasReturnStatement();
+			return Body.HasReturnStatement();
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Body.evaluateExpressions();
+			Body.EvaluateExpressions();
 
-			Condition = Condition.evaluateExpressions();
+			Condition = Condition.EvaluateExpressions();
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
-			return Body.findLabelByIdentifier(ident);
+			return Body.FindLabelByIdentifier(ident);
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
-			CodePiece cp_body = Body.generateCode(reversed);
-			cp_body.normalizeX();
+			CodePiece cpBody = Body.GenerateCode(reversed);
+			cpBody.NormalizeX();
 
-			CodePiece cp_cond = extendVerticalMCTagsUpwards(Condition.generateCode(!reversed));
-			cp_cond.normalizeX();
+			CodePiece cpCond = ExtendVerticalMcTagsUpwards(Condition.GenerateCode(!reversed));
+			cpCond.NormalizeX();
 
 			if (reversed)
 			{
@@ -3699,46 +3699,46 @@ namespace BefunGen.AST
 				//  >  CONDITION ^
 				CodePiece p = new CodePiece();
 
-				int mid = cp_body.MaxY;
-				int bottom = (mid + 1) - cp_cond.MinY;
-				int right = Math.Max(cp_body.Width, cp_cond.Width + 1);
+				int mid = cpBody.MaxY;
+				int bottom = (mid + 1) - cpCond.MinY;
+				int right = Math.Max(cpBody.Width, cpCond.Width + 1);
 
 				// Top-Left '<v'
-				p[-2, 0] = BCHelper.PC_Left;
-				p[-1, 0] = BCHelper.PC_Down;
+				p[-2, 0] = BCHelper.PCLeft;
+				p[-1, 0] = BCHelper.PCDown;
 				// Top-Right '<'
-				p[right, 0] = BCHelper.PC_Left;
+				p[right, 0] = BCHelper.PCLeft;
 				// Mid-Left '^'
-				p[-2, mid] = BCHelper.PC_Up;
+				p[-2, mid] = BCHelper.PCUp;
 				// Mid-Right '_^'
-				p[right, mid] = BCHelper.PC_Up;
-				p[right - 1, mid] = BCHelper.If_Horizontal;
+				p[right, mid] = BCHelper.PCUp;
+				p[right - 1, mid] = BCHelper.IfHorizontal;
 				//Bottom-Left '>'
-				p[-1, bottom] = BCHelper.PC_Right;
+				p[-1, bottom] = BCHelper.PCRight;
 				//Bottom-Right '^'
-				p[right - 1, bottom] = BCHelper.PC_Up;
+				p[right - 1, bottom] = BCHelper.PCUp;
 
 				// Walkway top (Statement to '<')
-				p.FillRowWW(0, cp_body.Width, right);
+				p.FillRowWw(0, cpBody.Width, right);
 				// Walkway bottom (Condition to '^')
-				p.FillRowWW(bottom, cp_cond.Width, right - 1);
+				p.FillRowWw(bottom, cpCond.Width, right - 1);
 				// Walkway left-lower ('<' to '^')
-				p.FillColWW(-2, 1, mid);
+				p.FillColWw(-2, 1, mid);
 				// Walkway left-full ('v' to '>')
-				p.FillColWW(-1, 1, bottom);
+				p.FillColWw(-1, 1, bottom);
 				// Walkway right-lower ('^' to '_')
-				p.FillColWW(right, 1, mid);
+				p.FillColWw(right, 1, mid);
 				// Walkway right-upper ('^' to '<')
-				p.FillColWW(right - 1, mid + 1, bottom);
+				p.FillColWw(right - 1, mid + 1, bottom);
 				// Walkway middle ('^' to '_^')
-				p.FillRowWW(mid, 0, right - 1);
+				p.FillRowWw(mid, 0, right - 1);
 
 				// Insert Statement
-				p.SetAt(0, 0, cp_body);
+				p.SetAt(0, 0, cpBody);
 				// Inser Condition
-				p.SetAt(0, bottom, cp_cond);
+				p.SetAt(0, bottom, cpCond);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
@@ -3749,60 +3749,60 @@ namespace BefunGen.AST
 				//  ^! CONDITION <
 				CodePiece p = new CodePiece();
 
-				int mid = cp_body.MaxY;
-				int bottom = (mid + 1) - cp_cond.MinY;
-				int right = Math.Max(cp_body.Width, cp_cond.Width + 2);
+				int mid = cpBody.MaxY;
+				int bottom = (mid + 1) - cpCond.MinY;
+				int right = Math.Max(cpBody.Width, cpCond.Width + 2);
 
 				// Top-Left '>'
-				p[-1, 0] = BCHelper.PC_Right;
+				p[-1, 0] = BCHelper.PCRight;
 				// Top-Right 'v>'
-				p[right, 0] = BCHelper.PC_Down;
-				p[right + 1, 0] = BCHelper.PC_Right;
+				p[right, 0] = BCHelper.PCDown;
+				p[right + 1, 0] = BCHelper.PCRight;
 				// Mid-Left '^_'
-				p[0, mid] = BCHelper.If_Horizontal;
-				p[-1, mid] = BCHelper.PC_Up;
+				p[0, mid] = BCHelper.IfHorizontal;
+				p[-1, mid] = BCHelper.PCUp;
 				// Mid-Right '^'
-				p[right + 1, mid] = BCHelper.PC_Up;
+				p[right + 1, mid] = BCHelper.PCUp;
 				//Bottom-Left '^!'
-				p[0, bottom] = BCHelper.PC_Up;
+				p[0, bottom] = BCHelper.PCUp;
 				p[1, bottom] = BCHelper.Not;
 				//Bottom-Right '<'
-				p[right, bottom] = BCHelper.PC_Left;
+				p[right, bottom] = BCHelper.PCLeft;
 
 				// Walkway top (Statement to 'v')
-				p.FillRowWW(0, cp_body.Width, right);
+				p.FillRowWw(0, cpBody.Width, right);
 				// Walkway bottom (Condition to '<')
-				p.FillRowWW(bottom, cp_cond.Width + 2, right);
+				p.FillRowWw(bottom, cpCond.Width + 2, right);
 				// Walkway left-lower ('>' to '^')
-				p.FillColWW(-1, 1, mid);
+				p.FillColWw(-1, 1, mid);
 				// Walkway left-upper ('_' to '^')
-				p.FillColWW(0, mid + 1, bottom);
+				p.FillColWw(0, mid + 1, bottom);
 				// Walkway right-lower ('>' to '^')
-				p.FillColWW(right + 1, 1, mid);
+				p.FillColWw(right + 1, 1, mid);
 				// Walkway right-full ('v' to '<')
-				p.FillColWW(right, 1, bottom);
+				p.FillColWw(right, 1, bottom);
 				// Walkway middle ('^_' to '^')
-				p.FillRowWW(mid, 1, right);
+				p.FillRowWw(mid, 1, right);
 
 				// Insert Statement
-				p.SetAt(0, 0, cp_body);
+				p.SetAt(0, 0, cpBody);
 				// Inser Condition
-				p.SetAt(2, bottom, cp_cond);
+				p.SetAt(2, bottom, cpCond);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				return p;
 			}
 		}
 	}
 
-	public class Statement_Switch : Statement
+	public class StatementSwitch : Statement
 	{
 		public Expression Condition;
-		public List<Switch_Case> Cases;
+		public List<SwitchCase> Cases;
 		public Statement DefaultCase;
 
-		public Statement_Switch(SourceCodePosition pos, Expression c, List_Switchs lst)
+		public StatementSwitch(SourceCodePosition pos, Expression c, ListSwitchs lst)
 			: base(pos)
 		{
 			this.Condition = c;
@@ -3815,111 +3815,111 @@ namespace BefunGen.AST
 			}
 			else
 			{
-				DefaultCase = new Statement_NOP(pos);
+				DefaultCase = new StatementNOP(pos);
 			}
 		}
 
-		public override string getDebugString() // Whoop Whoop - I can do it in one line
+		public override string GetDebugString() // Whoop Whoop - I can do it in one line
 		{
 			return
 				string.Format("#SWITCH ({0}){1}{2}",
-					Condition.getDebugString(),
+					Condition.GetDebugString(),
 					Environment.NewLine,
-					indent(
+					Indent(
 						String.Join(
 							Environment.NewLine + Environment.NewLine,
 							Cases.Select(p =>
-								p.Value.getDebugString() +
+								p.Value.GetDebugString() +
 								":" +
 								Environment.NewLine +
-								indent(
-									p.Body.getDebugString()
+								Indent(
+									p.Body.GetDebugString()
 								)
 							)
 						) +
 						Environment.NewLine +
 						"default:" +
 						Environment.NewLine +
-						indent(
-							DefaultCase.getDebugString()
+						Indent(
+							DefaultCase.GetDebugString()
 						)
 					)
 				);
 		}
 
-		public override void integrateStatementLists()
+		public override void IntegrateStatementLists()
 		{
-			Cases.ForEach(p => p.Body.integrateStatementLists());
-			DefaultCase.integrateStatementLists();
+			Cases.ForEach(p => p.Body.IntegrateStatementLists());
+			DefaultCase.IntegrateStatementLists();
 		}
 
-		public override void linkVariables(Method owner)
+		public override void LinkVariables(Method owner)
 		{
-			Condition.linkVariables(owner);
+			Condition.LinkVariables(owner);
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				sc.Body.linkVariables(owner);
+				sc.Body.LinkVariables(owner);
 			}
 
-			DefaultCase.linkVariables(owner);
+			DefaultCase.LinkVariables(owner);
 		}
 
-		public override void inlineConstants()
+		public override void InlineConstants()
 		{
-			Condition = Condition.inlineConstants();
+			Condition = Condition.InlineConstants();
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				sc.Body.inlineConstants();
+				sc.Body.InlineConstants();
 			}
 
-			DefaultCase.inlineConstants();
+			DefaultCase.InlineConstants();
 		}
 
-		public override void addressCodePoints()
+		public override void AddressCodePoints()
 		{
-			Condition.addressCodePoints();
+			Condition.AddressCodePoints();
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				sc.Body.addressCodePoints();
+				sc.Body.AddressCodePoints();
 			}
 
-			DefaultCase.addressCodePoints();
+			DefaultCase.AddressCodePoints();
 		}
 
-		public override void linkMethods(Program owner)
+		public override void LinkMethods(Program owner)
 		{
-			Condition.linkMethods(owner);
+			Condition.LinkMethods(owner);
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				sc.Body.linkMethods(owner);
+				sc.Body.LinkMethods(owner);
 			}
 
-			DefaultCase.linkMethods(owner);
+			DefaultCase.LinkMethods(owner);
 		}
 
-		public override void linkResultTypes(Method owner)
+		public override void LinkResultTypes(Method owner)
 		{
-			Condition.linkResultTypes(owner);
+			Condition.LinkResultTypes(owner);
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				sc.Body.linkResultTypes(owner);
+				sc.Body.LinkResultTypes(owner);
 			}
 
-			DefaultCase.linkResultTypes(owner);
+			DefaultCase.LinkResultTypes(owner);
 
 			// Test for correct Types: //
 			//#########################//
 
-			BType expected = Condition.getResultType();
+			BType expected = Condition.GetResultType();
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				BType present = sc.Value.getBType();
+				BType present = sc.Value.GetBType();
 
 				if (present != expected)
 					throw new WrongTypeException(sc.Value.Position, present, expected);
@@ -3928,7 +3928,7 @@ namespace BefunGen.AST
 			// Test for duplicate Cases: //
 			//###########################//
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
 				if (Cases.Where(p => p != sc).Any(p => p.Value.ValueEquals(sc.Value)))
 				{
@@ -3937,48 +3937,48 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override bool allPathsReturn()
+		public override bool AllPathsReturn()
 		{
 			bool result = true;
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				result &= sc.Body.allPathsReturn();
+				result &= sc.Body.AllPathsReturn();
 			}
 
-			result &= DefaultCase.allPathsReturn();
+			result &= DefaultCase.AllPathsReturn();
 
 			return result; // Its possible that the Body isnt executed at all
 		}
 
-		public override Statement_Return hasReturnStatement()
+		public override StatementReturn HasReturnStatement()
 		{
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				Statement_Return r;
-				if ((r = sc.Body.hasReturnStatement()) != null)
+				StatementReturn r;
+				if ((r = sc.Body.HasReturnStatement()) != null)
 					return r;
 			}
 			return null;
 		}
 
-		public override void evaluateExpressions()
+		public override void EvaluateExpressions()
 		{
-			Condition = Condition.evaluateExpressions();
+			Condition = Condition.EvaluateExpressions();
 
-			foreach (Switch_Case sc in Cases)
-				sc.Body.evaluateExpressions();
+			foreach (SwitchCase sc in Cases)
+				sc.Body.EvaluateExpressions();
 		}
 
-		public override Statement_Label findLabelByIdentifier(string ident)
+		public override StatementLabel FindLabelByIdentifier(string ident)
 		{
-			Statement_Label result = null;
+			StatementLabel result = null;
 
-			result = DefaultCase.findLabelByIdentifier(ident);
+			result = DefaultCase.FindLabelByIdentifier(ident);
 
-			foreach (Switch_Case sc in Cases)
+			foreach (SwitchCase sc in Cases)
 			{
-				Statement_Label found = sc.Body.findLabelByIdentifier(ident);
+				StatementLabel found = sc.Body.FindLabelByIdentifier(ident);
 				if (found != null && result != null)
 					return null;
 				if (found != null && result == null)
@@ -3988,7 +3988,7 @@ namespace BefunGen.AST
 			return result;
 		}
 
-		public override CodePiece generateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -4016,7 +4016,7 @@ namespace BefunGen.AST
 				//  @ ######
 				//   > "d" 
 				//    ######
-				p = generateCode_Top(reversed);
+				p = GenerateCode_Top(reversed);
 				int topWidth = p.Width;
 
 				List<Statement> stmts = Cases.Select(pp => pp.Body).ToList();
@@ -4024,49 +4024,49 @@ namespace BefunGen.AST
 
 				for (int i = 0; i < stmts.Count; i++)
 				{
-					CodePiece p_stmt = stmts[i].generateCode(false);
+					CodePiece pStmt = stmts[i].GenerateCode(false);
 
 					CodePiece turnout = CodePieceStore.SwitchLaneTurnout();
 
-					p_stmt.SetAt(p_stmt.MinX - turnout.Width, p_stmt.MinY - turnout.Height, turnout);
+					pStmt.SetAt(pStmt.MinX - turnout.Width, pStmt.MinY - turnout.Height, turnout);
 
-					p_stmt.normalizeX();
+					pStmt.NormalizeX();
 
-					p_stmt[2, 0] = BCHelper.PC_Right;
-					p_stmt.FillColWW(2, p_stmt.MinY + 2, 0);
+					pStmt[2, 0] = BCHelper.PCRight;
+					pStmt.FillColWw(2, pStmt.MinY + 2, 0);
 
 					if (i + 1 != stmts.Count)
-						p_stmt.FillColWW(1, p_stmt.MinY + 2, p_stmt.MaxY);
+						pStmt.FillColWw(1, pStmt.MinY + 2, pStmt.MaxY);
 					else // last one
-						p_stmt[1, p_stmt.MinY + 2] = BCHelper.Stop_tagged(new Unreachable_Tag());
+						pStmt[1, pStmt.MinY + 2] = BCHelper.Stop_tagged(new UnreachableTag());
 
-					p_stmt[p_stmt.MaxX, 0] = BCHelper.PC_Down;
-					p_stmt[p_stmt.MaxX - 1, p_stmt.MaxY] = BCHelper.PC_Left;
-					p_stmt.FillColWW(p_stmt.MaxX - 1, 1, p_stmt.MaxY - 1);
-					p_stmt.FillRowWW(p_stmt.MaxY - 1, 0, p_stmt.MaxX - 1);
-					p_stmt[-1, p_stmt.MaxY - 1] = BCHelper.PC_Up_tagged(new SwitchStmt_Case_Exit_Tag());
+					pStmt[pStmt.MaxX, 0] = BCHelper.PCDown;
+					pStmt[pStmt.MaxX - 1, pStmt.MaxY] = BCHelper.PCLeft;
+					pStmt.FillColWw(pStmt.MaxX - 1, 1, pStmt.MaxY - 1);
+					pStmt.FillRowWw(pStmt.MaxY - 1, 0, pStmt.MaxX - 1);
+					pStmt[-1, pStmt.MaxY - 1] = BCHelper.PC_Up_tagged(new SwitchStmtCaseExitTag());
 
 
-					p.AppendBottom(p_stmt);
+					p.AppendBottom(pStmt);
 				}
 
-				p.FillRowWW(0, topWidth, p.Width);
+				p.FillRowWw(0, topWidth, p.Width);
 
-				List<TagLocation> sc_exits = p.findAllActiveCodeTags(typeof(SwitchStmt_Case_Exit_Tag)).OrderBy(pp => pp.Y).ToList();
+				List<TagLocation> scExits = p.FindAllActiveCodeTags(typeof(SwitchStmtCaseExitTag)).OrderBy(pp => pp.Y).ToList();
 
 				int lastY = 0;
 
-				foreach (TagLocation exit in sc_exits)
+				foreach (TagLocation exit in scExits)
 				{
-					p.CreateColWW(-1, lastY + 1, exit.Y);
+					p.CreateColWw(-1, lastY + 1, exit.Y);
 					lastY = exit.Y;
 
-					exit.Tag.deactivate();
+					exit.Tag.Deactivate();
 				}
 
-				p[-1, 0] = BCHelper.PC_Left;
+				p[-1, 0] = BCHelper.PCLeft;
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				#endregion
 			}
@@ -4094,50 +4094,50 @@ namespace BefunGen.AST
 				//  @ ######
 				//   > "d"                                       ^
 				//    ######
-				p = generateCode_Top(reversed);
+				p = GenerateCode_Top(reversed);
 
 				List<Statement> stmts = Cases.Select(pp => pp.Body).ToList();
 				stmts.Add(DefaultCase);
 
 				for (int i = 0; i < stmts.Count; i++)
 				{
-					CodePiece p_stmt = stmts[i].generateCode(false);
+					CodePiece pStmt = stmts[i].GenerateCode(false);
 
 					CodePiece turnout = CodePieceStore.SwitchLaneTurnout();
 
-					p_stmt.SetAt(p_stmt.MinX - turnout.Width, p_stmt.MinY - turnout.Height, turnout);
+					pStmt.SetAt(pStmt.MinX - turnout.Width, pStmt.MinY - turnout.Height, turnout);
 
-					p_stmt.normalizeX();
+					pStmt.NormalizeX();
 
-					p_stmt[2, 0] = BCHelper.PC_Right;
-					p_stmt.FillColWW(2, p_stmt.MinY + 2, 0);
+					pStmt[2, 0] = BCHelper.PCRight;
+					pStmt.FillColWw(2, pStmt.MinY + 2, 0);
 
 					if (i + 1 != stmts.Count)
-						p_stmt.FillColWW(1, p_stmt.MinY + 2, p_stmt.MaxY);
+						pStmt.FillColWw(1, pStmt.MinY + 2, pStmt.MaxY);
 					else // last one
-						p_stmt[1, p_stmt.MinY + 2] = BCHelper.Stop_tagged(new Unreachable_Tag());
+						pStmt[1, pStmt.MinY + 2] = BCHelper.Stop_tagged(new UnreachableTag());
 
-					p_stmt[p_stmt.MaxX, 0] = BCHelper.PC_Right_tagged(new SwitchStmt_Case_Exit_Tag());
+					pStmt[pStmt.MaxX, 0] = BCHelper.PC_Right_tagged(new SwitchStmtCaseExitTag());
 
-					p.AppendBottom(p_stmt);
+					p.AppendBottom(pStmt);
 				}
 
-				List<TagLocation> sc_exits = p.findAllActiveCodeTags(typeof(SwitchStmt_Case_Exit_Tag)).OrderBy(pp => pp.Y).ToList();
+				List<TagLocation> scExits = p.FindAllActiveCodeTags(typeof(SwitchStmtCaseExitTag)).OrderBy(pp => pp.Y).ToList();
 
 				int rightLaneX = p.MaxX;
 
-				p[rightLaneX, 0] = BCHelper.PC_Right;
+				p[rightLaneX, 0] = BCHelper.PCRight;
 
 				int lastY = 0;
 
-				foreach (TagLocation exit in sc_exits)
+				foreach (TagLocation exit in scExits)
 				{
-					p[rightLaneX, exit.Y] = BCHelper.PC_Up;
-					p.CreateRowWW(exit.Y, exit.X + 1, rightLaneX);
-					p.CreateColWW(rightLaneX, lastY + 1, exit.Y);
+					p[rightLaneX, exit.Y] = BCHelper.PCUp;
+					p.CreateRowWw(exit.Y, exit.X + 1, rightLaneX);
+					p.CreateColWw(rightLaneX, lastY + 1, exit.Y);
 					lastY = exit.Y;
 
-					exit.Tag.deactivate();
+					exit.Tag.Deactivate();
 				}
 
 				#endregion
@@ -4145,39 +4145,39 @@ namespace BefunGen.AST
 
 			#region Extend MehodCall-Tags
 
-			List<TagLocation> entries = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalReEntry_Tag));
-			List<TagLocation> exits = p.findAllActiveCodeTags(typeof(MethodCall_HorizontalExit_Tag));
+			List<TagLocation> entries = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalReEntryTag));
+			List<TagLocation> exits = p.FindAllActiveCodeTags(typeof(MethodCallHorizontalExitTag));
 
 			foreach (TagLocation entry in entries)
 			{
-				MethodCall_HorizontalReEntry_Tag tag_entry = entry.Tag as MethodCall_HorizontalReEntry_Tag;
+				MethodCallHorizontalReEntryTag tagEntry = entry.Tag as MethodCallHorizontalReEntryTag;
 
-				p.CreateRowWW(entry.Y, p.MinX, entry.X);
+				p.CreateRowWw(entry.Y, p.MinX, entry.X);
 
-				tag_entry.deactivate();
+				tagEntry.Deactivate();
 
-				p.SetTag(p.MinX, entry.Y, new MethodCall_HorizontalReEntry_Tag(tag_entry.TagParam as ICodeAddressTarget), true);
+				p.SetTag(p.MinX, entry.Y, new MethodCallHorizontalReEntryTag(tagEntry.TagParam as ICodeAddressTarget), true);
 			}
 
 			foreach (TagLocation exit in exits)
 			{
-				MethodCall_HorizontalExit_Tag tag_exit = exit.Tag as MethodCall_HorizontalExit_Tag;
+				MethodCallHorizontalExitTag tagExit = exit.Tag as MethodCallHorizontalExitTag;
 
-				p.CreateRowWW(exit.Y, exit.X + 1, p.MaxX);
+				p.CreateRowWw(exit.Y, exit.X + 1, p.MaxX);
 
-				tag_exit.deactivate();
+				tagExit.Deactivate();
 
-				p.SetTag(p.MaxX - 1, exit.Y, new MethodCall_HorizontalExit_Tag(tag_exit.TagParam), true);
+				p.SetTag(p.MaxX - 1, exit.Y, new MethodCallHorizontalExitTag(tagExit.TagParam), true);
 			}
 
 			#endregion
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		private CodePiece generateCode_Top(bool reversed)
+		private CodePiece GenerateCode_Top(bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -4190,41 +4190,41 @@ namespace BefunGen.AST
 				// >v             +                +                +                +              
 				//   ^            <                <                <                <              
 
-				p.AppendLeft(BCHelper.Digit_0);
+				p.AppendLeft(BCHelper.Digit0);
 
-				p.AppendLeft(Condition.generateCode(reversed));
+				p.AppendLeft(Condition.GenerateCode(reversed));
 
 				for (int i = 0; i < Cases.Count; i++)
 				{
-					CodePiece p_sc = new CodePiece();
+					CodePiece pSc = new CodePiece();
 
-					Switch_Case sc = Cases[i];
+					SwitchCase sc = Cases[i];
 
-					p_sc.AppendLeft(sc.Value.generateCode(reversed));
-					p_sc.AppendLeft(BCHelper.Stack_Swap);
-					p_sc.AppendLeft(sc.Value.generateCode(reversed));
+					pSc.AppendLeft(sc.Value.GenerateCode(reversed));
+					pSc.AppendLeft(BCHelper.StackSwap);
+					pSc.AppendLeft(sc.Value.GenerateCode(reversed));
 
-					p_sc.FillRowWW(2, p_sc.MinX, p_sc.MaxX);
+					pSc.FillRowWw(2, pSc.MinX, pSc.MaxX);
 
-					p_sc.AppendLeft(CodePieceStore.SwitchStatementTester(reversed));
+					pSc.AppendLeft(CodePieceStore.SwitchStatementTester(reversed));
 
-					p.AppendLeft(p_sc);
+					p.AppendLeft(pSc);
 				}
 
-				CodePiece p_def = new CodePiece();
+				CodePiece pDef = new CodePiece();
 
-				p_def[0, 0] = BCHelper.PC_Down;
-				p_def[0, 1] = BCHelper.PC_Right;
+				pDef[0, 0] = BCHelper.PCDown;
+				pDef[0, 1] = BCHelper.PCRight;
 
-				p_def[1, 0] = BCHelper.Stack_Pop;
-				p_def[1, 1] = BCHelper.PC_Down;
-				p_def[1, 2] = BCHelper.Walkway;
+				pDef[1, 0] = BCHelper.StackPop;
+				pDef[1, 1] = BCHelper.PCDown;
+				pDef[1, 2] = BCHelper.Walkway;
 
-				p_def[2, 0] = BCHelper.PC_Left;
-				p_def[2, 1] = BCHelper.Walkway;
-				p_def[2, 2] = BCHelper.PC_Up;
+				pDef[2, 0] = BCHelper.PCLeft;
+				pDef[2, 1] = BCHelper.Walkway;
+				pDef[2, 2] = BCHelper.PCUp;
 
-				p.AppendLeft(p_def);
+				p.AppendLeft(pDef);
 
 				#endregion
 			}
@@ -4238,46 +4238,46 @@ namespace BefunGen.AST
 				//               >                >                >                >            v
 				//  v                                                                           $<
 
-				p.AppendRight(BCHelper.Digit_0);
+				p.AppendRight(BCHelper.Digit0);
 
-				p.AppendRight(Condition.generateCode(reversed));
+				p.AppendRight(Condition.GenerateCode(reversed));
 
 				for (int i = 0; i < Cases.Count; i++)
 				{
-					CodePiece p_sc = new CodePiece();
+					CodePiece pSc = new CodePiece();
 
-					Switch_Case sc = Cases[i];
+					SwitchCase sc = Cases[i];
 
-					p_sc.AppendRight(sc.Value.generateCode(reversed));
-					p_sc.AppendRight(BCHelper.Stack_Swap);
-					p_sc.AppendRight(sc.Value.generateCode(reversed));
+					pSc.AppendRight(sc.Value.GenerateCode(reversed));
+					pSc.AppendRight(BCHelper.StackSwap);
+					pSc.AppendRight(sc.Value.GenerateCode(reversed));
 
-					p_sc.FillRowWW(2, p_sc.MinX, p_sc.MaxX);
+					pSc.FillRowWw(2, pSc.MinX, pSc.MaxX);
 
-					p_sc.AppendRight(CodePieceStore.SwitchStatementTester(reversed));
+					pSc.AppendRight(CodePieceStore.SwitchStatementTester(reversed));
 
-					p.AppendRight(p_sc);
+					p.AppendRight(pSc);
 				}
 
-				CodePiece p_def = new CodePiece();
+				CodePiece pDef = new CodePiece();
 
-				p_def[0, 0] = BCHelper.PC_Down;
-				p_def[0, 1] = BCHelper.Walkway;
-				p_def[0, 2] = BCHelper.PC_Down;
-				p_def[0, 3] = BCHelper.PC_Left;
+				pDef[0, 0] = BCHelper.PCDown;
+				pDef[0, 1] = BCHelper.Walkway;
+				pDef[0, 2] = BCHelper.PCDown;
+				pDef[0, 3] = BCHelper.PCLeft;
 
-				p.AppendRight(p_def);
+				p.AppendRight(pDef);
 
 
-				p[1, 3] = BCHelper.PC_Down;
-				p[p.MaxX - 2, 3] = BCHelper.Stack_Pop;
+				p[1, 3] = BCHelper.PCDown;
+				p[p.MaxX - 2, 3] = BCHelper.StackPop;
 
-				p.FillRowWW(3, 2, p.MaxX - 2);
+				p.FillRowWw(3, 2, p.MaxX - 2);
 
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 			return p;
 		}
 	}

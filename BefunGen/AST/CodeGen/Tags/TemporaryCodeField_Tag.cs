@@ -1,9 +1,9 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class TemporaryCodeField_Tag : CodeTag
+	public class TemporaryCodeFieldTag : CodeTag
 	{
-		public TemporaryCodeField_Tag()
+		public TemporaryCodeFieldTag()
 			: base("TemporaryCodeField_Tag")
 		{
 			//NOP

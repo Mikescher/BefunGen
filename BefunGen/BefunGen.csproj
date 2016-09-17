@@ -40,7 +40,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="GOLD Engine">
-      <HintPath>..\..\Libraries\GOLD Engine.dll</HintPath>
+      <HintPath>..\Libraries\GOLD Engine.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\packages\Newtonsoft.Json.6.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>

@@ -43,7 +43,7 @@ namespace BefunGen.AST.CodeGen
 
 		#region ReadArrayToStack
 
-		public static CodePiece ReadArrayToStack(VarDeclaration_Array v, bool reversed)
+		public static CodePiece ReadArrayToStack(VarDeclarationArray v, bool reversed)
 		{
 			return ReadArrayToStack(v.Size, v.CodePositionX, v.CodePositionY, reversed);
 		}
@@ -68,9 +68,9 @@ namespace BefunGen.AST.CodeGen
 			// ¯¯¯¯¯
 			//
 
-			CodePiece p_len = NumberCodeHelper.generateCode(arrLen - 1, reversed);
-			CodePiece p_arx = NumberCodeHelper.generateCode(arrX, reversed);
-			CodePiece p_ary = NumberCodeHelper.generateCode(arrY, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
+			CodePiece pArx = NumberCodeHelper.GenerateCode(arrX, reversed);
+			CodePiece pAry = NumberCodeHelper.GenerateCode(arrY, reversed);
 
 			if (reversed)
 			{
@@ -79,37 +79,37 @@ namespace BefunGen.AST.CodeGen
 				CodePiece p = new CodePiece();
 
 				#region Reversed
-				int bot_start;
-				int bot_end;
+				int botStart;
+				int botEnd;
 
-				bot_start = 0;
+				botStart = 0;
 
-				p[-2, 0] = BCHelper.Stack_Pop;
-				p[-1, 0] = BCHelper.If_Horizontal;
-				p[0, 0] = BCHelper.PC_Down;
-				p[1, 0] = BCHelper.PC_Jump;
+				p[-2, 0] = BCHelper.StackPop;
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p[1, 0] = BCHelper.PCJump;
 				p[2, 0] = BCHelper.Not;
-				p[3, 0] = BCHelper.Stack_Dup;
-				p[4, 0] = BCHelper.Stack_Swap;
-				p[5, 0] = BCHelper.Reflect_Get;
+				p[3, 0] = BCHelper.StackDup;
+				p[4, 0] = BCHelper.StackSwap;
+				p[5, 0] = BCHelper.ReflectGet;
 
-				p.AppendRight(p_ary);
+				p.AppendRight(pAry);
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(p_arx);
-				p.AppendRight(BCHelper.Stack_Dup);
-				bot_end = p.MaxX;
-				p.AppendRight(BCHelper.PC_Left);
-				p.AppendRight(p_len);
+				p.AppendRight(pArx);
+				p.AppendRight(BCHelper.StackDup);
+				botEnd = p.MaxX;
+				p.AppendRight(BCHelper.PCLeft);
+				p.AppendRight(pLen);
 
-				p[bot_start, 1] = BCHelper.PC_Right;
-				p[bot_start + 1, 1] = BCHelper.Digit_1;
-				p[bot_start + 2, 1] = BCHelper.Sub;
+				p[botStart, 1] = BCHelper.PCRight;
+				p[botStart + 1, 1] = BCHelper.Digit1;
+				p[botStart + 2, 1] = BCHelper.Sub;
 
-				p[bot_end, 1] = BCHelper.PC_Up;
+				p[botEnd, 1] = BCHelper.PCUp;
 
-				p.FillRowWW(1, bot_start + 3, bot_end);
+				p.FillRowWw(1, botStart + 3, botEnd);
 
-				p.normalizeX();
+				p.NormalizeX();
 				#endregion
 
 				return p;
@@ -121,38 +121,38 @@ namespace BefunGen.AST.CodeGen
 				CodePiece p = new CodePiece();
 
 				#region Normal
-				int bot_start;
-				int bot_end;
+				int botStart;
+				int botEnd;
 
-				bot_start = 0;
+				botStart = 0;
 
-				p[0, 0] = BCHelper.PC_Right;
-				p[1, 0] = BCHelper.Stack_Dup;
+				p[0, 0] = BCHelper.PCRight;
+				p[1, 0] = BCHelper.StackDup;
 
-				p.AppendRight(p_arx);
+				p.AppendRight(pArx);
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(p_ary);
-				p.AppendRight(BCHelper.Reflect_Get);
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(BCHelper.Stack_Dup);
-				p.AppendRight(BCHelper.PC_Jump);
+				p.AppendRight(pAry);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.PCJump);
 
-				bot_end = p.MaxX;
+				botEnd = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Down);
-				p.AppendRight(BCHelper.If_Horizontal);
-				p.AppendRight(BCHelper.Stack_Pop);
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
+				p.AppendRight(BCHelper.StackPop);
 
-				p[bot_start, 1] = BCHelper.PC_Up;
-				p[bot_start + 1, 1] = BCHelper.Sub;
-				p[bot_start + 2, 1] = BCHelper.Digit_1;
-				p[bot_end, 1] = BCHelper.PC_Left;
+				p[botStart, 1] = BCHelper.PCUp;
+				p[botStart + 1, 1] = BCHelper.Sub;
+				p[botStart + 2, 1] = BCHelper.Digit1;
+				p[botEnd, 1] = BCHelper.PCLeft;
 
-				p.AppendLeft(p_len);
+				p.AppendLeft(pLen);
 
-				p.FillRowWW(1, bot_start + 3, bot_end);
+				p.FillRowWw(1, botStart + 3, botEnd);
 
-				p.normalizeX();
+				p.NormalizeX();
 				#endregion
 
 				return p;
@@ -163,7 +163,7 @@ namespace BefunGen.AST.CodeGen
 
 		#region WriteArrayFromStack
 
-		public static CodePiece WriteArrayFromStack(VarDeclaration_Array v, bool reversed)
+		public static CodePiece WriteArrayFromStack(VarDeclarationArray v, bool reversed)
 		{
 			return WriteArrayFromStack(v.Size, v.CodePositionX, v.CodePositionY, reversed);
 		}
@@ -188,15 +188,15 @@ namespace BefunGen.AST.CodeGen
 			// [A, B, C, D]
 			//
 
-			CodePiece p_tpx = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, reversed);
-			CodePiece p_tpy = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, reversed);
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, reversed);
 
-			CodePiece p_tpx_r = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, !reversed);
-			CodePiece p_tpy_r = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, !reversed);
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, !reversed);
 
-			CodePiece p_len = NumberCodeHelper.generateCode(arrLen - 1, reversed);
-			CodePiece p_arx = NumberCodeHelper.generateCode(arrX, reversed);
-			CodePiece p_ary = NumberCodeHelper.generateCode(arrY, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
+			CodePiece pArx = NumberCodeHelper.GenerateCode(arrX, reversed);
+			CodePiece pAry = NumberCodeHelper.GenerateCode(arrY, reversed);
 
 			if (reversed)
 			{
@@ -206,78 +206,78 @@ namespace BefunGen.AST.CodeGen
 
 				#region Reversed
 
-				int bot_start;
-				int bot_end;
+				int botStart;
+				int botEnd;
 
-				bot_start = 0;
+				botStart = 0;
 
-				p[-1, 0] = BCHelper.If_Horizontal;
-				p[0, 0] = BCHelper.PC_Down;
-				p[1, 0] = BCHelper.PC_Jump;
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p[1, 0] = BCHelper.PCJump;
 				p[2, 0] = BCHelper.Not;
 				p[3, 0] = BCHelper.Sub;
 
-				p.AppendRight(p_len);
+				p.AppendRight(pLen);
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(p_ary);
+				p.AppendRight(pAry);
 
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.ReflectGet);
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_arx);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pArx);
 
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.ReflectGet);
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
 
-				bot_end = p.MaxX;
+				botEnd = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Left);
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.PCLeft);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
 
-				p.AppendRight(BCHelper.Digit_0);
+				p.AppendRight(BCHelper.Digit0);
 
-				CodePiece p_bottom = new CodePiece();
+				CodePiece pBottom = new CodePiece();
 				{
 					#region Generate_Bottom
 
-					p_bottom.AppendRight(p_tpx_r);
+					pBottom.AppendRight(pTpxR);
 
-					p_bottom.AppendRight(BCHelper.Stack_Dup);
+					pBottom.AppendRight(BCHelper.StackDup);
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Reflect_Get);
-					p_bottom.AppendRight(BCHelper.Digit_1);
-					p_bottom.AppendRight(BCHelper.Add);
-					p_bottom.AppendRight(BCHelper.Stack_Swap);
+					pBottom.AppendRight(BCHelper.ReflectGet);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.Add);
+					pBottom.AppendRight(BCHelper.StackSwap);
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Reflect_Set);
+					pBottom.AppendRight(BCHelper.ReflectSet);
 
-					p_bottom.normalizeX();
+					pBottom.NormalizeX();
 
 					#endregion
 				}
 
-				p[bot_start, 1] = BCHelper.PC_Right;
-				p[bot_end, 1] = BCHelper.PC_Up;
+				p[botStart, 1] = BCHelper.PCRight;
+				p[botEnd, 1] = BCHelper.PCUp;
 
-				p.SetAt(bot_start + 1, 1, p_bottom);
+				p.SetAt(botStart + 1, 1, pBottom);
 
-				p.FillRowWW(1, bot_start + 1 + p_bottom.Width, bot_end);
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				#endregion
 
@@ -291,75 +291,75 @@ namespace BefunGen.AST.CodeGen
 
 				#region Normal
 
-				int bot_start;
-				int bot_end;
+				int botStart;
+				int botEnd;
 
-				p.AppendRight(BCHelper.Digit_0);
+				p.AppendRight(BCHelper.Digit0);
 
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
 
-				p.AppendRight(BCHelper.Reflect_Set);
-				bot_start = p.MaxX;
-				p.AppendRight(BCHelper.PC_Right);
+				p.AppendRight(BCHelper.ReflectSet);
+				botStart = p.MaxX;
+				p.AppendRight(BCHelper.PCRight);
 
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
 
-				p.AppendRight(BCHelper.Reflect_Get);
-				p.AppendRight(BCHelper.Stack_Swap);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
 
-				p.AppendRight(p_arx);
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
+				p.AppendRight(pArx);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
 
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.Add);
 
-				p.AppendRight(p_ary);
+				p.AppendRight(pAry);
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(p_len);
+				p.AppendRight(pLen);
 
 				p.AppendRight(BCHelper.Sub);
-				p.AppendRight(BCHelper.PC_Jump);
-				bot_end = p.MaxX;
-				p.AppendRight(BCHelper.PC_Down);
-				p.AppendRight(BCHelper.If_Horizontal);
+				p.AppendRight(BCHelper.PCJump);
+				botEnd = p.MaxX;
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
 
-				CodePiece p_bottom = new CodePiece();
+				CodePiece pBottom = new CodePiece();
 				{
 					#region Generate_Bottom
 
-					p_bottom[0, 0] = BCHelper.Reflect_Set;
+					pBottom[0, 0] = BCHelper.ReflectSet;
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Stack_Swap);
-					p_bottom.AppendRight(BCHelper.Add);
-					p_bottom.AppendRight(BCHelper.Digit_1);
-					p_bottom.AppendRight(BCHelper.Reflect_Get);
+					pBottom.AppendRight(BCHelper.StackSwap);
+					pBottom.AppendRight(BCHelper.Add);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.ReflectGet);
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Stack_Dup);
+					pBottom.AppendRight(BCHelper.StackDup);
 
-					p_bottom.AppendRight(p_tpx_r);
+					pBottom.AppendRight(pTpxR);
 
-					p_bottom.normalizeX();
+					pBottom.NormalizeX();
 
 					#endregion
 				}
 
-				p[bot_start, 1] = BCHelper.PC_Up;
-				p[bot_end, 1] = BCHelper.PC_Left;
+				p[botStart, 1] = BCHelper.PCUp;
+				p[botEnd, 1] = BCHelper.PCLeft;
 
-				p.SetAt(bot_start + 1, 1, p_bottom);
+				p.SetAt(botStart + 1, 1, pBottom);
 
-				p.FillRowWW(1, bot_start + 1 + p_bottom.Width, bot_end);
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				#endregion
 
@@ -384,15 +384,15 @@ namespace BefunGen.AST.CodeGen
 			// [A, B, C, D]
 			//
 
-			CodePiece p_tpx = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, reversed);
-			CodePiece p_tpy = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, reversed);
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, reversed);
 
-			CodePiece p_tpx_r = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, !reversed);
-			CodePiece p_tpy_r = NumberCodeHelper.generateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, !reversed);
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, !reversed);
 
-			CodePiece p_len = NumberCodeHelper.generateCode(arrLen - 1, reversed);
-			CodePiece p_arx = NumberCodeHelper.generateCode(arrX, reversed);
-			CodePiece p_ary = NumberCodeHelper.generateCode(arrY, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
+			CodePiece pArx = NumberCodeHelper.GenerateCode(arrX, reversed);
+			CodePiece pAry = NumberCodeHelper.GenerateCode(arrY, reversed);
 
 			if (reversed)
 			{
@@ -402,75 +402,75 @@ namespace BefunGen.AST.CodeGen
 
 				#region Reversed
 
-				int bot_start;
-				int bot_end;
+				int botStart;
+				int botEnd;
 
-				bot_start = 0;
+				botStart = 0;
 
-				p[-1, 0] = BCHelper.If_Horizontal;
-				p[0, 0] = BCHelper.PC_Down;
-				p[1, 0] = BCHelper.PC_Jump;
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p[1, 0] = BCHelper.PCJump;
 				p[2, 0] = BCHelper.Not;
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(p_ary);
+				p.AppendRight(pAry);
 
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.ReflectGet);
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_arx);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pArx);
 
-				p.AppendRight(BCHelper.Stack_Swap);
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.ReflectGet);
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
 
-				bot_end = p.MaxX;
+				botEnd = p.MaxX;
 
-				p.AppendRight(BCHelper.PC_Left);
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.PCLeft);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(p_tpy);
-				p.AppendRight(p_tpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
 
-				p.AppendRight(p_len);
+				p.AppendRight(pLen);
 
-				CodePiece p_bottom = new CodePiece();
+				CodePiece pBottom = new CodePiece();
 				{
 					#region Generate_Bottom
 
-					p_bottom.AppendRight(p_tpx_r);
+					pBottom.AppendRight(pTpxR);
 
-					p_bottom.AppendRight(BCHelper.Stack_Dup);
+					pBottom.AppendRight(BCHelper.StackDup);
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Reflect_Get);
-					p_bottom.AppendRight(BCHelper.Digit_1);
-					p_bottom.AppendRight(BCHelper.Sub);
-					p_bottom.AppendRight(BCHelper.Stack_Swap);
+					pBottom.AppendRight(BCHelper.ReflectGet);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.Sub);
+					pBottom.AppendRight(BCHelper.StackSwap);
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Reflect_Set);
+					pBottom.AppendRight(BCHelper.ReflectSet);
 
-					p_bottom.normalizeX();
+					pBottom.NormalizeX();
 
 					#endregion
 				}
 
-				p[bot_start, 1] = BCHelper.PC_Right;
-				p[bot_end, 1] = BCHelper.PC_Up;
+				p[botStart, 1] = BCHelper.PCRight;
+				p[botEnd, 1] = BCHelper.PCUp;
 
-				p.SetAt(bot_start + 1, 1, p_bottom);
+				p.SetAt(botStart + 1, 1, pBottom);
 
-				p.FillRowWW(1, bot_start + 1 + p_bottom.Width, bot_end);
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				#endregion
 
@@ -484,72 +484,72 @@ namespace BefunGen.AST.CodeGen
 
 				#region Normal
 
-				int bot_start;
-				int bot_end;
+				int botStart;
+				int botEnd;
 
-				p.AppendRight(p_len);
+				p.AppendRight(pLen);
 
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
 
-				p.AppendRight(BCHelper.Reflect_Set);
-				bot_start = p.MaxX;
-				p.AppendRight(BCHelper.PC_Right);
+				p.AppendRight(BCHelper.ReflectSet);
+				botStart = p.MaxX;
+				p.AppendRight(BCHelper.PCRight);
 
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
 
-				p.AppendRight(BCHelper.Reflect_Get);
-				p.AppendRight(BCHelper.Stack_Swap);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
 
-				p.AppendRight(p_arx);
-				p.AppendRight(p_tpx);
-				p.AppendRight(p_tpy);
+				p.AppendRight(pArx);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
 
-				p.AppendRight(BCHelper.Reflect_Get);
+				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.Add);
 
-				p.AppendRight(p_ary);
+				p.AppendRight(pAry);
 
-				p.AppendRight(BCHelper.Reflect_Set);
+				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(BCHelper.PC_Jump);
-				bot_end = p.MaxX;
-				p.AppendRight(BCHelper.PC_Down);
-				p.AppendRight(BCHelper.If_Horizontal);
+				p.AppendRight(BCHelper.PCJump);
+				botEnd = p.MaxX;
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
 
-				CodePiece p_bottom = new CodePiece();
+				CodePiece pBottom = new CodePiece();
 				{
 					#region Generate_Bottom
 
-					p_bottom[0, 0] = BCHelper.Reflect_Set;
+					pBottom[0, 0] = BCHelper.ReflectSet;
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Stack_Swap);
-					p_bottom.AppendRight(BCHelper.Sub);
-					p_bottom.AppendRight(BCHelper.Digit_1);
-					p_bottom.AppendRight(BCHelper.Reflect_Get);
+					pBottom.AppendRight(BCHelper.StackSwap);
+					pBottom.AppendRight(BCHelper.Sub);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.ReflectGet);
 
-					p_bottom.AppendRight(p_tpy_r);
+					pBottom.AppendRight(pTpyR);
 
-					p_bottom.AppendRight(BCHelper.Stack_Dup);
+					pBottom.AppendRight(BCHelper.StackDup);
 
-					p_bottom.AppendRight(p_tpx_r);
+					pBottom.AppendRight(pTpxR);
 
-					p_bottom.normalizeX();
+					pBottom.NormalizeX();
 
 					#endregion
 				}
 
-				p[bot_start, 1] = BCHelper.PC_Up;
-				p[bot_end, 1] = BCHelper.PC_Left;
+				p[botStart, 1] = BCHelper.PCUp;
+				p[botEnd, 1] = BCHelper.PCLeft;
 
-				p.SetAt(bot_start + 1, 1, p_bottom);
+				p.SetAt(botStart + 1, 1, pBottom);
 
-				p.FillRowWW(1, bot_start + 1 + p_bottom.Width, bot_end);
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
 
-				p.normalizeX();
+				p.NormalizeX();
 
 				#endregion
 
@@ -568,9 +568,9 @@ namespace BefunGen.AST.CodeGen
 			// |
 			CodePiece p = new CodePiece();
 
-			p[0, -1] = BCHelper.PC_Jump;
-			p[0, +0] = BCHelper.PC_Right;
-			p[0, +1] = BCHelper.If_Vertical;
+			p[0, -1] = BCHelper.PCJump;
+			p[0, +0] = BCHelper.PCRight;
+			p[0, +1] = BCHelper.IfVertical;
 
 			return p;
 		}
@@ -586,11 +586,11 @@ namespace BefunGen.AST.CodeGen
 				// |
 				CodePiece p = new CodePiece();
 
-				p[0, -3] = BCHelper.Stack_Dup;
+				p[0, -3] = BCHelper.StackDup;
 				p[0, -2] = BCHelper.Not;
-				p[0, -1] = BCHelper.PC_Jump;
-				p[0, +0] = BCHelper.PC_Right;
-				p[0, +1] = BCHelper.If_Vertical;
+				p[0, -1] = BCHelper.PCJump;
+				p[0, +0] = BCHelper.PCRight;
+				p[0, +1] = BCHelper.IfVertical;
 
 				return p;
 			}
@@ -605,13 +605,13 @@ namespace BefunGen.AST.CodeGen
 				// |
 				CodePiece p = new CodePiece();
 
-				p[0, -5] = BCHelper.Digit_1;
+				p[0, -5] = BCHelper.Digit1;
 				p[0, -4] = BCHelper.Sub;
-				p[0, -3] = BCHelper.Stack_Dup;
+				p[0, -3] = BCHelper.StackDup;
 				p[0, -2] = BCHelper.Not;
-				p[0, -1] = BCHelper.PC_Jump;
-				p[0, +0] = BCHelper.PC_Right;
-				p[0, +1] = BCHelper.If_Vertical;
+				p[0, -1] = BCHelper.PCJump;
+				p[0, +0] = BCHelper.PCRight;
+				p[0, +1] = BCHelper.IfVertical;
 
 				return p;
 			}
@@ -635,7 +635,7 @@ namespace BefunGen.AST.CodeGen
 
 		public static CodePiece PopMultipleStackValues(int count, bool reversed)
 		{
-			CodePiece p_count = NumberCodeHelper.generateCode(count, reversed);
+			CodePiece pCount = NumberCodeHelper.GenerateCode(count, reversed);
 
 			CodePiece p = new CodePiece();
 
@@ -645,7 +645,7 @@ namespace BefunGen.AST.CodeGen
 				// $_^# !:<{C}
 
 				p.SetAt(2, -1, CodePiece.ParseFromLine(@">\$1-v"));
-				p.SetAt(0, +0, CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@"$_^# !:<", true), p_count));
+				p.SetAt(0, +0, CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@"$_^# !:<", true), pCount));
 			}
 			else
 			{
@@ -655,30 +655,30 @@ namespace BefunGen.AST.CodeGen
 				p.SetAt(0, 0, CodePiece.ParseFromLine(@"0>-:#v_$"));
 				p.SetAt(1, 1, CodePiece.ParseFromLine(@"^1$\<"));
 
-				p.AppendLeft(p_count);
+				p.AppendLeft(pCount);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
 		public static CodePiece ReadValueFromField(MathExt.Point pos, bool reversed)
 		{
-			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.generateCode(pos.X), NumberCodeHelper.generateCode(pos.Y), new CodePiece(BCHelper.Reflect_Get));
+			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.GenerateCode(pos.X), NumberCodeHelper.GenerateCode(pos.Y), new CodePiece(BCHelper.ReflectGet));
 
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 
 			return p;
 		}
 
 		public static CodePiece WriteValueToField(MathExt.Point pos, bool reversed)
 		{
-			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.generateCode(pos.X), NumberCodeHelper.generateCode(pos.Y), new CodePiece(BCHelper.Reflect_Set));
+			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.GenerateCode(pos.X), NumberCodeHelper.GenerateCode(pos.Y), new CodePiece(BCHelper.ReflectSet));
 
 			if (reversed)
-				p.reverseX(false);
+				p.ReverseX(false);
 
 			return p;
 		}
@@ -687,8 +687,8 @@ namespace BefunGen.AST.CodeGen
 		{
 			CodePiece p = new CodePiece();
 
-			CodePiece p_r = NumberCodeHelper.generateCode(range, reversed);
-			CodePiece p_r_rev = NumberCodeHelper.generateCode(range, !reversed);
+			CodePiece pR = NumberCodeHelper.GenerateCode(range, reversed);
+			CodePiece pRRev = NumberCodeHelper.GenerateCode(range, !reversed);
 
 			if (reversed)
 			{
@@ -697,35 +697,35 @@ namespace BefunGen.AST.CodeGen
 				// >#<{R}%-++1#v_^#`0:
 				//   ^%{R}     <
 
-				CodePiece p_top = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@"v\"), p_r, CodePiece.ParseFromLine(@":*-10:"));
-				CodePiece p_mid = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@">#<"), p_r_rev, CodePiece.ParseFromLine(@"%-++1#"));
-				CodePiece p_bot = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@"^%"), p_r);
+				CodePiece pTop = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@"v\"), pR, CodePiece.ParseFromLine(@":*-10:"));
+				CodePiece pMid = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@">#<"), pRRev, CodePiece.ParseFromLine(@"%-++1#"));
+				CodePiece pBot = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@"^%"), pR);
 
-				p_top.AddXOffset(0);
-				p_mid.AddXOffset(0);
-				p_bot.AddXOffset(2);
+				pTop.AddXOffset(0);
+				pMid.AddXOffset(0);
+				pBot.AddXOffset(2);
 
-				int bot_w = Math.Max(p_mid.MaxX, p_bot.MaxX);
+				int botW = Math.Max(pMid.MaxX, pBot.MaxX);
 
-				p_mid.FillRowWW(0, p_mid.MaxX, bot_w);
-				p_mid[bot_w + 0, 0] = BCHelper.PC_Down;
-				p_mid[bot_w + 1, 0] = BCHelper.If_Horizontal;
+				pMid.FillRowWw(0, pMid.MaxX, botW);
+				pMid[botW + 0, 0] = BCHelper.PCDown;
+				pMid[botW + 1, 0] = BCHelper.IfHorizontal;
 
-				p_bot.FillRowWW(0, p_bot.MaxX, bot_w);
-				p_bot[bot_w, 0] = BCHelper.PC_Left;
+				pBot.FillRowWw(0, pBot.MaxX, botW);
+				pBot[botW, 0] = BCHelper.PCLeft;
 
-				int top_w = Math.Max(p_top.MaxX, p_mid.MaxX);
+				int topW = Math.Max(pTop.MaxX, pMid.MaxX);
 
-				p_top.FillRowWW(0, p_top.MaxX, top_w);
-				p_top.AppendRight(BCHelper.PC_Left);
+				pTop.FillRowWw(0, pTop.MaxX, topW);
+				pTop.AppendRight(BCHelper.PCLeft);
 
-				p_mid.FillRowWW(0, p_mid.MaxX, top_w);
-				p_mid.AppendRight(CodePiece.ParseFromLine(@"^#`0:"));
+				pMid.FillRowWw(0, pMid.MaxX, topW);
+				pMid.AppendRight(CodePiece.ParseFromLine(@"^#`0:"));
 
 
-				p.SetAt(0, -1, p_top);
-				p.SetAt(0, +0, p_mid);
-				p.SetAt(0, +1, p_bot);
+				p.SetAt(0, -1, pTop);
+				p.SetAt(0, +0, pMid);
+				p.SetAt(0, +1, pBot);
 
 				#endregion
 			}
@@ -736,27 +736,27 @@ namespace BefunGen.AST.CodeGen
 				// :0`#v_^#1++-%{R}>#<
 				//     >{R}%       ^
 
-				CodePiece p_top = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@">:01-*:"), p_r);
-				CodePiece p_mid = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@":0`#v_^#1++-%"), p_r_rev);
-				CodePiece p_bot = CodePiece.CombineHorizontal(new CodePiece(BCHelper.PC_Right), p_r, new CodePiece(BCHelper.Modulo));
+				CodePiece pTop = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@">:01-*:"), pR);
+				CodePiece pMid = CodePiece.CombineHorizontal(CodePiece.ParseFromLine(@":0`#v_^#1++-%"), pRRev);
+				CodePiece pBot = CodePiece.CombineHorizontal(new CodePiece(BCHelper.PCRight), pR, new CodePiece(BCHelper.Modulo));
 
-				p_top.AddXOffset(6);
-				p_mid.AddXOffset(0);
-				p_bot.AddXOffset(4);
+				pTop.AddXOffset(6);
+				pMid.AddXOffset(0);
+				pBot.AddXOffset(4);
 
-				int max = MathExt.Max(p_top.MaxX, p_mid.MaxX, p_bot.MaxX);
+				int max = MathExt.Max(pTop.MaxX, pMid.MaxX, pBot.MaxX);
 
-				p_top.FillRowWW(0, p_top.MaxX, max);
-				p_mid.FillRowWW(0, p_mid.MaxX, max);
-				p_bot.FillRowWW(0, p_bot.MaxX, max);
+				pTop.FillRowWw(0, pTop.MaxX, max);
+				pMid.FillRowWw(0, pMid.MaxX, max);
+				pBot.FillRowWw(0, pBot.MaxX, max);
 
-				p_top.AppendRight(CodePiece.ParseFromLine(@"\ v", true));
-				p_mid.AppendRight(CodePiece.ParseFromLine(@">#<", false));
-				p_bot.AppendRight(CodePiece.ParseFromLine(@"^", false));
+				pTop.AppendRight(CodePiece.ParseFromLine(@"\ v", true));
+				pMid.AppendRight(CodePiece.ParseFromLine(@">#<", false));
+				pBot.AppendRight(CodePiece.ParseFromLine(@"^", false));
 
-				p.SetAt(0, -1, p_top);
-				p.SetAt(0, +0, p_mid);
-				p.SetAt(0, +1, p_bot);
+				p.SetAt(0, -1, pTop);
+				p.SetAt(0, +0, pMid);
+				p.SetAt(0, +1, pBot);
 
 				#endregion
 			}
@@ -788,7 +788,7 @@ namespace BefunGen.AST.CodeGen
 
 				p.AppendRight(len);
 
-				p.AppendRight(BCHelper.Digit_9);
+				p.AppendRight(BCHelper.Digit9);
 
 			}
 			else
@@ -808,12 +808,12 @@ namespace BefunGen.AST.CodeGen
 
 				p.AppendLeft(len);
 
-				p.AppendLeft(BCHelper.Digit_9);
+				p.AppendLeft(BCHelper.Digit9);
 
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
@@ -849,7 +849,7 @@ namespace BefunGen.AST.CodeGen
 				#endregion
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
@@ -874,9 +874,9 @@ namespace BefunGen.AST.CodeGen
 			p.SetAt(0, +2, CodePiece.ParseFromLine(@"  >  ", true, true));
 
 			if (reversed)
-				p.reverseX(true);
+				p.ReverseX(true);
 
-			p.normalizeX();
+			p.NormalizeX();
 			return p;
 		}
 
@@ -887,12 +887,12 @@ namespace BefunGen.AST.CodeGen
 
 			CodePiece p = new CodePiece();
 
-			p[0, 0] = BCHelper.PC_Down;
-			p[1, 0] = BCHelper.If_Horizontal;
-			p[2, 0] = BCHelper.PC_Down;
+			p[0, 0] = BCHelper.PCDown;
+			p[1, 0] = BCHelper.IfHorizontal;
+			p[2, 0] = BCHelper.PCDown;
 
-			p[0, 1] = BCHelper.PC_Right;
-			p[1, 1] = BCHelper.PC_Down;
+			p[0, 1] = BCHelper.PCRight;
+			p[1, 1] = BCHelper.PCDown;
 			p[2, 1] = BCHelper.Walkway;
 
 			return p;

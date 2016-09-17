@@ -1,9 +1,9 @@
 ﻿
 namespace BefunGen.AST.CodeGen.Tags
 {
-	public class VarDeclaration_Tag : CodeTag
+	public class VarDeclarationTag : CodeTag
 	{
-		public VarDeclaration_Tag(VarDeclaration target)
+		public VarDeclarationTag(VarDeclaration target)
 			: base("VarDeclaration_Tag", target)
 		{
 			//NOP

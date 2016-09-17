@@ -9,8 +9,8 @@ namespace BefunGen.AST
 {
 	public class Method : ASTObject
 	{
-		private static int _METHODADDRESS_COUNTER = 0;
-		protected static int METHODADDRESS_COUNTER { get { return _METHODADDRESS_COUNTER++; } }
+		private static int _methodaddressCounter = 0;
+		protected static int METHODADDRESS_COUNTER { get { return _methodaddressCounter++; } }
 
 		public Program Owner;
 
@@ -19,21 +19,21 @@ namespace BefunGen.AST
 		public readonly List<VarDeclaration> Parameter;
 
 		public readonly List<VarDeclaration> Variables; // Includes Parameter & Temps
-		public readonly Statement_StatementList Body;
+		public readonly StatementStatementList Body;
 
 		public int ReferenceCount { get { return References.Count; } }
-		public List<Statement_MethodCall> References = new List<Statement_MethodCall>(); // Can Contain Reference <null> (in MainMethod)
+		public List<StatementMethodCall> References = new List<StatementMethodCall>(); // Can Contain Reference <null> (in MainMethod)
 
-		private int _METHODADDRESS = -1;
-		public int MethodAddr { get { return _METHODADDRESS; } private set { _METHODADDRESS = value; } }
+		private int methodaddress = -1;
+		public int MethodAddr { get { return methodaddress; } private set { methodaddress = value; } }
 
-		public Method(SourceCodePosition pos, Method_Header h, Method_Body b)
+		public Method(SourceCodePosition pos, MethodHeader h, MethodBody b)
 			: this(h.Position, h.ResultType, h.Identifier, h.Parameter, b.Variables, b.Body)
 		{
 			//--
 		}
 
-		public Method(SourceCodePosition pos, BType t, string id, List<VarDeclaration> p, List<VarDeclaration> v, Statement_StatementList b)
+		public Method(SourceCodePosition pos, BType t, string id, List<VarDeclaration> p, List<VarDeclaration> v, StatementStatementList b)
 			: base(pos)
 		{
 			this.ResultType = t;
@@ -46,69 +46,69 @@ namespace BefunGen.AST
 			Variables.AddRange(Parameter);
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
 			return string.Format("#Method ({{{0}}}({1}):{2})\n[\n#References: {3}\n#Parameter:\n{4}\n#Variables:\n{5}\n#Body:\n{6}\n]",
 				MethodAddr,
 				Identifier,
-				ResultType.getDebugString(),
+				ResultType.GetDebugString(),
 				References.Count,
-				indent(getDebugStringForList(Parameter)),
-				indent(getDebugStringForList(Variables.Where(p => !Parameter.Contains(p)).ToList())),
-				indent(Body.getDebugString()));
+				Indent(GetDebugStringForList(Parameter)),
+				Indent(GetDebugStringForList(Variables.Where(p => !Parameter.Contains(p)).ToList())),
+				Indent(Body.GetDebugString()));
 		}
 
-		public string getWellFormattedHeader()
+		public string GetWellFormattedHeader()
 		{
-			return string.Format("{0} {1}({2});", ResultType, Identifier, string.Join(", ", Parameter.Select(p => p.getWellFormattedDecalaration())));
+			return string.Format("{0} {1}({2});", ResultType, Identifier, string.Join(", ", Parameter.Select(p => p.GetWellFormattedDecalaration())));
 		}
 
-		public void createCodeAddress()
+		public void CreateCodeAddress()
 		{
 			MethodAddr = METHODADDRESS_COUNTER;
 		}
 
-		public void integrateStatementLists()
+		public void IntegrateStatementLists()
 		{
-			Body.integrateStatementLists();
+			Body.IntegrateStatementLists();
 		}
 
-		public void linkVariables()
+		public void LinkVariables()
 		{
-			Body.linkVariables(this);
+			Body.LinkVariables(this);
 		}
 
-		public void inlineConstants()
+		public void InlineConstants()
 		{
-			Body.inlineConstants();
+			Body.InlineConstants();
 		}
 
-		public void addressCodePoints()
+		public void AddressCodePoints()
 		{
-			Body.addressCodePoints();
+			Body.AddressCodePoints();
 		}
 
-		public void linkMethods(Program owner)
+		public void LinkMethods(Program owner)
 		{
-			Body.linkMethods(owner);
+			Body.LinkMethods(owner);
 		}
 
-		public void linkResultTypes()
+		public void LinkResultTypes()
 		{
-			Body.linkResultTypes(this);
+			Body.LinkResultTypes(this);
 		}
 
-		public void forceMethodReturn(bool isMain)
+		public void ForceMethodReturn(bool isMain)
 		{
-			if (!Body.allPathsReturn())
+			if (!Body.AllPathsReturn())
 			{
 				if (isMain)
 				{
-					Body.List.Add(new Statement_Quit(Position));
+					Body.List.Add(new StatementQuit(Position));
 				}
-				else if (ResultType is BType_Void)
+				else if (ResultType is BTypeVoid)
 				{
-					Body.List.Add(new Statement_Return(Position));
+					Body.List.Add(new StatementReturn(Position));
 				}
 				else
 				{
@@ -117,26 +117,26 @@ namespace BefunGen.AST
 			}
 		}
 
-		public void raiseErrorOnReturnStatement()
+		public void RaiseErrorOnReturnStatement()
 		{
-			Statement_Return sr;
-			if ((sr = Body.hasReturnStatement()) != null)
+			StatementReturn sr;
+			if ((sr = Body.HasReturnStatement()) != null)
 			{
 				throw new IllegalReturnCallInMainException(sr.Position);
 			}
 		}
 
-		public void evaluateExpressions()
+		public void EvaluateExpressions()
 		{
-			Body.evaluateExpressions();
+			Body.EvaluateExpressions();
 		}
 
-		public void AddReference(Statement_MethodCall rf)
+		public void AddReference(StatementMethodCall rf)
 		{
 			References.Add(rf);
 		}
 
-		public VarDeclaration findVariableByIdentifier(string ident)
+		public VarDeclaration FindVariableByIdentifier(string ident)
 		{
 			List<VarDeclaration> r = Variables.Where(p => p.Identifier.ToLower() == ident.ToLower())
 				.Concat(Owner.Variables.Where(p => p.Identifier.ToLower() == ident.ToLower()))
@@ -146,51 +146,51 @@ namespace BefunGen.AST
 			return r.Count() == 1 ? r.Single() : null;
 		}
 
-		public Statement_Label findLabelByIdentifier(string ident)
+		public StatementLabel FindLabelByIdentifier(string ident)
 		{
-			return Body.findLabelByIdentifier(ident);
+			return Body.FindLabelByIdentifier(ident);
 		}
 
-		public static void resetCounter()
+		public static void ResetCounter()
 		{
-			_METHODADDRESS_COUNTER = 0;
+			_methodaddressCounter = 0;
 		}
 
 		#region GenerateCode
 
-		public CodePiece generateCode(int meth_offset_x, int meth_offset_y)
+		public CodePiece GenerateCode(int methOffsetX, int methOffsetY)
 		{
 			CodePiece p = new CodePiece();
 
 			// Generate Space for Variables
-			p.AppendBottom(generateCode_Variables(meth_offset_x, meth_offset_y));
+			p.AppendBottom(GenerateCode_Variables(methOffsetX, methOffsetY));
 
 			// Generate Initialization of Variables
-			CodePiece p_vi = generateCode_VariableIntialization();
-			p_vi.SetTag(0, 0, new MethodEntry_FullInitialization_Tag(this));  //v<-- Entry Point
-			p.AppendBottom(p_vi);
+			CodePiece pVi = GenerateCode_VariableIntialization();
+			pVi.SetTag(0, 0, new MethodEntryFullInitializationTag(this));  //v<-- Entry Point
+			p.AppendBottom(pVi);
 
 			// Generate Initialization of Parameters
-			p.AppendBottom(generateCode_ParameterIntialization());
+			p.AppendBottom(GenerateCode_ParameterIntialization());
 
 			// Generate Statements
-			p.AppendBottom(generateCode_Body());
+			p.AppendBottom(GenerateCode_Body());
 
 			return p;
 		}
 
-		private CodePiece generateCode_Variables(int mo_x, int mo_y)
+		private CodePiece GenerateCode_Variables(int moX, int moY)
 		{
 			CodePiece p = new CodePiece();
 
 			int paramX = 0;
 			int paramY = 0;
 
-			int max_arr = 0;
-			if (Variables.Count(t => t is VarDeclaration_Array) > 0)
-				max_arr = Variables.Where(t => t is VarDeclaration_Array).Select(t => t as VarDeclaration_Array).Max(t => t.Size);
+			int maxArr = 0;
+			if (Variables.Count(t => t is VarDeclarationArray) > 0)
+				maxArr = Variables.Where(t => t is VarDeclarationArray).Select(t => t as VarDeclarationArray).Max(t => t.Size);
 
-			int maxwidth = Math.Max(max_arr, CGO.DefaultVarDeclarationWidth);
+			int maxwidth = Math.Max(maxArr, CGO.DefaultVarDeclarationWidth);
 
 			for (int i = 0; i < Variables.Count; i++)
 			{
@@ -204,24 +204,24 @@ namespace BefunGen.AST
 					paramY++;
 				}
 
-				if (paramX > 0 && var is VarDeclaration_Array && (paramX + (var as VarDeclaration_Array).Size) > maxwidth)
+				if (paramX > 0 && var is VarDeclarationArray && (paramX + (var as VarDeclarationArray).Size) > maxwidth)
 				{	// Next Line
 					paramX = 0;
 					paramY++;
 				}
 
-				if (var is VarDeclaration_Value)
+				if (var is VarDeclarationValue)
 				{
-					lit[0, 0] = BCHelper.chr(CGO.DefaultVarDeclarationSymbol,new VarDeclaration_Tag(var));
+					lit[0, 0] = BCHelper.Chr(CGO.DefaultVarDeclarationSymbol,new VarDeclarationTag(var));
 				}
 				else
 				{
-					int sz = (var as VarDeclaration_Array).Size;
-					lit.Fill(0, 0, sz, 1, BCHelper.chr(CGO.DefaultVarDeclarationSymbol), new VarDeclaration_Tag(var));
+					int sz = (var as VarDeclarationArray).Size;
+					lit.Fill(0, 0, sz, 1, BCHelper.Chr(CGO.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
 				}
 
-				var.CodePositionX = mo_x + paramX;
-				var.CodePositionY = mo_y + paramY;
+				var.CodePositionX = moX + paramX;
+				var.CodePositionY = moY + paramY;
 
 				p.SetAt(paramX, paramY, lit);
 				paramX += lit.Width;
@@ -230,7 +230,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		private CodePiece generateCode_VariableIntialization()
+		private CodePiece GenerateCode_VariableIntialization()
 		{
 			CodePiece p = new CodePiece();
 
@@ -243,7 +243,7 @@ namespace BefunGen.AST
 				if (Parameter.Contains(var))
 					continue;
 
-				varDecls.Add(new TwoDirectionCodePiece(var.generateCode(false), var.generateCode(true)));
+				varDecls.Add(new TwoDirectionCodePiece(var.GenerateCode(false), var.GenerateCode(true)));
 			}
 
 			if (varDecls.Count % 2 != 0)
@@ -254,46 +254,46 @@ namespace BefunGen.AST
 
 			for (int i = 0; i < varDecls.Count; i += 2)
 			{
-				CodePiece cp_a = varDecls[i].Normal;
-				CodePiece cp_b = varDecls[i + 1].Reversed;
+				CodePiece cpA = varDecls[i].Normal;
+				CodePiece cpB = varDecls[i + 1].Reversed;
 
-				cp_a.normalizeX();
-				cp_b.normalizeX();
+				cpA.NormalizeX();
+				cpB.NormalizeX();
 
-				int mw = Math.Max(cp_a.MaxX, cp_b.MaxX);
+				int mw = Math.Max(cpA.MaxX, cpB.MaxX);
 
-				cp_a.AppendLeft(BCHelper.PC_Right);
-				cp_b.AppendLeft(BCHelper.PC_Down);
+				cpA.AppendLeft(BCHelper.PCRight);
+				cpB.AppendLeft(BCHelper.PCDown);
 
-				cp_a.Fill(cp_a.MaxX, 0, mw, 1, BCHelper.Walkway);
-				cp_b.Fill(cp_b.MaxX, 0, mw, 1, BCHelper.Walkway);
+				cpA.Fill(cpA.MaxX, 0, mw, 1, BCHelper.Walkway);
+				cpB.Fill(cpB.MaxX, 0, mw, 1, BCHelper.Walkway);
 
-				cp_a[mw, 0] = BCHelper.PC_Down;
-				cp_b[mw, 0] = BCHelper.PC_Left;
-
-
-				cp_a.FillColWW(cp_a.MaxX - 1, 1, cp_a.MaxY);
-				cp_a.FillColWW(cp_a.MinX, cp_a.MinY, 0);
-
-				cp_b.FillColWW(cp_b.MaxX - 1, cp_b.MinY, 0);
-				cp_b.FillColWW(cp_b.MinX, 1, cp_b.MaxY);
+				cpA[mw, 0] = BCHelper.PCDown;
+				cpB[mw, 0] = BCHelper.PCLeft;
 
 
-				cp_a.normalizeX();
-				cp_b.normalizeX();
+				cpA.FillColWw(cpA.MaxX - 1, 1, cpA.MaxY);
+				cpA.FillColWw(cpA.MinX, cpA.MinY, 0);
 
-				p.AppendBottom(cp_a);
-				p.AppendBottom(cp_b);
+				cpB.FillColWw(cpB.MaxX - 1, cpB.MinY, 0);
+				cpB.FillColWw(cpB.MinX, 1, cpB.MaxY);
+
+
+				cpA.NormalizeX();
+				cpB.NormalizeX();
+
+				p.AppendBottom(cpA);
+				p.AppendBottom(cpB);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
-			p.forceNonEmpty(BCHelper.PC_Down);
+			p.ForceNonEmpty(BCHelper.PCDown);
 
 			return p;
 		}
 
-		private CodePiece generateCode_ParameterIntialization()
+		private CodePiece GenerateCode_ParameterIntialization()
 		{
 			CodePiece p = new CodePiece();
 
@@ -303,7 +303,7 @@ namespace BefunGen.AST
 			{
 				VarDeclaration var = Parameter[i];
 
-				paramDecls.Add(new TwoDirectionCodePiece(var.generateCode_SetToStackVal(false), var.generateCode_SetToStackVal(true)));
+				paramDecls.Add(new TwoDirectionCodePiece(var.GenerateCode_SetToStackVal(false), var.GenerateCode_SetToStackVal(true)));
 			}
 
 			if (paramDecls.Count % 2 != 0)
@@ -311,52 +311,52 @@ namespace BefunGen.AST
 
 			for (int i = 0; i < paramDecls.Count; i += 2)
 			{
-				CodePiece cp_a = paramDecls[i].Normal;
-				CodePiece cp_b = paramDecls[i + 1].Reversed;
+				CodePiece cpA = paramDecls[i].Normal;
+				CodePiece cpB = paramDecls[i + 1].Reversed;
 
-				cp_a.normalizeX();
-				cp_b.normalizeX();
+				cpA.NormalizeX();
+				cpB.NormalizeX();
 
-				int mw = Math.Max(cp_a.MaxX, cp_b.MaxX);
+				int mw = Math.Max(cpA.MaxX, cpB.MaxX);
 
-				cp_a.AppendLeft(BCHelper.PC_Right);
-				cp_b.AppendLeft(BCHelper.PC_Down);
+				cpA.AppendLeft(BCHelper.PCRight);
+				cpB.AppendLeft(BCHelper.PCDown);
 
-				cp_a.Fill(cp_a.MaxX, 0, mw, 1, BCHelper.Walkway);
-				cp_b.Fill(cp_b.MaxX, 0, mw, 1, BCHelper.Walkway);
+				cpA.Fill(cpA.MaxX, 0, mw, 1, BCHelper.Walkway);
+				cpB.Fill(cpB.MaxX, 0, mw, 1, BCHelper.Walkway);
 
-				cp_a[mw, 0] = BCHelper.PC_Down;
-				cp_b[mw, 0] = BCHelper.PC_Left;
+				cpA[mw, 0] = BCHelper.PCDown;
+				cpB[mw, 0] = BCHelper.PCLeft;
 
-				for (int y = cp_a.MinY; y < cp_a.MaxY; y++)
+				for (int y = cpA.MinY; y < cpA.MaxY; y++)
 					if (y != 0)
-						cp_a[cp_a.MaxX - 1, y] = BCHelper.Walkway;
+						cpA[cpA.MaxX - 1, y] = BCHelper.Walkway;
 
-				for (int y = cp_b.MinY; y < cp_b.MaxY; y++)
+				for (int y = cpB.MinY; y < cpB.MaxY; y++)
 					if (y != 0)
-						cp_b[cp_b.MaxX - 1, y] = BCHelper.Walkway;
+						cpB[cpB.MaxX - 1, y] = BCHelper.Walkway;
 
-				cp_a.normalizeX();
-				cp_b.normalizeX();
+				cpA.NormalizeX();
+				cpB.NormalizeX();
 
-				p.AppendBottom(cp_a);
-				p.AppendBottom(cp_b);
+				p.AppendBottom(cpA);
+				p.AppendBottom(cpB);
 			}
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			return p;
 		}
 
-		private CodePiece generateCode_Body()
+		private CodePiece GenerateCode_Body()
 		{
-			CodePiece p = Body.generateStrippedCode();
+			CodePiece p = Body.GenerateStrippedCode();
 
-			p.normalizeX();
+			p.NormalizeX();
 
-			p[-1, 0] = BCHelper.PC_Right;
+			p[-1, 0] = BCHelper.PCRight;
 
-			p.normalizeX();
+			p.NormalizeX();
 
 			p.Fill(0, p.MinY, 1, 0, BCHelper.Walkway);
 
@@ -366,37 +366,37 @@ namespace BefunGen.AST
 		#endregion
 	}
 
-	public class Method_Header : ASTObject // TEMPORARY -- NOT IN RESULTING AST
+	public class MethodHeader : ASTObject // TEMPORARY -- NOT IN RESULTING AST
 	{
 		public readonly BType ResultType;
 		public readonly string Identifier;
 		public readonly List<VarDeclaration> Parameter;
 
-		public Method_Header(SourceCodePosition pos, BType t, string ident, List<VarDeclaration> p)
+		public MethodHeader(SourceCodePosition pos, BType t, string ident, List<VarDeclaration> p)
 			: base(pos)
 		{
 			this.ResultType = t;
 			this.Identifier = ident;
 			this.Parameter = p;
 
-			if (ASTObject.isKeyword(ident))
+			if (ASTObject.IsKeyword(ident))
 			{
 				throw new IllegalIdentifierException(Position, ident);
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 	}
 
-	public class Method_Body : ASTObject // TEMPORARY -- NOT IN RESULTING AST
+	public class MethodBody : ASTObject // TEMPORARY -- NOT IN RESULTING AST
 	{
 		public readonly List<VarDeclaration> Variables;
-		public readonly Statement_StatementList Body;
+		public readonly StatementStatementList Body;
 
-		public Method_Body(SourceCodePosition pos, List<VarDeclaration> v, Statement_StatementList b)
+		public MethodBody(SourceCodePosition pos, List<VarDeclaration> v, StatementStatementList b)
 			: base(pos)
 		{
 			this.Variables = v;
@@ -409,9 +409,9 @@ namespace BefunGen.AST
 			}
 		}
 
-		public override string getDebugString()
+		public override string GetDebugString()
 		{
-			throw new InvalidASTStateException(Position);
+			throw new InvalidAstStateException(Position);
 		}
 	}
 }

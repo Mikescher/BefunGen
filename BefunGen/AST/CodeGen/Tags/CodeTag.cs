@@ -7,8 +7,8 @@ namespace BefunGen.AST.CodeGen.Tags
 		public readonly string TagName;
 		public readonly object TagParam;
 
-		private bool _Active = true;
-		public bool Active { get { return _Active; } }
+		private bool active = true;
+		public bool Active { get { return active; } }
 
 
 		public CodeTag(string name)
@@ -17,12 +17,12 @@ namespace BefunGen.AST.CodeGen.Tags
 			//-
 		}
 
-		public void deactivate()
+		public void Deactivate()
 		{
-			_Active = false;
+			active = false;
 		}
 
-		public bool isActive()
+		public bool IsActive()
 		{
 			return Active;
 		}
@@ -34,7 +34,7 @@ namespace BefunGen.AST.CodeGen.Tags
 			this.TagParam = param;
 		}
 
-		public bool hasParam()
+		public bool HasParam()
 		{
 			return TagParam != null;
 		}
@@ -42,7 +42,7 @@ namespace BefunGen.AST.CodeGen.Tags
 		public override string ToString()
 		{
 			return 
-				(hasParam()) 
+				(HasParam()) 
 				? 
 				(string.Format("[{0}] {1} ({2}) <{3}>", Active ? "+" : "-", TagName, TagParam, UUID))
 				:
