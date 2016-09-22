@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/Mikescher/BefunUtils/master/README-FILES/icon_BefunGen.png) BefunGen
+![](https://raw.githubusercontent.com/Mikescher/BefunUtils/master/README-FILES/icon_BefunGen.png) BefunGen [![Build status](https://ci.appveyor.com/api/projects/status/2a0bp9dem42uru2j/branch/master?svg=true)](https://ci.appveyor.com/project/Mikescher/befungen/branch/master)
 ========
 
 BefunGen is  a compiler for TextFunge and a code generator for Befunge.  
@@ -9,19 +9,23 @@ This is important to understand, while I always try to optimize the generated co
 
 But thats not really the problem, because the target of BefunGen is **not** generate code that could also be made by hand. The target code size is code so big that it would be totally impractical to write by hand (without spending days and weeks on it).
 
-BefunGen itself is not a standalone program, it's a simple library. You are free to use the DLL in your own program (but beware of the license, please give me credits...). If you need help how to use it you can either simply look at the source code (of BefunGen or BefunWrite) or write me a friendly mail.
-
-
 Running
 =======
 
-You can call BefunGen simply via the commandline and supply it with an *.tf file to compile. (call with `--help` to see all the options).
+You can call BefunGen simply via the command line and supply it with an *.tf file to compile. (call with `--help` to see all the options).
+
+~~~
+$> BefunGen input.tf output.b93
+~~~
+
 But there is also a small IDE [BefunWrite](https://github.com/Mikescher/BefunWrite) which makes it a lot easier to write a program.
 
 Download
 ========
 
 You can download the binaries from my website [www.mikescher.com](http://www.mikescher.com/programs/view/BefunUtils)
+
+Or you can download the latest (nightly) version from the **[AppVeyor build server](https://ci.appveyor.com/project/Mikescher/BefunGen/build/artifacts)**
 
 Set Up
 ======
