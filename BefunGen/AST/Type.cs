@@ -104,7 +104,7 @@ namespace BefunGen.AST
 
 		public override int GetHashCode()
 		{
-			return GetPriority() * (Size + 1);
+			return 10000 + GetPriority() * (Size + 1);
 		}
 
 		protected abstract BTypeValue GetInternType();
@@ -176,6 +176,39 @@ namespace BefunGen.AST
 		{
 			return PRIORITY_UNION;
 		}
+	}
+
+	public abstract class BTypeStack : BType
+	{
+		public BTypeValue InternalType { get { return GetInternType(); } }
+
+		public readonly int Size;
+
+		public BTypeStack(SourceCodePosition pos, int sz)
+			: base(pos)
+		{
+			Size = sz;
+		}
+
+		public override int GetSize()
+		{
+			return Size;
+		}
+
+		public override bool Equals(BType p)
+		{
+			if ((object)p == null)
+				return false;
+
+			return this.GetType() == p.GetType() && (p as BTypeStack).Size == Size;
+		}
+
+		public override int GetHashCode()
+		{
+			return 20000 + GetPriority() * (Size + 1);
+		}
+
+		protected abstract BTypeValue GetInternType();
 	}
 
 	#endregion
@@ -435,4 +468,140 @@ namespace BefunGen.AST
 	}
 
 	#endregion Array Types
+
+	#region Stack Types
+
+	public class BTypeIntStack : BTypeArray
+	{
+		public BTypeIntStack(SourceCodePosition pos, int sz)
+			: base(pos, sz)
+		{
+		}
+
+		public override string GetDebugString()
+		{
+			return string.Format("int_stack<{0}>", Size);
+		}
+
+		public override Literal GetDefaultValue()
+		{
+
+		}
+
+		public override bool IsImplicitCastableTo(BType other)
+		{
+			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeIntStack));
+		}
+
+		public override int GetPriority()
+		{
+			return PRIORITY_INT;
+		}
+
+		protected override BTypeValue GetInternType()
+		{
+			return new BTypeInt(Position);
+		}
+	}
+
+	public class BTypeCharStack : BTypeArray
+	{
+		public BTypeCharStack(SourceCodePosition pos, int sz)
+			: base(pos, sz)
+		{
+		}
+
+		public override string GetDebugString()
+		{
+			return string.Format("char_stack<{0}>", Size);
+		}
+
+		public override Literal GetDefaultValue()
+		{
+
+		}
+
+		public override bool IsImplicitCastableTo(BType other)
+		{
+			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeCharStack));
+		}
+
+		public override int GetPriority()
+		{
+			return PRIORITY_CHAR;
+		}
+
+		protected override BTypeValue GetInternType()
+		{
+			return new BTypeChar(Position);
+		}
+	}
+
+	public class BTypeDigitStack : BTypeArray
+	{
+		public BTypeDigitStack(SourceCodePosition pos, int sz)
+			: base(pos, sz)
+		{
+		}
+
+		public override string GetDebugString()
+		{
+			return string.Format("digit_stack<{0}>", Size);
+		}
+
+		public override Literal GetDefaultValue()
+		{
+
+		}
+
+		public override bool IsImplicitCastableTo(BType other)
+		{
+			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeDigitStack));
+		}
+
+		public override int GetPriority()
+		{
+			return PRIORITY_DIGIT;
+		}
+
+		protected override BTypeValue GetInternType()
+		{
+			return new BTypeDigit(Position);
+		}
+	}
+
+	public class BTypeBoolStack : BTypeArray
+	{
+		public BTypeBoolStack(SourceCodePosition pos, int sz)
+			: base(pos, sz)
+		{
+		}
+
+		public override string GetDebugString()
+		{
+			return string.Format("bool_stack<{0}>", Size);
+		}
+
+		public override Literal GetDefaultValue()
+		{
+
+		}
+
+		public override bool IsImplicitCastableTo(BType other)
+		{
+			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeBoolStack));
+		}
+
+		public override int GetPriority()
+		{
+			return PRIORITY_BOOL;
+		}
+
+		protected override BTypeValue GetInternType()
+		{
+			return new BTypeBool(Position);
+		}
+	}
+
+	#endregion
 }

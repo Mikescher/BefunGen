@@ -195,7 +195,11 @@ HexLiteral             = 0x{Hex Digit}+
                        |   <Type_String>
                        |   <Type_DigitArr>
                        |   <Type_BoolArr>
-                   
+                       |   <Type_IntStack>
+                       |   <Type_DigitStack>
+                       |   <Type_CharStack>
+                       |   <Type_BoolStack>
+
 <Type_Int>             ::= 'int'  | 'integer'
 <Type_Char>            ::= 'char' | 'Character'
 <Type_Digit>           ::= 'digit'
@@ -207,6 +211,10 @@ HexLiteral             = 0x{Hex Digit}+
 <Type_DigitArr>        ::= <Type_Digit> '[' <Literal_Int> ']'
 <Type_BoolArr>         ::= <Type_Bool>  '[' <Literal_Int> ']'
 
+<Type_IntStack>        ::= 'stack'  '<' <Type_Int>       '>' '[' <Literal_Int> ']'
+<Type_CharStack>       ::= 'stack'  '<' <Type_CharStack> '>' '[' <Literal_Int> ']'
+<Type_DigitStack>      ::= 'stack'  '<' <Type_Digit>     '>' '[' <Literal_Int> ']'
+<Type_BoolStack>       ::= 'stack'  '<' <Type_Bool>      '>' '[' <Literal_Int> ']'
 
 !#############
 !  LITERALS  !
