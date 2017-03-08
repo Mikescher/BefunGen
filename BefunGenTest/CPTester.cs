@@ -258,7 +258,7 @@ namespace BefunGenTest
 					Pop();
 					break;
 				case '.':
-					Output.Append((int)Pop());
+					Output.Append(Pop().ToString() + " ");
 					break;
 				case ',':
 					Output.Append((char)Pop());
