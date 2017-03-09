@@ -1,6 +1,8 @@
 ﻿using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.AST.Exceptions;
+using BefunGen.MathExtensions;
+
 namespace BefunGen.AST
 {
 	public abstract class VarDeclaration : ASTObject
@@ -15,6 +17,8 @@ namespace BefunGen.AST
 
 		public bool HasCompleteUserDefiniedInitialValue;
 		public bool IsConstant { get; private set; }
+
+		public MathExt.Point CodePosition => new MathExt.Point(CodePositionX, CodePositionY);
 
 		private int codePositionX = -1;
 		public int CodePositionX
@@ -199,7 +203,7 @@ namespace BefunGen.AST
 	{
 		public BTypeValue InternalType { get { return (Type as BTypeArray).InternalType; } }
 
-		public int Size { get { return (Type as BTypeArray).Size; } }
+		public int Size { get { return (Type as BTypeArray).ArraySize; } }
 
 		public VarDeclarationArray(SourceCodePosition pos, BTypeArray t, string id)
 			: base(pos, t, id, null)
@@ -218,13 +222,13 @@ namespace BefunGen.AST
 			if (!v.GetBType().IsImplicitCastableTo(t))
 				throw new ImplicitCastException(pos, v.GetBType(), t);
 
-			if (literalSize > t.Size)
+			if (literalSize > t.ArraySize)
 			{
 				throw new ArrayLiteralTooBigException(pos);
 			}
-			else if (literalSize < t.Size)
+			else if (literalSize < t.ArraySize)
 			{
-				((LiteralArray)Initial).AppendDefaultValues(t.Size - literalSize);
+				((LiteralArray)Initial).AppendDefaultValues(t.ArraySize - literalSize);
 				HasCompleteUserDefiniedInitialValue = false;
 			}
 		}
@@ -421,6 +425,56 @@ namespace BefunGen.AST
 				throw new ConstantValueChangedException(Position, Identifier);
 
 			return CodePieceStore.WriteArrayFromStack(this, reversed);
+		}
+	}
+
+	public class VarDeclarationStack : VarDeclaration
+	{
+		public BTypeValue InternalType { get { return (Type as BTypeStack).InternalType; } }
+
+		public int Size { get { return (Type as BTypeStack).StackSize; } }
+
+		public VarDeclarationStack(SourceCodePosition pos, BTypeStack t, string id)
+			: base(pos, t, id, null)
+		{
+			if (Size < 2) throw new ArrayTooSmallException(Position);
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			if (IsConstant) throw new ConstantValueChangedException(Position, Identifier);
+
+			CodePiece p = new CodePiece();
+
+			int varX = CodePositionX;
+			int varY = CodePositionY;
+
+			if (reversed)
+			{
+				p.AppendLeft(BCHelper.Digit0);
+				p.AppendLeft(NumberCodeHelper.GenerateCode(varX, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
+			}
+			else
+			{
+				p.AppendRight(BCHelper.Digit0);
+				p.AppendRight(NumberCodeHelper.GenerateCode(varX, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(varY, reversed));
+				p.AppendRight(BCHelper.ReflectSet);
+			}
+
+			p.NormalizeX();
+
+			return p;
+		}
+
+		public override CodePiece GenerateCode_SetToStackVal(bool reversed)
+		{
+			if (IsConstant)
+				throw new ConstantValueChangedException(Position, Identifier);
+
+			return CodePieceStore.WriteArrayFromStack(Size + 1, CodePositionX, CodePositionY, reversed);
 		}
 	}
 

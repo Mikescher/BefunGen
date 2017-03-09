@@ -139,7 +139,7 @@ end
 		[TestMethod]
 		public void codeGenTest_Program_Euklid()
 		{
-			BFTestHelper.debugProgram_Output("4", @"
+			BFTestHelper.debugProgram_Output("4 ", @"
 program example
 	begin
 		out euclid(44, 12);
@@ -168,7 +168,7 @@ end
 		[TestMethod]
 		public void codeGenTest_Program_GlobalVar()
 		{
-			BFTestHelper.debugProgram_Output("99", @"
+			BFTestHelper.debugProgram_Output("99 ", @"
 program example
 	global
 	 int i;
@@ -205,7 +205,7 @@ end
 		[TestMethod]
 		public void codeGenTest_Program_Constants()
 		{
-			BFTestHelper.debugProgram_Output("99", @"
+			BFTestHelper.debugProgram_Output("99 ", @"
 program example
 	const
 		int FALSCH := 0;
@@ -461,6 +461,40 @@ program example
 	begin
 		out ''a'';
 		return 0;
+	end
+end
+");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_ArrayParameter()
+		{
+			BFTestHelper.debugProgram_Output("110308", @"
+program p0
+	var 
+		digit[6] x := {#1, #1, #2, #3, #5, #8};
+	begin
+		x[2] = #0;
+		x[4] = #0;
+		a(x);
+	end
+
+	void a(digit[6] px)
+	begin
+		out b(px, 0);
+		out b(px, 1);
+		out b(px, 2);
+		out b(px, 3);
+		out b(px, 4);
+		out b(px, 5);
+	end
+
+	int b(digit[6] a, int i)
+	var 
+		digit[6] tmp;
+	begin
+		tmp = a;
+		return tmp[i];
 	end
 end
 ");

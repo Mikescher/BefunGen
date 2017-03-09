@@ -540,12 +540,21 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_SetDisplay()
 		{
-			BFTestHelper.debugMethod_Output("1", "a()",
+			BFTestHelper.debugMethod_Output("1 ", "a()",
 			@"
 				void a()
 				begin
 					display[0, 0] = '0';
 					OUT (int)(display[0, 0] == '0');
+				end
+			");
+
+			BFTestHelper.debugMethod_Output("1", "a()",
+			@"
+				void a()
+				begin
+					display[0, 0] = '0';
+					OUT (digit)(display[0, 0] == '0');
 				end
 			");
 		}
@@ -569,7 +578,7 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_PostIncrement()
 		{
-			BFTestHelper.debugMethod_Output("5", "a()",
+			BFTestHelper.debugMethod_Output("5 ", "a()",
 			@"
 				void a()
 				var
@@ -585,7 +594,7 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_PostDecrement()
 		{
-			BFTestHelper.debugMethod_Output("5", "a()",
+			BFTestHelper.debugMethod_Output("5 ", "a()",
 			@"
 				void a()
 				var
@@ -601,7 +610,7 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_PreIncrement()
 		{
-			BFTestHelper.debugMethod_Output("6", "a()",
+			BFTestHelper.debugMethod_Output("6 ", "a()",
 			@"
 				void a()
 				var
@@ -617,7 +626,7 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_PreDecrement()
 		{
-			BFTestHelper.debugMethod_Output("4", "a()",
+			BFTestHelper.debugMethod_Output("4 ", "a()",
 			@"
 				void a()
 				var

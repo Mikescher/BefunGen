@@ -977,42 +977,12 @@ namespace BefunGen.AST
 
 				if (popResult)
 				{
-					if (Target.ResultType is BTypeVoid)
-					{
-						p.AppendLeft(BCHelper.StackPop);
-					}
-					else if (Target.ResultType is BTypeValue)
-					{
-						p.AppendLeft(BCHelper.StackPop);
-					}
-					else if (Target.ResultType is BTypeArray)
-					{
-						p.AppendLeft(CodePieceStore.PopMultipleStackValues((Target.ResultType as BTypeArray).Size, reversed));
-					}
-					else
-						throw new WTFException();
-				}
-				else if (Target.ResultType is BTypeVoid)
-				{
-					p.AppendLeft(BCHelper.StackPop); // Nobody cares about the result ...
-				}
-				else if (Target.ResultType is BTypeValue)
-				{
-					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
-
-					p.AppendLeft(BCHelper.ReflectSet);
-				}
-				else if (Target.ResultType is BTypeArray)
-				{
-					p.AppendLeft(CodePieceStore.WriteArrayFromStack((
-						Target.ResultType as BTypeArray).Size,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
-						reversed));
+					p.AppendLeft(Target.ResultType.GenerateCodePopValueFromStack(Position, reversed));
 				}
 				else
-					throw new WTFException();
+				{
+					p.AppendLeft(Target.ResultType.GenerateCodeWriteFromStackToGrid(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				}
 
 				// Restore Variables
 
@@ -1024,27 +994,10 @@ namespace BefunGen.AST
 				{
 					// Do nothing - no really ...
 				}
-				else if (Target.ResultType is BTypeVoid)
-				{
-					// DO nothing - Nobody cares about the result ...
-				}
-				else if (Target.ResultType is BTypeValue)
-				{
-					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendLeft(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
-
-					p.AppendLeft(BCHelper.ReflectGet);
-				}
-				else if (Target.ResultType is BTypeArray)
-				{
-					p.AppendLeft(CodePieceStore.ReadArrayToStack((
-						Target.ResultType as BTypeArray).Size,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
-						reversed));
-				}
 				else
-					throw new WTFException();
+				{
+					Target.ResultType.GenerateCodeReadFromGridToStack(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed);
+				}
 
 				#endregion
 
@@ -1096,43 +1049,12 @@ namespace BefunGen.AST
 
 				if (popResult)
 				{
-					if (Target.ResultType is BTypeVoid)
-					{
-						p.AppendRight(BCHelper.StackPop);
-					}
-					else if (Target.ResultType is BTypeValue)
-					{
-						p.AppendRight(BCHelper.StackPop);
-					}
-					else if (Target.ResultType is BTypeArray)
-					{
-						p.AppendRight(CodePieceStore.PopMultipleStackValues((Target.ResultType as BTypeArray).Size, reversed));
-
-					}
-					else
-						throw new WTFException();
-				}
-				else if (Target.ResultType is BTypeVoid)
-				{
-					p.AppendRight(BCHelper.StackPop); // Nobody cares about the result ...
-				}
-				else if (Target.ResultType is BTypeValue)
-				{
-					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
-
-					p.AppendRight(BCHelper.ReflectSet);
-				}
-				else if (Target.ResultType is BTypeArray)
-				{
-					p.AppendRight(CodePieceStore.WriteArrayFromStack((
-						Target.ResultType as BTypeArray).Size,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
-						reversed));
+					p.AppendRight(Target.ResultType.GenerateCodePopValueFromStack(Position, reversed));
 				}
 				else
-					throw new WTFException();
+				{
+					p.AppendRight(Target.ResultType.GenerateCodeWriteFromStackToGrid(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				}
 
 				// Restore Variables
 
@@ -1144,27 +1066,10 @@ namespace BefunGen.AST
 				{
 					// Do nothing - no really ...
 				}
-				else if (Target.ResultType is BTypeVoid)
-				{
-					// Do nothing - Nobody cares about the result ...
-				}
-				else if (Target.ResultType is BTypeValue)
-				{
-					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, reversed));
-					p.AppendRight(NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y, reversed));
-
-					p.AppendRight(BCHelper.ReflectGet);
-				}
-				else if (Target.ResultType is BTypeArray)
-				{
-					p.AppendRight(CodePieceStore.ReadArrayToStack((
-						Target.ResultType as BTypeArray).Size,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X,
-						CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
-						reversed));
-				}
 				else
-					throw new WTFException();
+				{
+					Target.ResultType.GenerateCodeReadFromGridToStack(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed);
+				}
 
 				#endregion
 
@@ -1644,133 +1549,13 @@ namespace BefunGen.AST
 
 		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (ResultType is BTypeVoid)
-			{
-				return GenerateCode_Void(reversed);
-			}
-			else if (ResultType is BTypeValue)
-			{
-				return GenerateCode_Value(reversed);
-			}
-			else if (ResultType is BTypeArray)
-			{
-				return GenerateCode_Array(reversed);
-			}
-			else
-				throw new WTFException();
-		}
-
-		private CodePiece GenerateCode_Void(bool reversed)
-		{
-			CodePiece p = CodePiece.ParseFromLine(@"0\0");
-
-			p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
-
-			if (reversed)
-				p.ReverseX(false);
-
-			return p;
-
-		}
-
-		private CodePiece GenerateCode_Value(bool reversed)
-		{
-			CodePiece p = new CodePiece();
-
-			if (reversed)
-			{
-				#region Reversed
-
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
-
-				p.AppendRight(BCHelper.Digit0); // Right Lane
-
-				p.AppendRight(BCHelper.StackSwap); // Swap BackjumpAddr back to Stack-Front
-
-				p.AppendRight(Value.GenerateCode(reversed));
-
-				#endregion
-			}
-			else
-			{
-				#region Normal
-
-				p.AppendRight(Value.GenerateCode(reversed));
-
-				p.AppendRight(BCHelper.StackSwap); // Swap BackjumpAddr back to Stack-Front
-
-				p.AppendRight(BCHelper.Digit0); // Right Lane
-
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
-
-				#endregion
-
-			}
-
-			p.NormalizeX();
-			return p;
-		}
-
-		private CodePiece GenerateCode_Array(bool reversed)
-		{
-			CodePiece p = new CodePiece();
-
-			BTypeArray rType = ResultType as BTypeArray;
-
-			if (reversed)
-			{
-				#region Reversed
-
-				p.AppendLeft(Value.GenerateCode(reversed));
-
-
-				// Switch ReturnValue (Array)  and  BackJumpAddr
-
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
-				p.AppendLeft(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
-
-				p.AppendLeft(CodePieceStore.ReadArrayToStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
-				p.AppendLeft(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
-
-
-				p.AppendLeft(BCHelper.Digit0); // Right Lane
-
-				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
-
-				#endregion
-			}
-			else
-			{
-				#region Normal
-
-				p.AppendRight(Value.GenerateCode(reversed));
-
-
-				// Switch ReturnValue (Array)  and  BackJumpAddr
-
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
-				p.AppendRight(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
-
-				p.AppendRight(CodePieceStore.ReadArrayToStack(rType.Size, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
-				p.AppendRight(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
-
-
-				p.AppendRight(BCHelper.Digit0); // Right Lane
-
-				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
-
-				#endregion
-
-			}
-
-			p.NormalizeX();
-			return p;
+			return ResultType.GenerateCodeReturnFromMethodCall(Position, Value, reversed);
 		}
 	}
 
 	public class StatementOut : Statement
 	{
-		public enum OutMode { OUT_INT, OUT_CHAR, OUT_CHAR_ARR };
+		public enum OutMode { OUT_INT, OUT_CHAR, OUT_DIGIT, OUT_CHAR_ARR };
 
 		public Expression Value;
 
@@ -1815,13 +1600,24 @@ namespace BefunGen.AST
 
 			BTypeChar tChar = new BTypeChar(Position);
 			BTypeInt tInt = new BTypeInt(Position);
-			BTypeCharArr tChararr = (r is BTypeArray) ? new BTypeCharArr(Position, (r as BTypeArray).Size) : new BTypeCharArr(Position, 0);
+			BTypeDigit tDig = new BTypeDigit(Position);
+			BTypeCharArr tChararr = (r is BTypeArray) ? new BTypeCharArr(Position, (r as BTypeArray).ArraySize) : new BTypeCharArr(Position, 0);
 
 			bool implToChar = r.IsImplicitCastableTo(tChar);
 			bool implToInt = r.IsImplicitCastableTo(tInt);
+			bool implToDig = r.IsImplicitCastableTo(tDig);
 			bool implToCharArr = (r is BTypeArray) && r.IsImplicitCastableTo(tChararr);
 
-			if (implToInt)
+			if (implToDig)
+			{
+				Mode = OutMode.OUT_DIGIT;
+
+				if (r != tDig)
+				{
+					Value = new ExpressionCast(Position, tDig, Value);
+				}
+			}
+			else if (implToInt)
 			{
 				Mode = OutMode.OUT_INT;
 
@@ -1885,6 +1681,8 @@ namespace BefunGen.AST
 			{
 				case OutMode.OUT_INT:
 					return GenerateCode_Int(reversed);
+				case OutMode.OUT_DIGIT:
+					return GenerateCode_Digit(reversed);
 				case OutMode.OUT_CHAR:
 					return GenerateCode_Char(reversed);
 				case OutMode.OUT_CHAR_ARR:
@@ -1922,11 +1720,37 @@ namespace BefunGen.AST
 			return p;
 		}
 
+		private CodePiece GenerateCode_Digit(bool reversed)
+		{
+			CodePiece p = Value.GenerateCode(reversed);
+
+			if (reversed)
+			{
+				p.AppendLeft(BCHelper.Digit6);
+				p.AppendLeft(BCHelper.Digit8);
+				p.AppendLeft(BCHelper.Mult);
+				p.AppendLeft(BCHelper.Add);
+				p.AppendLeft(BCHelper.OutASCII);
+			}
+			else
+			{
+				p.AppendRight(BCHelper.Digit6);
+				p.AppendRight(BCHelper.Digit8);
+				p.AppendRight(BCHelper.Mult);
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.OutASCII);
+			}
+
+			p.NormalizeX();
+
+			return p;
+		}
+
 		private CodePiece GenerateCode_CharArr(bool reversed)
 		{
 			BTypeCharArr typeRight = Value.GetResultType() as BTypeCharArr;
 
-			CodePiece pLen = NumberCodeHelper.GenerateCode(typeRight.Size - 1, reversed);
+			CodePiece pLen = NumberCodeHelper.GenerateCode(typeRight.ArraySize - 1, reversed);
 
 			CodePiece pTpx = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.X, reversed);
 			CodePiece pTpy = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_OUT_ARR.Y, reversed);
@@ -2255,8 +2079,8 @@ namespace BefunGen.AST
 
 			BType expecInt = new BTypeInt(Position);
 			BType expecChar = new BTypeChar(Position);
-			BType expecChararr = (present is BTypeArray) ? new BTypeCharArr(Position, (present as BTypeArray).Size) : new BTypeCharArr(Position, 0);
-			BType expecIntarr = (present is BTypeArray) ? new BTypeIntArr(Position, (present as BTypeArray).Size) : new BTypeIntArr(Position, 0);
+			BType expecChararr = (present is BTypeArray) ? new BTypeCharArr(Position, (present as BTypeArray).ArraySize) : new BTypeCharArr(Position, 0);
+			BType expecIntarr = (present is BTypeArray) ? new BTypeIntArr(Position, (present as BTypeArray).ArraySize) : new BTypeIntArr(Position, 0);
 
 			if (present == expecChar)
 			{
@@ -2369,7 +2193,7 @@ namespace BefunGen.AST
 		private CodePiece GenerateCode_CharArr(bool reversed)
 		{
 			ExpressionDirectValuePointer vp = ValueTarget as ExpressionDirectValuePointer;
-			int len = (ValueTarget.GetResultType() as BTypeArray).Size;
+			int len = (ValueTarget.GetResultType() as BTypeArray).ArraySize;
 
 			CodePiece pLen = NumberCodeHelper.GenerateCode(len, reversed);
 			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
@@ -2401,7 +2225,7 @@ namespace BefunGen.AST
 		private CodePiece GenerateCode_IntArr(bool reversed)
 		{
 			ExpressionDirectValuePointer vp = ValueTarget as ExpressionDirectValuePointer;
-			int len = (ValueTarget.GetResultType() as BTypeArray).Size;
+			int len = (ValueTarget.GetResultType() as BTypeArray).ArraySize;
 
 			CodePiece pLen = NumberCodeHelper.GenerateCode(len, reversed);
 			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
@@ -2866,69 +2690,7 @@ namespace BefunGen.AST
 
 		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (Target.GetResultType() is BTypeArray)
-			{
-				return GenerateCode_Array(reversed);
-			}
-			else if (Target.GetResultType() is BTypeValue)
-			{
-				return GenerateCode_Value(reversed);
-			}
-			else
-			{
-				throw new InvalidAstStateException(Position);
-			}
-		}
-
-		private CodePiece GenerateCode_Value(bool reversed)
-		{
-			CodePiece p = new CodePiece();
-
-			if (reversed)
-			{
-				p.AppendLeft(Expr.GenerateCode(reversed));
-				p.AppendLeft(Target.GenerateCodeSingle(reversed));
-
-				p.AppendLeft(BCHelper.ReflectSet);
-
-				p.NormalizeX();
-			}
-			else
-			{
-				p.AppendRight(Expr.GenerateCode(reversed));
-				p.AppendRight(Target.GenerateCodeSingle(reversed));
-
-				p.AppendRight(BCHelper.ReflectSet);
-
-				p.NormalizeX();
-			}
-
-			return p;
-		}
-
-		private CodePiece GenerateCode_Array(bool reversed)
-		{
-			CodePiece p = new CodePiece();
-
-			BTypeArray type = Target.GetResultType() as BTypeArray;
-			ExpressionDirectValuePointer vPointer = Target as ExpressionDirectValuePointer;
-
-			if (reversed)
-			{
-				p.AppendLeft(Expr.GenerateCode(reversed));
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(type.Size, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
-
-				p.NormalizeX();
-			}
-			else
-			{
-				p.AppendRight(Expr.GenerateCode(reversed));
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(type.Size, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
-
-				p.NormalizeX();
-			}
-
-			return p;
+			return Target.GetResultType().GenerateCodeAssignment(Position, Expr, Target, reversed);
 		}
 	}
 

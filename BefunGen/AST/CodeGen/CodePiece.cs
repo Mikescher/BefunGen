@@ -35,6 +35,8 @@ namespace BefunGen.AST.CodeGen
 
 		#region Construct
 
+		public static CodePiece Empty => new CodePiece();
+
 		public CodePiece(BefungeCommand cmd)
 			: this()
 		{
@@ -49,12 +51,7 @@ namespace BefunGen.AST.CodeGen
 			MaxX = 0;
 			MaxY = 0;
 		}
-
-		//public static CodePiece ParseFromLineFormatted(string l, bool interpretSpaceAsWalkway, params CodePiece[] cpparams)
-		//{
-		//	return CodePiece.ParseFromLine(string.Format(l, cpparams.Select(p => p.ToSimpleString()).ToArray()), interpretSpaceAsWalkway);
-		//}
-
+		
 		public static CodePiece ParseFromLine(string l, bool interpretSpaceAsWalkway = false, bool interpretAtAsNOP = false)
 		{
 			CodePiece p = new CodePiece();
@@ -105,6 +102,13 @@ namespace BefunGen.AST.CodeGen
 			foreach (var cp in cplist)
 				p.AppendBottom(cp);
 
+			return p;
+		}
+		
+		public static CodePiece Repeat(int count, BefungeCommand cmd)
+		{
+			CodePiece p = new CodePiece();
+			for (int i = 0; i < count; i++) p[i, 0] = cmd;
 			return p;
 		}
 

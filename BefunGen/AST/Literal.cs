@@ -1,5 +1,6 @@
 ﻿using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
+using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
@@ -83,6 +84,19 @@ namespace BefunGen.AST
 		public abstract CodePiece GenerateCode(int pos, bool reversed);
 
 		public abstract bool IsUniform();
+	}
+
+	public abstract class LiteralStack : Literal
+	{
+		public int StackSize { get { return GetStackSize(); } }
+
+		public LiteralStack(SourceCodePosition pos)
+			: base(pos)
+		{
+			//--
+		}
+
+		protected abstract int GetStackSize();
 	}
 
 	#endregion Parents
@@ -501,4 +515,132 @@ namespace BefunGen.AST
 	}
 
 	#endregion Array Literals
+
+	#region Stack Literals
+
+	public class LiteralIntStack : LiteralStack
+	{
+		private readonly int size;
+
+		public LiteralIntStack(SourceCodePosition pos, int stacksize)
+			: base(pos)
+		{
+			size = stacksize;
+		}
+
+		public override string GetDebugString()
+		{
+			return "stack<int," + size + ">";
+		}
+
+		protected override int GetStackSize()
+		{
+			return size;
+		}
+
+		public override BType GetBType()
+		{
+			return new BTypeIntStack(new SourceCodePosition(), StackSize);
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public class LiteralCharStack : LiteralStack
+	{
+		private readonly int size;
+
+		public LiteralCharStack(SourceCodePosition pos, int stacksize)
+			: base(pos)
+		{
+			size = stacksize;
+		}
+
+		public override string GetDebugString()
+		{
+			return "stack<char," + size + ">";
+		}
+
+		protected override int GetStackSize()
+		{
+			return size;
+		}
+
+		public override BType GetBType()
+		{
+			return new BTypeCharStack(new SourceCodePosition(), StackSize);
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public class LiteralBoolStack : LiteralStack
+	{
+		private readonly int size;
+
+		public LiteralBoolStack(SourceCodePosition pos, int stacksize)
+			: base(pos)
+		{
+			size = stacksize;
+		}
+
+		public override string GetDebugString()
+		{
+			return "stack<bool," + size + ">";
+		}
+
+		protected override int GetStackSize()
+		{
+			return size;
+		}
+
+		public override BType GetBType()
+		{
+			return new BTypeBoolStack(new SourceCodePosition(), StackSize);
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public class LiteralDigitStack : LiteralStack
+	{
+		private readonly int size;
+
+		public LiteralDigitStack(SourceCodePosition pos, int stacksize)
+			: base(pos)
+		{
+			size = stacksize;
+		}
+
+		public override string GetDebugString()
+		{
+			return "stack<digit," + size + ">";
+		}
+
+		protected override int GetStackSize()
+		{
+			return size;
+		}
+
+		public override BType GetBType()
+		{
+			return new BTypeDigitStack(new SourceCodePosition(), StackSize);
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	#endregion
 }

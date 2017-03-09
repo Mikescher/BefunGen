@@ -264,7 +264,7 @@ namespace BefunGen.AST
 
 		public int GetMaxReturnValueWidth()
 		{
-			return MathExt.Max(1, MethodList.Select(p => p.ResultType.GetSize()).ToArray());
+			return MathExt.Max(1, MethodList.Select(p => p.ResultType.GetCodeSize()).ToArray());
 		}
 
 		public CodePiece GenerateCode(string initialDisp = "")

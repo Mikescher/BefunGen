@@ -660,6 +660,8 @@ namespace BefunGen.AST.CodeGen
 
 			p.NormalizeX();
 
+			if (p.Width >= count) return CodePiece.Repeat(count, BCHelper.StackPop);
+
 			return p;
 		}
 
@@ -673,9 +675,29 @@ namespace BefunGen.AST.CodeGen
 			return p;
 		}
 
+		public static CodePiece ReadValueFromField(int px, int py, bool reversed)
+		{
+			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.GenerateCode(px), NumberCodeHelper.GenerateCode(py), new CodePiece(BCHelper.ReflectGet));
+
+			if (reversed)
+				p.ReverseX(false);
+
+			return p;
+		}
+
 		public static CodePiece WriteValueToField(MathExt.Point pos, bool reversed)
 		{
 			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.GenerateCode(pos.X), NumberCodeHelper.GenerateCode(pos.Y), new CodePiece(BCHelper.ReflectSet));
+
+			if (reversed)
+				p.ReverseX(false);
+
+			return p;
+		}
+
+		public static CodePiece WriteValueToField(int px, int py, bool reversed)
+		{
+			CodePiece p = CodePiece.CombineHorizontal(NumberCodeHelper.GenerateCode(px), NumberCodeHelper.GenerateCode(py), new CodePiece(BCHelper.ReflectSet));
 
 			if (reversed)
 				p.ReverseX(false);

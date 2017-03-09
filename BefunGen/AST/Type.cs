@@ -1,6 +1,11 @@
 using BefunGen.AST.CodeGen;
 using BefunGen.AST.Exceptions;
 using System.Linq;
+using System;
+using BefunGen.AST.CodeGen.NumberCode;
+using BefunGen.MathExtensions;
+using BefunGen.AST.CodeGen.Tags;
+
 namespace BefunGen.AST
 {
 	#region Parents
@@ -20,7 +25,7 @@ namespace BefunGen.AST
 			//--
 		}
 
-		public abstract int GetSize();
+		public abstract int GetCodeSize();
 
 		public override bool Equals(System.Object obj)
 		{
@@ -61,6 +66,12 @@ namespace BefunGen.AST
 		public abstract Literal GetDefaultValue();
 		public abstract bool IsImplicitCastableTo(BType other);
 		public abstract int GetPriority();
+
+		public abstract CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed);
+		public abstract CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed);
+		public abstract CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed);
+		public abstract CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed);
+		public abstract CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed);
 	}
 
 	public abstract class BTypeValue : BType
@@ -71,9 +82,117 @@ namespace BefunGen.AST
 			//--
 		}
 
-		public override int GetSize()
+		public override int GetCodeSize()
 		{
 			return 1;
+		}
+
+		public override CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+
+			if (reversed)
+			{
+				p.AppendLeft(source.GenerateCode(reversed));
+				p.AppendLeft(target.GenerateCodeSingle(reversed));
+
+				p.AppendLeft(BCHelper.ReflectSet);
+
+				p.NormalizeX();
+			}
+			else
+			{
+				p.AppendRight(source.GenerateCode(reversed));
+				p.AppendRight(target.GenerateCodeSingle(reversed));
+
+				p.AppendRight(BCHelper.ReflectSet);
+
+				p.NormalizeX();
+			}
+
+			return p;
+		}
+
+		public override CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed)
+		{
+			return new CodePiece(BCHelper.StackPop);
+		}
+
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+			if (reversed)
+			{
+				p.AppendLeft(NumberCodeHelper.GenerateCode(gridPos.X, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(gridPos.Y, reversed));
+				p.AppendLeft(BCHelper.ReflectSet);
+			}
+			else
+			{
+				p.AppendRight(NumberCodeHelper.GenerateCode(gridPos.X, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(gridPos.Y, reversed));
+
+				p.AppendRight(BCHelper.ReflectSet);
+			}
+			return p;
+		}
+
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+			if (reversed)
+			{
+				p.AppendLeft(NumberCodeHelper.GenerateCode(gridPos.X, reversed));
+				p.AppendLeft(NumberCodeHelper.GenerateCode(gridPos.Y, reversed));
+
+				p.AppendLeft(BCHelper.ReflectGet);
+			}
+			else
+			{
+				p.AppendRight(NumberCodeHelper.GenerateCode(gridPos.X, reversed));
+				p.AppendRight(NumberCodeHelper.GenerateCode(gridPos.Y, reversed));
+
+				p.AppendRight(BCHelper.ReflectGet);
+			}
+			return p;
+		}
+
+		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+
+			if (reversed)
+			{
+				#region Reversed
+
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+				p.AppendRight(BCHelper.Digit0); // Right Lane
+
+				p.AppendRight(BCHelper.StackSwap); // Swap BackjumpAddr back to Stack-Front
+
+				p.AppendRight(value.GenerateCode(reversed));
+
+				#endregion
+			}
+			else
+			{
+				#region Normal
+
+				p.AppendRight(value.GenerateCode(reversed));
+
+				p.AppendRight(BCHelper.StackSwap); // Swap BackjumpAddr back to Stack-Front
+
+				p.AppendRight(BCHelper.Digit0); // Right Lane
+
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+				#endregion
+
+			}
+
+			p.NormalizeX();
+			return p;
 		}
 	}
 
@@ -81,17 +200,17 @@ namespace BefunGen.AST
 	{
 		public BTypeValue InternalType { get { return GetInternType(); } }
 
-		public readonly int Size;
+		public readonly int ArraySize;
 
 		public BTypeArray(SourceCodePosition pos, int sz)
 			: base(pos)
 		{
-			Size = sz;
+			ArraySize = sz;
 		}
 
-		public override int GetSize()
+		public override int GetCodeSize()
 		{
-			return Size;
+			return ArraySize;
 		}
 
 		public override bool Equals(BType p)
@@ -99,15 +218,107 @@ namespace BefunGen.AST
 			if ((object)p == null)
 				return false;
 
-			return this.GetType() == p.GetType() && (p as BTypeArray).Size == Size;
+			return this.GetType() == p.GetType() && (p as BTypeArray).ArraySize == ArraySize;
 		}
 
 		public override int GetHashCode()
 		{
-			return 10000 + GetPriority() * (Size + 1);
+			return 10000 + GetPriority() * (ArraySize + 1);
 		}
 
 		protected abstract BTypeValue GetInternType();
+
+		public override CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+
+			BTypeArray type = target.GetResultType() as BTypeArray;
+			ExpressionDirectValuePointer vPointer = target as ExpressionDirectValuePointer;
+
+			if (reversed)
+			{
+				p.AppendLeft(source.GenerateCode(reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(type.ArraySize, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+
+				p.NormalizeX();
+			}
+			else
+			{
+				p.AppendRight(source.GenerateCode(reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(type.ArraySize, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+
+				p.NormalizeX();
+			}
+
+			return p;
+		}
+
+		public override CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed)
+		{
+			return CodePieceStore.PopMultipleStackValues(ArraySize, reversed);
+		}
+
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			return CodePieceStore.WriteArrayFromStack(ArraySize, gridPos, reversed);
+		}
+
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			return CodePieceStore.ReadArrayToStack(ArraySize, gridPos.X, gridPos.Y, reversed);
+		}
+
+		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+			
+			if (reversed)
+			{
+				#region Reversed
+
+				p.AppendLeft(value.GenerateCode(reversed));
+
+				// Switch ReturnValue (Array)  and  BackJumpAddr
+
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+
+				p.AppendLeft(CodePieceStore.ReadArrayToStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+
+
+				p.AppendLeft(BCHelper.Digit0); // Right Lane
+
+				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+				#endregion
+			}
+			else
+			{
+				#region Normal
+
+				p.AppendRight(value.GenerateCode(reversed));
+
+				// Switch ReturnValue (Array)  and  BackJumpAddr
+
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+
+				p.AppendRight(CodePieceStore.ReadArrayToStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+
+
+				p.AppendRight(BCHelper.Digit0); // Right Lane
+
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+				#endregion
+
+			}
+
+			p.NormalizeX();
+			return p;
+		}
 	}
 
 	public class BTypeVoid : BType // neither Array nor Value ...
@@ -118,7 +329,7 @@ namespace BefunGen.AST
 			//--
 		}
 
-		public override int GetSize()
+		public override int GetCodeSize()
 		{
 			return 1;
 		}
@@ -142,6 +353,37 @@ namespace BefunGen.AST
 		{
 			return PRIORITY_VOID;
 		}
+
+		public override CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed)
+		{
+			throw new InvalidAstStateException(pos);
+		}
+
+		public override CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed)
+		{
+			return new CodePiece(BCHelper.StackPop);
+		}
+
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			return new CodePiece(BCHelper.StackPop); // Nobody cares about the result ...
+		}
+
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			return CodePiece.Empty; // Do nothing
+		}
+
+		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
+		{
+			CodePiece p = CodePiece.ParseFromLine(@"0\0");
+
+			p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+			if (reversed) p.ReverseX(false);
+
+			return p;
+		}
 	}
 
 	public class BTypeUnion : BType // Only for internal cast - is castable to everything
@@ -152,7 +394,7 @@ namespace BefunGen.AST
 			//--
 		}
 
-		public override int GetSize()
+		public override int GetCodeSize()
 		{
 			throw new InvalidAstStateException(Position);
 		}
@@ -176,23 +418,48 @@ namespace BefunGen.AST
 		{
 			return PRIORITY_UNION;
 		}
+
+		public override CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed)
+		{
+			throw new InvalidAstStateException(pos);
+		}
+
+		public override CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed)
+		{
+			throw new InvalidAstStateException(pos);
+		}
+
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			throw new InvalidAstStateException(pos);
+		}
+
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			throw new InvalidAstStateException(pos);
+		}
+
+		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
+		{
+			throw new InvalidAstStateException(pos);
+		}
 	}
 
 	public abstract class BTypeStack : BType
 	{
 		public BTypeValue InternalType { get { return GetInternType(); } }
 
-		public readonly int Size;
+		public readonly int StackSize;
 
 		public BTypeStack(SourceCodePosition pos, int sz)
 			: base(pos)
 		{
-			Size = sz;
+			StackSize = sz;
 		}
 
-		public override int GetSize()
+		public override int GetCodeSize()
 		{
-			return Size;
+			return StackSize + 1;
 		}
 
 		public override bool Equals(BType p)
@@ -200,15 +467,105 @@ namespace BefunGen.AST
 			if ((object)p == null)
 				return false;
 
-			return this.GetType() == p.GetType() && (p as BTypeStack).Size == Size;
+			return this.GetType() == p.GetType() && (p as BTypeStack).StackSize == StackSize;
 		}
 
 		public override int GetHashCode()
 		{
-			return 20000 + GetPriority() * (Size + 1);
+			return 20000 + GetPriority() * (StackSize + 1);
 		}
 
 		protected abstract BTypeValue GetInternType();
+
+		public override CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+
+			BTypeArray type = target.GetResultType() as BTypeArray;
+			ExpressionDirectValuePointer vPointer = target as ExpressionDirectValuePointer;
+
+			if (reversed)
+			{
+				p.AppendLeft(source.GenerateCode(reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(type.ArraySize + 1, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+
+				p.NormalizeX();
+			}
+			else
+			{
+				p.AppendRight(source.GenerateCode(reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(type.ArraySize+1, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+
+				p.NormalizeX();
+			}
+
+			return p;
+		}
+
+		public override CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed)
+		{
+			return CodePieceStore.PopMultipleStackValues(StackSize + 1, reversed);
+		}
+
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			return CodePieceStore.WriteArrayFromStack(StackSize+1, gridPos, reversed);
+		}
+
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		{
+			return CodePieceStore.ReadArrayToStack(StackSize + 1, gridPos.X, gridPos.Y, reversed);
+		}
+
+		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
+		{
+			CodePiece p = new CodePiece();
+
+			if (reversed)
+			{
+				#region Reversed
+
+				p.AppendLeft(value.GenerateCode(reversed));
+
+				// Switch ReturnValue (Array)  and  BackJumpAddr
+
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+
+				p.AppendLeft(CodePieceStore.ReadArrayToStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+				
+				p.AppendLeft(BCHelper.Digit0); // Right Lane
+
+				p.AppendLeft(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+				#endregion
+			}
+			else
+			{
+				#region Normal
+
+				p.AppendRight(value.GenerateCode(reversed));
+
+				// Switch ReturnValue (Array)  and  BackJumpAddr
+
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+
+				p.AppendRight(CodePieceStore.ReadArrayToStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
+				
+				p.AppendRight(BCHelper.Digit0); // Right Lane
+
+				p.AppendRight(BCHelper.PC_Up_tagged(new MethodCallVerticalExitTag()));
+
+				#endregion
+
+			}
+
+			p.NormalizeX();
+			return p;
+		}
 	}
 
 	#endregion
@@ -344,17 +701,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("int[{0}]", Size);
+			return string.Format("int[{0}]", ArraySize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralIntArr(new SourceCodePosition(), Enumerable.Repeat((long)CGO.DefaultNumeralValue, Size).ToList());
+			return new LiteralIntArr(new SourceCodePosition(), Enumerable.Repeat((long)CGO.DefaultNumeralValue, ArraySize).ToList());
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeIntArr));
+			return (other is BTypeArray && (other as BTypeArray).ArraySize == ArraySize && (other is BTypeIntArr));
 		}
 
 		public override int GetPriority()
@@ -377,17 +734,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("char[{0}]", Size);
+			return string.Format("char[{0}]", ArraySize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralCharArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultCharacterValue, Size).ToList());
+			return new LiteralCharArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultCharacterValue, ArraySize).ToList());
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeCharArr));
+			return (other is BTypeArray && (other as BTypeArray).ArraySize == ArraySize && (other is BTypeCharArr));
 		}
 
 		public override int GetPriority()
@@ -410,17 +767,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("digit[{0}]", Size);
+			return string.Format("digit[{0}]", ArraySize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralDigitArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultNumeralValue, Size).ToList());
+			return new LiteralDigitArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultNumeralValue, ArraySize).ToList());
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeDigitArr || other is BTypeIntArr));
+			return (other is BTypeArray && (other as BTypeArray).ArraySize == ArraySize && (other is BTypeDigitArr || other is BTypeIntArr));
 		}
 
 		public override int GetPriority()
@@ -443,17 +800,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("bool[{0}]", Size);
+			return string.Format("bool[{0}]", ArraySize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralBoolArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultBooleanValue, Size).ToList());
+			return new LiteralBoolArr(new SourceCodePosition(), Enumerable.Repeat(CGO.DefaultBooleanValue, ArraySize).ToList());
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeArray && (other as BTypeArray).Size == Size && (other is BTypeBoolArr));
+			return (other is BTypeArray && (other as BTypeArray).ArraySize == ArraySize && (other is BTypeBoolArr));
 		}
 
 		public override int GetPriority()
@@ -471,7 +828,7 @@ namespace BefunGen.AST
 
 	#region Stack Types
 
-	public class BTypeIntStack : BTypeArray
+	public class BTypeIntStack : BTypeStack
 	{
 		public BTypeIntStack(SourceCodePosition pos, int sz)
 			: base(pos, sz)
@@ -480,17 +837,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("int_stack<{0}>", Size);
+			return string.Format("int_stack<{0}>", StackSize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-
+			return new LiteralIntStack(new SourceCodePosition(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeIntStack));
+			return (other is BTypeStack && (other as BTypeStack).StackSize == StackSize && (other is BTypeIntStack));
 		}
 
 		public override int GetPriority()
@@ -504,7 +861,7 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class BTypeCharStack : BTypeArray
+	public class BTypeCharStack : BTypeStack
 	{
 		public BTypeCharStack(SourceCodePosition pos, int sz)
 			: base(pos, sz)
@@ -513,17 +870,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("char_stack<{0}>", Size);
+			return string.Format("char_stack<{0}>", StackSize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-
+			return new LiteralCharStack(new SourceCodePosition(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeCharStack));
+			return (other is BTypeStack && (other as BTypeStack).StackSize == StackSize && (other is BTypeCharStack));
 		}
 
 		public override int GetPriority()
@@ -537,7 +894,7 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class BTypeDigitStack : BTypeArray
+	public class BTypeDigitStack : BTypeStack
 	{
 		public BTypeDigitStack(SourceCodePosition pos, int sz)
 			: base(pos, sz)
@@ -546,17 +903,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("digit_stack<{0}>", Size);
+			return string.Format("digit_stack<{0}>", StackSize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-
+			return new LiteralDigitStack(new SourceCodePosition(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeDigitStack));
+			return (other is BTypeStack && (other as BTypeStack).StackSize == StackSize && (other is BTypeDigitStack));
 		}
 
 		public override int GetPriority()
@@ -570,7 +927,7 @@ namespace BefunGen.AST
 		}
 	}
 
-	public class BTypeBoolStack : BTypeArray
+	public class BTypeBoolStack : BTypeStack
 	{
 		public BTypeBoolStack(SourceCodePosition pos, int sz)
 			: base(pos, sz)
@@ -579,17 +936,17 @@ namespace BefunGen.AST
 
 		public override string GetDebugString()
 		{
-			return string.Format("bool_stack<{0}>", Size);
+			return string.Format("bool_stack<{0}>", StackSize);
 		}
 
 		public override Literal GetDefaultValue()
 		{
-
+			return new LiteralBoolStack(new SourceCodePosition(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
 		{
-			return (other is BTypeStack && (other as BTypeStack).Size == Size && (other is BTypeBoolStack));
+			return (other is BTypeStack && (other as BTypeStack).StackSize == StackSize && (other is BTypeBoolStack));
 		}
 
 		public override int GetPriority()

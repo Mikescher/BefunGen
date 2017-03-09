@@ -229,7 +229,7 @@ namespace BefunGen.AST
 
 			BType presentR = Right.GetResultType();
 
-			if (presentL is BTypeArray || presentR is BTypeArray)
+			if (!(presentL is BTypeValue) || !(presentR is BTypeValue))
 				throw new InvalidCompareException(presentL, presentR, Position);
 
 			if (presentL != presentR)
@@ -452,52 +452,12 @@ namespace BefunGen.AST
 
 		public override CodePiece GenerateCode(bool reversed)
 		{
-			if (Target is VarDeclarationArray)
-			{
-				return GenerateCode_Array(reversed);
-			}
-			else if (Target is VarDeclarationValue)
-			{
-				return GenerateCode_Value(reversed);
-			}
-			else
-			{
-				throw new WTFException();
-			}
+			return Target.Type.GenerateCodeReadFromGridToStack(Position, Target.CodePosition, reversed);
 		}
 
 		public override Expression EvaluateExpressions()
 		{
 			return this;
-		}
-
-		private CodePiece GenerateCode_Value(bool reversed)
-		{
-			CodePiece p = new CodePiece();
-
-			if (reversed)
-			{
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
-				p.AppendLeft(BCHelper.ReflectGet);
-			}
-			else
-			{
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionX, reversed));
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodePositionY, reversed));
-				p.AppendRight(BCHelper.ReflectGet);
-			}
-
-			p.NormalizeX();
-
-			return p;
-		}
-
-		private CodePiece GenerateCode_Array(bool reversed)
-		{
-			VarDeclarationArray vda = Target as VarDeclarationArray;
-
-			return CodePieceStore.ReadArrayToStack(vda.Size, vda.CodePositionX, vda.CodePositionY, reversed);
 		}
 
 		// Puts X and Y on the stack: [X, Y]

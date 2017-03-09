@@ -72,14 +72,14 @@ namespace BefunGenTest
 		{
 			ASTObject.CGO.CompileTimeEvaluateExpressions = true;
 
-			BFTestHelper.debugExpression_Output("0", "int", "RAND[0]");
-			BFTestHelper.debugExpression_Output("0", "int", "4 - 4");
-			BFTestHelper.debugExpression_Output("0", "int", "4 * 0");
-			BFTestHelper.debugExpression_Output("0", "int", "0 * 4");
-			BFTestHelper.debugExpression_Output("0", "int", "0 * 0");
-			BFTestHelper.debugExpression_Output("0", "int", "0 + 0");
-			BFTestHelper.debugExpression_Output("0", "int", "12 * (11 - 11)");
-			BFTestHelper.debugExpression_Output("0", "int", "666 / 6 - 111");
+			BFTestHelper.debugExpression_Output("0 ", "int", "RAND[0]");
+			BFTestHelper.debugExpression_Output("0 ", "int", "4 - 4");
+			BFTestHelper.debugExpression_Output("0 ", "int", "4 * 0");
+			BFTestHelper.debugExpression_Output("0 ", "int", "0 * 4");
+			BFTestHelper.debugExpression_Output("0 ", "int", "0 * 0");
+			BFTestHelper.debugExpression_Output("0 ", "int", "0 + 0");
+			BFTestHelper.debugExpression_Output("0 ", "int", "12 * (11 - 11)");
+			BFTestHelper.debugExpression_Output("0 ", "int", "666 / 6 - 111");
 			BFTestHelper.debugExpression("bool", "!a");
 		}
 	}
