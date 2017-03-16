@@ -996,7 +996,7 @@ namespace BefunGen.AST
 				}
 				else
 				{
-					Target.ResultType.GenerateCodeReadFromGridToStack(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed);
+					p.AppendLeft(Target.ResultType.GenerateCodeReadFromGridToStack(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				}
 
 				#endregion
@@ -1068,7 +1068,7 @@ namespace BefunGen.AST
 				}
 				else
 				{
-					Target.ResultType.GenerateCodeReadFromGridToStack(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed);
+					p.AppendRight(Target.ResultType.GenerateCodeReadFromGridToStack(Position, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				}
 
 				#endregion

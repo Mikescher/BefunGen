@@ -18,9 +18,7 @@ namespace BefunGen.AST.CodeGen
 	public static class CodePieceStore
 	{
 		#region Store
-
-
-
+		
 		public static CodePieceStoreElement[] CODEPIECES = new[]
 		{
 			new CodePieceStoreElement("ReadArrayToStack", () => ReadArrayToStack(8, 0, 0, false)),
