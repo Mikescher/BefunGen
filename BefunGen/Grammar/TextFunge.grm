@@ -116,6 +116,7 @@ HexLiteral             = 0x{Hex Digit}+
                        |   <Stmt_Call>
                        |   <Stmt_ModAssignment>
                        |   <Stmt_Outf>
+                       |   <Stmt_Subcall>
 
 <StatementList>        ::= <StatementList> <Statement>
                        |
@@ -149,6 +150,9 @@ HexLiteral             = 0x{Hex Digit}+
 
 <Stmt_Outf>            ::= 'outf' <OutfList>
 
+<Stmt_Subcall>         ::= Identifier '.' Identifier '(' <ExpressionList> ')'
+                       |   Identifier '.' Identifier '(' ')'
+                        
 <OutfList>             ::= <Expression>
                        |   <Literal_String>
                        |   <OutfList> ',' <Expression>
@@ -302,7 +306,6 @@ HexLiteral             = 0x{Hex Digit}+
 
 
 <Value>                ::= <Value_Literal>
-                       |   <Exp Rand>
                        |   <ValuePointer>
                        |   Identifier '(' <ExpressionList> ')'
                        |   Identifier '(' ')'
@@ -311,6 +314,9 @@ HexLiteral             = 0x{Hex Digit}+
                        |   <ValuePointer> '--'
                        |   '++' <ValuePointer>
                        |   '--' <ValuePointer>
+                       |   Identifier '.' Identifier '(' <ExpressionList>  ')'
+                       |   Identifier '.' Identifier '(' ')'
+                       |   <Exp Rand>
                        
 <Exp Rand>             ::= 'rand'
                        |   'rand' '[' <Expression> ']'
