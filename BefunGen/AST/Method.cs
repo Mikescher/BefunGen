@@ -319,8 +319,8 @@ namespace BefunGen.AST
 
 				int mw = Math.Max(cpA.MaxX, cpB.MaxX);
 
-				cpA.AppendLeft(BCHelper.PCRight);
-				cpB.AppendLeft(BCHelper.PCDown);
+				cpA[-1, 0] = BCHelper.PCRight;
+				cpB[-1, 0] = BCHelper.PCDown;
 
 				cpA.Fill(cpA.MaxX, 0, mw, 1, BCHelper.Walkway);
 				cpB.Fill(cpB.MaxX, 0, mw, 1, BCHelper.Walkway);
@@ -330,11 +330,11 @@ namespace BefunGen.AST
 
 				for (int y = cpA.MinY; y < cpA.MaxY; y++)
 					if (y != 0)
-						cpA[cpA.MaxX - 1, y] = BCHelper.Walkway;
+						cpA[mw, y] = BCHelper.Walkway;
 
 				for (int y = cpB.MinY; y < cpB.MaxY; y++)
 					if (y != 0)
-						cpB[cpB.MaxX - 1, y] = BCHelper.Walkway;
+						cpB[-1, y] = BCHelper.Walkway;
 
 				cpA.NormalizeX();
 				cpB.NormalizeX();

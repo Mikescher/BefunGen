@@ -457,7 +457,7 @@ namespace BefunGen.AST.CodeGen
 
 		#region Setter
 
-		public void CreateRowWw(int y, int x1, int x2)
+		public void CreateRowWw(int y, int x1, int x2) //TODO rename Horz + Vert (refactor)
 		{
 			CreateWw(x1, y, x2, y + 1);
 		}
@@ -797,6 +797,11 @@ namespace BefunGen.AST.CodeGen
 			}
 
 			return cnt;
+		}
+
+		public bool IsEmpty()
+		{
+			return Size == 0;
 		}
 
 		#endregion

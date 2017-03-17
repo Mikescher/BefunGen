@@ -1120,65 +1120,9 @@ namespace BefunGen.AST
 				}
 			}
 
-			pieces.Add(current);
+			if (!current.IsEmpty()) pieces.Add(current);
 
-			if (pieces.Count == 0)
-				return new CodePiece();
-			if (pieces.Count == 1)
-				return pieces[0];
-
-			if (pieces.Count % 2 == 0)
-				pieces.Add(new CodePiece());
-
-			int maxlen = pieces.Max(lp => lp.Width);
-
-			pieces.ForEach(lp => lp.ExtendWithWalkwayLeft(maxlen));
-			pieces.ForEach(lp => lp.Normalize());
-
-
-			if (initialReversed)
-			{
-				#region Reversed
-
-				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCRight;
-
-				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCLeft : BCHelper.PCDown;
-
-
-				pieces[0][maxlen, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][-2, 0] = BCHelper.PCUp;
-				pieces[pieces.Count - 1][-1, 0] = BCHelper.Walkway;
-				pieces[0][-2, 0] = BCHelper.PCLeft;
-
-				for (int i = 1; i < (pieces.Count - 1); i++)
-					pieces[i][-2, 0] = BCHelper.Walkway;
-
-				#endregion
-			}
-			else
-			{
-				#region Normal
-
-				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCLeft;
-
-				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCRight : BCHelper.PCDown;
-
-				pieces[0][-1, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PCUp;
-				pieces[pieces.Count - 1][maxlen, 0] = BCHelper.Walkway;
-				pieces[0][maxlen + 1, 0] = BCHelper.PCRight;
-
-				for (int i = 1; i < (pieces.Count - 1); i++)
-					pieces[i][maxlen + 1, 0] = BCHelper.Walkway;
-
-				#endregion
-			}
-
-			return CodePiece.CreateFromVerticalList(pieces);
+			return CodePieceStore.CreateSerpentine(pieces, initialReversed);
 		}
 
 		private CodePiece GenerateCode_varFrame_JumpBack(bool initialReversed)
@@ -1203,65 +1147,9 @@ namespace BefunGen.AST
 				}
 			}
 
-			pieces.Add(current);
+			if (!current.IsEmpty()) pieces.Add(current);
 
-			if (pieces.Count == 0)
-				return new CodePiece();
-			if (pieces.Count == 1)
-				return pieces[0];
-
-			if (pieces.Count % 2 == 0)
-				pieces.Add(new CodePiece());
-
-			int maxlen = pieces.Max(lp => lp.Width);
-
-			pieces.ForEach(lp => lp.ExtendWithWalkwayLeft(maxlen));
-			pieces.ForEach(lp => lp.Normalize());
-
-
-			if (initialReversed)
-			{
-				#region Reversed
-
-				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCRight;
-
-				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCLeft : BCHelper.PCDown;
-
-
-				pieces[0][maxlen, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][-2, 0] = BCHelper.PCUp;
-				pieces[pieces.Count - 1][-1, 0] = BCHelper.Walkway;
-				pieces[0][-2, 0] = BCHelper.PCLeft;
-
-				for (int i = 1; i < (pieces.Count - 1); i++)
-					pieces[i][-2, 0] = BCHelper.Walkway;
-
-				#endregion
-			}
-			else
-			{
-				#region Normal
-
-				for (int i = 0; i < (pieces.Count - 1); i++)
-					pieces[i][maxlen, 0] = (i % 2 == 0) ? BCHelper.PCDown : BCHelper.PCLeft;
-
-				for (int i = 1; i < pieces.Count; i++)
-					pieces[i][-1, 0] = (i % 2 == 0) ? BCHelper.PCRight : BCHelper.PCDown;
-
-				pieces[0][-1, 0] = BCHelper.Walkway;
-				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PCUp;
-				pieces[pieces.Count - 1][maxlen, 0] = BCHelper.Walkway;
-				pieces[0][maxlen + 1, 0] = BCHelper.PCRight;
-
-				for (int i = 1; i < (pieces.Count - 1); i++)
-					pieces[i][maxlen + 1, 0] = BCHelper.Walkway;
-
-				#endregion
-			}
-
-			return CodePiece.CreateFromVerticalList(pieces);
+			return CodePieceStore.CreateSerpentine(pieces, initialReversed);
 		}
 	}
 

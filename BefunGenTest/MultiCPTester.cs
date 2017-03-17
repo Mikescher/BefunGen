@@ -5,7 +5,7 @@ namespace BefunGenTest
 	public class MultiCPTester
 	{
 		private const int RAND_RUN_COUNT = 64;
-		private const int MAX_STEP = 8192;
+		private const int MAX_STEP = 16384;
 
 		public static void Test_Common(string prog)
 		{
