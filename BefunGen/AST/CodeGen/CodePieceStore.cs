@@ -1,6 +1,8 @@
 ﻿using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.MathExtensions;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BefunGen.AST.CodeGen
 {
@@ -919,5 +921,139 @@ namespace BefunGen.AST.CodeGen
 		}
 
 		#endregion
+
+		public static CodePiece CreateSerpentine(List<CodePiece> pieces, bool reversed)
+		{
+			if (pieces.Count == 0)
+				return new CodePiece();
+			if (pieces.Count == 1)
+				return pieces[0];
+
+			if (pieces.Count % 2 == 0)
+				pieces.Add(new CodePiece());
+
+			pieces = pieces.Select(p => p.Copy()).ToList();
+
+			int maxlen = pieces.Max(lp => lp.Width);
+
+			pieces.ForEach(lp => lp.ExtendWithWalkwayLeft(maxlen));
+			pieces.ForEach(lp => lp.Normalize());
+
+			if (reversed)
+			{
+				#region Reversed
+
+				//    
+				//    (~ = Walkway)
+				//    
+				//    <v1111111111111~
+				//    ~ 1111111111111 
+				//    ~>2222222222222v
+				//    ~v3333333333333<
+				//    ~>4444444444444v
+				//    ~ 4444444444444 
+				//    ~ 4444444444444 
+				//    ^~5555555555555<
+				//    
+
+				for (int i = 0; i < pieces.Count; i++)
+				{
+					bool first = (i == 0);
+					bool last = (i == pieces.Count - 1);
+
+					if (first)
+						pieces[i][maxlen, 0] = BCHelper.Walkway;
+					else if (i % 2 == 0)
+						pieces[i][maxlen, 0] = BCHelper.PCLeft;
+					else // if (i%2 != 0)
+						pieces[i][maxlen, 0] = BCHelper.PCDown;
+
+					if (last)
+						pieces[i][-1, 0] = BCHelper.Walkway;
+					else if (i % 2 == 0)
+						pieces[i][-1, 0] = BCHelper.PCDown;
+					else // if (i%2 != 0)
+						pieces[i][-1, 0] = BCHelper.PCRight;
+
+					if (i % 2 == 0)
+						pieces[i].CreateColWw(-1, 1, pieces[i].MaxY);
+					else // if (i%2 != 0)
+						pieces[i].CreateColWw(maxlen, 1, pieces[i].MaxY);
+				}
+
+				pieces[pieces.Count - 1][-2, 0] = BCHelper.PCUp;
+				for (int i = 0; i < pieces.Count; i++)
+				{
+					if (i == 0)
+						pieces[i].CreateColWw(-2, 1, pieces[i].MaxY);
+					else if (i == pieces.Count - 1)
+						pieces[i].CreateColWw(-2, 0, pieces[i].MaxY - 1);
+					else
+						pieces[i].CreateColWw(-2, 0, pieces[i].MaxY);
+				}
+				pieces[0][-2, 0] = BCHelper.PCLeft;
+
+				#endregion
+			}
+			else
+			{
+				#region Normal
+
+				//   
+				//    (~ = Walkway)
+				//   
+				//    ~1111111111111v>
+				//     1111111111111~~
+				//    v2222222222222<~
+				//    >3333333333333v~
+				//    v4444444444444<~
+				//    ~4444444444444 ~
+				//    ~4444444444444 ~
+				//    >5555555555555~^
+				//   
+
+				for (int i = 0; i < pieces.Count; i++)
+				{
+					bool first = (i == 0);
+					bool last = (i == pieces.Count - 1);
+
+					if (first)
+						pieces[i][-1, 0] = BCHelper.Walkway;
+					else if (i % 2 == 0)
+						pieces[i][-1, 0] = BCHelper.PCRight;
+					else // if (i%2 != 0)
+						pieces[i][-1, 0] = BCHelper.PCDown;
+
+					if (last)
+						pieces[i][maxlen, 0] = BCHelper.Walkway;
+					else if (i % 2 == 0)
+						pieces[i][maxlen, 0] = BCHelper.PCDown;
+					else // if (i%2 != 0)
+						pieces[i][maxlen, 0] = BCHelper.PCLeft;
+
+					if (i % 2 == 0)
+						pieces[i].CreateColWw(maxlen, 1, pieces[i].MaxY);
+					else // if (i%2 != 0)
+						pieces[i].CreateColWw(-1, 1, pieces[i].MaxY);
+				}
+
+				pieces[pieces.Count - 1][maxlen + 1, 0] = BCHelper.PCUp;
+				for (int i = 0; i < pieces.Count; i++)
+				{
+					if (i == 0)
+						pieces[i].CreateColWw(maxlen + 1, 1, pieces[i].MaxY);
+					else if (i == pieces.Count - 1)
+						pieces[i].CreateColWw(maxlen + 1, 0, pieces[i].MaxY - 1);
+					else
+						pieces[i].CreateColWw(maxlen + 1, 0, pieces[i].MaxY);
+				}
+				pieces[0][maxlen + 1, 0] = BCHelper.PCRight;
+
+				#endregion
+			}
+
+			return CodePiece.CreateFromVerticalList(pieces);
+		}
+
 	}
 }

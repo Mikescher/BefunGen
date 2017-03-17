@@ -489,7 +489,7 @@ program p0
 		out b(px, 5);
 	end
 
-	int b(digit[6] a, int i)
+	digit b(digit[6] a, int i)
 	var 
 		digit[6] tmp;
 	begin
