@@ -210,15 +210,7 @@ namespace BefunGen.AST
 					paramY++;
 				}
 
-				if (var is VarDeclarationValue)
-				{
-					lit[0, 0] = BCHelper.Chr(CGO.DefaultVarDeclarationSymbol,new VarDeclarationTag(var));
-				}
-				else
-				{
-					int sz = (var as VarDeclarationArray).Size;
-					lit.Fill(0, 0, sz, 1, BCHelper.Chr(CGO.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
-				}
+				lit.Fill(0, 0, var.Type.GetCodeSize(), 1, BCHelper.Chr(CGO.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
 
 				var.CodePositionX = moX + paramX;
 				var.CodePositionY = moY + paramY;

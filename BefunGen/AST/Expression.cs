@@ -1,3 +1,4 @@
+using System;
 using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.AST.Exceptions;
@@ -2840,6 +2841,65 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCode(bool reversed)
 		{
 			return MethodCall.GenerateCode(reversed, false);
+		}
+	}
+
+	public class ExpressionClassMethodCall : Expression
+	{
+		public readonly StatementClassMethodCall MethodCall;
+
+		public ExpressionClassMethodCall(SourceCodePosition pos, StatementClassMethodCall cmc) : base(pos)
+		{
+			MethodCall = cmc;
+		}
+
+		public override void AddressCodePoints()
+		{
+			MethodCall.AddressCodePoints();
+		}
+
+		public override Expression EvaluateExpressions()
+		{
+			MethodCall.EvaluateExpressions();
+			return this;
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			return MethodCall.GenerateCode(reversed, false);
+		}
+
+		public override string GetDebugString()
+		{
+			return MethodCall.GetDebugString();
+		}
+
+		public override BType GetResultType()
+		{
+			return MethodCall.ResultType;
+		}
+
+		public override Expression InlineConstants()
+		{
+			MethodCall.InlineConstants();
+			return this;
+		}
+
+		public override void LinkMethods(Program owner)
+		{
+			MethodCall.LinkMethods(owner);
+
+			if (MethodCall.ResultType is BTypeVoid) throw new InlineVoidMethodCallException(Position);
+		}
+
+		public override void LinkResultTypes(Method owner)
+		{
+			MethodCall.LinkResultTypes(owner);
+		}
+
+		public override void LinkVariables(Method owner)
+		{
+			MethodCall.LinkVariables(owner);
 		}
 	}
 

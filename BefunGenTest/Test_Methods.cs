@@ -664,5 +664,107 @@ namespace BefunGenTest
 				end
 			");
 		}
+
+		[TestMethod]
+		public void codeGenTest_Method_StackInit()
+		{
+			BFTestHelper.debugMethod_Output("119922335588", "a()",
+			@"
+				void a()
+				var 
+					stack<digit>[6] x;
+				begin
+					x.Push(#8);
+					x.Push(#5);
+					x.Push(#3);
+					x.Push(#2);
+					x.Push(#9);
+					x.Push(#1);
+
+					while (!x.empty()) do
+						out x.peek();
+						out x.pop();
+					end
+				end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Method_StackReverse()
+		{
+			BFTestHelper.debugMethod_Output("dlroW olleH", "a()",
+			@"
+				void a()
+				var 
+					char[11] str := ''Hello World'';
+					stack<char>[16] stck;
+					int i;
+				begin
+
+					for (i=0; i < 11; i++) do
+						stck.Push(str[i]);
+					end
+
+					i=0;
+					while(!stck.Empty()) do
+						str[i++] = stck.pop();
+					end
+
+					out str;
+				end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Method_StackFill()
+		{
+			BFTestHelper.debugMethod_Output("128 64 32 16 8 4 2 1 ", "a()",
+			@"
+				void a()
+				var 
+					stack<int>[8] stck;
+					int i := 1;
+				begin
+					while(!stck.Full()) do
+						stck.push(i);
+						i *= 2;
+					end
+
+					while (!stck.empty()) do
+						out stck.pop();
+					end
+				end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Method_StackCount()
+		{
+			BFTestHelper.debugMethod_Output("0 2 6 0 ", "a()",
+			@"
+				void a()
+				var 
+					stack<int>[8] stck;
+				begin
+					out stck.count();
+
+					stck.push(0);
+					stck.push(0);
+
+					out stck.count();
+
+					stck.push(0);
+					stck.push(0);
+					stck.push(0);
+					stck.push(0);
+
+					out stck.count();
+
+					while (!stck.empty()) do stck.pop(); end
+
+					out stck.count();
+				end
+			");
+		}
 	}
 }

@@ -296,7 +296,7 @@ namespace BefunGen.AST
 		@Type_digitarr_Lbracket_Rbracket = 114,    // <Type_DigitArr> ::= <Type_Digit> '[' <Literal_Int> ']'
 		@Type_boolarr_Lbracket_Rbracket = 115,     // <Type_BoolArr> ::= <Type_Bool> '[' <Literal_Int> ']'
 		@Type_intstack_Stack_Lt_Gt_Lbracket_Rbracket = 116,  // <Type_IntStack> ::= stack '<' <Type_Int> '>' '[' <Literal_Int> ']'
-		@Type_charstack_Stack_Lt_Gt_Lbracket_Rbracket = 117,  // <Type_CharStack> ::= stack '<' <Type_CharStack> '>' '[' <Literal_Int> ']'
+		@Type_charstack_Stack_Lt_Gt_Lbracket_Rbracket = 117,  // <Type_CharStack> ::= stack '<' <Type_Char> '>' '[' <Literal_Int> ']'
 		@Type_digitstack_Stack_Lt_Gt_Lbracket_Rbracket = 118,  // <Type_DigitStack> ::= stack '<' <Type_Digit> '>' '[' <Literal_Int> ']'
 		@Type_boolstack_Stack_Lt_Gt_Lbracket_Rbracket = 119,  // <Type_BoolStack> ::= stack '<' <Type_Bool> '>' '[' <Literal_Int> ']'
 		@Literal = 120,                            // <Literal> ::= <Array_Literal>

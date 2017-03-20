@@ -255,7 +255,7 @@ namespace BefunGen.AST
 
 				case ProductionIndex.Simplestatement10:
 					// <SimpleStatement> ::= <Stmt_Subcall>
-					//TODO
+					result = (Statement)r.get_Data(0);
 					break;
 
 				case ProductionIndex.Statementlist:
@@ -380,12 +380,12 @@ namespace BefunGen.AST
 
 				case ProductionIndex.Stmt_subcall_Identifier_Dot_Identifier_Lparen_Rparen:
 					// <Stmt_Subcall> ::= Identifier '.' Identifier '(' <ExpressionList> ')'
-					//TODO
+					result = new StatementClassMethodCall(p, GetStrData(0, r), GetStrData(2, r), ((ListExpressions)r.get_Data(4)).List);
 					break;
 
 				case ProductionIndex.Stmt_subcall_Identifier_Dot_Identifier_Lparen_Rparen2:
 					// <Stmt_Subcall> ::= Identifier '.' Identifier '(' ')'
-					//TODO
+					result = new StatementClassMethodCall(p, GetStrData(0, r), GetStrData(2, r), new List<Expression>());
 					break;
 
 				case ProductionIndex.Outflist:
@@ -604,7 +604,7 @@ namespace BefunGen.AST
 					break;
 
 				case ProductionIndex.Type_charstack_Stack_Lt_Gt_Lbracket_Rbracket:
-					// <Type_CharStack> ::= stack '<' <Type_CharStack> '>' '[' <Literal_Int> ']'
+					// <Type_CharStack> ::= stack '<' <Type_Char> '>' '[' <Literal_Int> ']'
 					result = new BTypeCharStack(p, (int)((LiteralInt)r.get_Data(5)).Value);
 					break;
 
@@ -940,12 +940,12 @@ namespace BefunGen.AST
 
 				case ProductionIndex.Value_Identifier_Dot_Identifier_Lparen_Rparen:
 					// <Value> ::= Identifier '.' Identifier '(' <ExpressionList> ')'
-					//TODO
+					result = new ExpressionClassMethodCall(p, new StatementClassMethodCall(p, GetStrData(0, r), GetStrData(2, r), ((ListExpressions)r.get_Data(4)).List));
 					break;
 
 				case ProductionIndex.Value_Identifier_Dot_Identifier_Lparen_Rparen2:
 					// <Value> ::= Identifier '.' Identifier '(' ')'
-					//TODO
+					result = new ExpressionClassMethodCall(p, new StatementClassMethodCall(p, GetStrData(0, r), GetStrData(2, r), new List<Expression>()));
 					break;
 
 				case ProductionIndex.Value3:
@@ -1007,13 +1007,23 @@ namespace BefunGen.AST
 			if (initArr != null)
 			{
 				if (type is BTypeArray)
+				{
 					return new VarDeclarationArray(p, (BTypeArray)type, ident, (LiteralArray)initArr);
+				}
 				else if (type is BTypeValue)
+				{
 					return new VarDeclarationValue(p, (BTypeValue)type, ident, (LiteralValue)initArr);
+				}
 				else if (type is BTypeStack)
+				{
+					if (initArr != null) throw new CannotInitStackException(p);
+
 					return new VarDeclarationStack(p, (BTypeStack)type, ident);
+				}
 				else
+				{
 					return null;
+				}
 			}
 			else
 			{
@@ -1035,10 +1045,8 @@ namespace BefunGen.AST
 
 		private static string GetStrData(int p, GOLD.Reduction r)
 		{
-			if (r.get_Data(p) == null)
-			{
-				Console.Beep();
-			}
+			if (r.get_Data(p) == null) throw new InvalidReductionException();
+
 			return (string)r.get_Data(p);
 		}
 

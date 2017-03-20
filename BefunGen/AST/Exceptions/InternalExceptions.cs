@@ -9,6 +9,12 @@ namespace BefunGen.AST.Exceptions
 			: base("Trying to access temporary AST-object", pos) { }
 	}
 
+	public class InvalidReductionException : BefunGenInternalException
+	{
+		public InvalidReductionException()
+			: base("Grammar reduction is not possible") { }
+	}
+
 	public class InvalidAstStateException : BefunGenInternalException
 	{
 		public InvalidAstStateException(SourceCodePosition pos)
@@ -85,5 +91,11 @@ namespace BefunGen.AST.Exceptions
 	{
 		public NativeException(Exception e)
 			: base("Native Exception:" + e.ToString()) { }
+	}
+
+	public class CodeAssertException : BefunGenInternalException
+	{
+		public CodeAssertException(string msg)
+			: base("Code Assert failed:" + msg) { }
 	}
 }

@@ -45,7 +45,12 @@ namespace BefunGen.AST.CodeGen
 
 		public static CodePiece ReadArrayToStack(VarDeclarationArray v, bool reversed)
 		{
-			return ReadArrayToStack(v.Size, v.CodePositionX, v.CodePositionY, reversed);
+			return ReadArrayToStack(v.Type.GetCodeSize(), v.CodePositionX, v.CodePositionY, reversed);
+		}
+
+		public static CodePiece ReadArrayToStack(VarDeclarationStack v, bool reversed)
+		{
+			return ReadArrayToStack(v.Type.GetCodeSize(), v.CodePositionX, v.CodePositionY, reversed);
 		}
 
 		public static CodePiece ReadArrayToStack(int arrLen, MathExt.Point arr, bool reversed)

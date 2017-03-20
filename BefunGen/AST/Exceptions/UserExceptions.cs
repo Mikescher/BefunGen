@@ -165,4 +165,22 @@ namespace BefunGen.AST.Exceptions
 		public DuplicateIdentifierException(SourceCodePosition pos, string ident)
 			: base(String.Format("The Identifier {0} is already in use", ident), pos) { }
 	}
+
+	public class ClassMethodNotFoundException : BefunGenUserException
+	{
+		public ClassMethodNotFoundException(SourceCodePosition pos, string ident)
+			: base(string.Format("The class method {0} does not exist", ident), pos) { }
+	}
+
+	public class ClassMethodTypeNotValidException : BefunGenUserException
+	{
+		public ClassMethodTypeNotValidException(SourceCodePosition pos, AutoClassMethods ident, BType t)
+			: base(string.Format("You cannot call the class method {0} on the type {1}", ident, t.ToString()), pos) { }
+	}
+
+	public class CannotInitStackException : BefunGenUserException
+	{
+		public CannotInitStackException(SourceCodePosition pos)
+			: base(string.Format("A stack variable cannot be initialized wit a value"), pos) { }
+	}
 }

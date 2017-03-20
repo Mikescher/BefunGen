@@ -109,7 +109,7 @@ namespace BefunGen.AST
 		public abstract CodePiece GenerateCode(bool reversed);
 	}
 
-	#region Interfaces
+	#region Interfaces/Enums
 
 	public interface ICodeAddressTarget
 	{
@@ -119,6 +119,8 @@ namespace BefunGen.AST
 			set;
 		}
 	}
+
+	public enum AutoClassMethods { Push, Peek, Pop, Count, Empty, Full }
 
 	#endregion
 
@@ -1109,6 +1111,15 @@ namespace BefunGen.AST
 					else
 						current.AppendRight(CodePieceStore.ReadArrayToStack(var, reversed));
 				}
+				else if (Owner.Variables[i] is VarDeclarationStack)
+				{
+					VarDeclarationStack var = Owner.Variables[i] as VarDeclarationStack;
+
+					if (reversed)
+						current.AppendLeft(CodePieceStore.ReadArrayToStack(var, reversed));
+					else
+						current.AppendRight(CodePieceStore.ReadArrayToStack(var, reversed));
+				}
 				else
 					throw new WTFException();
 
@@ -1150,6 +1161,364 @@ namespace BefunGen.AST
 			if (!current.IsEmpty()) pieces.Add(current);
 
 			return CodePieceStore.CreateSerpentine(pieces, initialReversed);
+		}
+	}
+
+	public class StatementClassMethodCall : Statement
+	{
+		public readonly List<Expression> CallParameter;
+		public readonly ExpressionDirectValuePointer Target;
+		public readonly AutoClassMethods Method;
+		public BType ResultType;
+
+		public StatementClassMethodCall(SourceCodePosition pos, string varID, string method, List<Expression> cp) : base(pos)
+		{
+			Target = new ExpressionDirectValuePointer(pos, varID);
+
+			CallParameter = cp;
+
+			method = method.ToLower();
+
+			if (method == "push") Method = AutoClassMethods.Push;
+			else if (method == "peek") Method = AutoClassMethods.Peek;
+			else if (method== "pop") Method = AutoClassMethods.Pop;
+			else if (method== "count") Method = AutoClassMethods.Count;
+			else if (method== "empty") Method = AutoClassMethods.Empty;
+			else if (method== "full") Method = AutoClassMethods.Full;
+			else throw new ClassMethodNotFoundException(pos, varID);
+		}
+
+		public override string GetDebugString()
+		{
+			return string.Format("#ClassMethodCall [{0}].[{1}] --> #Parameter: ({2})", Target.GetDebugString(), Method, GetDebugCommaStringForList(CallParameter));
+		}
+
+		public override void AddressCodePoints()
+		{
+			foreach (Expression e in CallParameter)
+				e.AddressCodePoints();
+
+			Target.AddressCodePoints();
+		}
+
+		public override bool AllPathsReturn()
+		{
+			return false;
+		}
+
+		public override void EvaluateExpressions()
+		{
+			for (int i = 0; i < CallParameter.Count; i++)
+			{
+				CallParameter[i] = CallParameter[i].EvaluateExpressions();
+			}
+		}
+
+		public override StatementLabel FindLabelByIdentifier(string ident)
+		{
+			return null;
+		}
+
+		public override CodePiece GenerateCode(bool reversed)
+		{
+			return GenerateCode(reversed, true);
+		}
+
+		public CodePiece GenerateCode(bool reversed, bool popResult)
+		{
+			switch (Method)
+			{
+				case AutoClassMethods.Push:
+					return GenerateCodePush(reversed, popResult);
+				case AutoClassMethods.Peek:
+					return GenerateCodePeek(reversed, popResult);
+				case AutoClassMethods.Pop:
+					return GenerateCodePop(reversed, popResult);
+				case AutoClassMethods.Count:
+					return GenerateCodeCount(reversed, popResult);
+				case AutoClassMethods.Empty:
+					return GenerateCodeEmpty(reversed, popResult);
+				case AutoClassMethods.Full:
+					return GenerateCodeFull(reversed, popResult);
+				default:
+					throw new InvalidAstStateException(Position);
+			}
+		}
+
+		private CodePiece GenerateCodePush(bool reversed, bool popResult)
+		{
+			var stack = Target.Target as VarDeclarationStack;
+			if (stack.IsConstant) throw new ConstantValueChangedException(Position, stack.Identifier);
+
+			CodePiece p = new CodePiece();
+
+			// {V}    {X}:{Y}g1++{Y}p{X}:{Y}g1+\{Y}p
+
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(BCHelper.StackDup);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+			p.AppendRight(BCHelper.Digit1);
+			p.AppendRight(BCHelper.Add);
+			p.AppendRight(BCHelper.Add);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectSet);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(BCHelper.StackDup);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+			p.AppendRight(BCHelper.Digit1);
+			p.AppendRight(BCHelper.Add);
+			p.AppendRight(BCHelper.StackSwap);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectSet);
+
+			if (reversed) p.ReverseX(false);
+
+			if (reversed)
+				p.AppendRight(CallParameter[0].GenerateCode(reversed));
+			else
+				p.AppendLeft(CallParameter[0].GenerateCode(reversed));
+
+			return p;
+		}
+
+		private CodePiece GenerateCodePeek(bool reversed, bool popResult)
+		{
+			var stack = Target.Target as VarDeclarationStack;
+
+			CodePiece p = new CodePiece();
+
+			// {X}:{Y}g+{Y}g
+
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(BCHelper.StackDup);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+			p.AppendRight(BCHelper.Add);
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+
+			if (popResult) p.AppendRight(BCHelper.StackPop);
+
+			if (reversed) p.ReverseX(false);
+
+			return p;
+		}
+
+		private CodePiece GenerateCodePop(bool reversed, bool popResult)
+		{
+			var stack = Target.Target as VarDeclarationStack;
+			if (stack.IsConstant) throw new ConstantValueChangedException(Position, stack.Identifier);
+
+			CodePiece p = new CodePiece();
+
+			if (popResult)
+			{
+				// {X}:{Y}g1-\{Y}p
+
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Digit1);
+				p.AppendRight(BCHelper.Sub);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(BCHelper.ReflectSet);
+			}
+			else
+			{
+				// {X}::{Y}g+{Y}g\:{Y}g1-\{Y}p
+
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Digit1);
+				p.AppendRight(BCHelper.Sub);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(BCHelper.ReflectSet);
+
+				if (reversed) p.ReverseX(false);
+			}
+
+			return p;
+		}
+
+		private CodePiece GenerateCodeCount(bool reversed, bool popResult)
+		{
+			var stack = Target.Target as VarDeclarationStack;
+
+			CodePiece p = new CodePiece();
+
+			// {X}{Y}g
+
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+
+			if (popResult) p.AppendRight(BCHelper.StackPop);
+
+			if (reversed) p.ReverseX(false);
+
+			return p;
+		}
+
+		private CodePiece GenerateCodeEmpty(bool reversed, bool popResult)
+		{
+			var stack = Target.Target as VarDeclarationStack;
+
+			CodePiece p = new CodePiece();
+
+			// {X}{Y}g!
+
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+			p.AppendRight(BCHelper.Not);
+
+			if (popResult) p.AppendRight(BCHelper.StackPop);
+
+			if (reversed) p.ReverseX(false);
+
+			return p;
+		}
+
+		private CodePiece GenerateCodeFull(bool reversed, bool popResult)
+		{
+			var stack = Target.Target as VarDeclarationStack;
+
+			CodePiece p = new CodePiece();
+
+			// {L}{X}{Y}g`!
+
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.Size, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(BCHelper.ReflectGet);
+			p.AppendRight(BCHelper.GreaterThan);
+			p.AppendRight(BCHelper.Not);
+
+			if (popResult) p.AppendRight(BCHelper.StackPop);
+
+			if (reversed) p.ReverseX(false);
+
+			return p;
+		}
+
+		public override StatementReturn HasReturnStatement()
+		{
+			return null;
+		}
+
+		public override void InlineConstants()
+		{
+			for (int i = 0; i < CallParameter.Count; i++)
+				CallParameter[i] = CallParameter[i].InlineConstants();
+		}
+
+		public override void IntegrateStatementLists()
+		{
+			// NOP
+		}
+
+		public override void LinkMethods(Program owner)
+		{
+			foreach (Expression e in CallParameter)
+				e.LinkMethods(owner);
+		}
+
+		public override void LinkResultTypes(Method owner)
+		{
+			foreach (Expression e in CallParameter)
+				e.LinkResultTypes(owner);
+			
+			if (Method == AutoClassMethods.Push)
+			{
+				var stacktarget = Target.Target.Type as BTypeStack;
+
+				if (stacktarget == null) throw new ClassMethodTypeNotValidException(Position, Method, Target.Target.Type);
+				if (CallParameter.Count != 1) throw new WrongParameterCountException(CallParameter.Count, 1, Position);
+
+				var present = CallParameter[0].GetResultType();
+				var expected = stacktarget.InternalType;
+				if (present != expected)
+				{
+					if (present.IsImplicitCastableTo(expected))
+						CallParameter[0] = new ExpressionCast(CallParameter[0].Position, expected, CallParameter[0]);
+					else
+						throw new ImplicitCastException(CallParameter[0].Position, present, expected);
+				}
+
+				ResultType = new BTypeVoid(Position);
+			}
+			else if (Method == AutoClassMethods.Peek)
+			{
+				var stacktarget = Target.Target.Type as BTypeStack;
+
+				if (stacktarget == null) throw new ClassMethodTypeNotValidException(Position, Method, Target.Target.Type);
+				if (CallParameter.Count != 0) throw new WrongParameterCountException(CallParameter.Count, 0, Position);
+
+				ResultType = stacktarget.InternalType;
+			}
+			else if (Method == AutoClassMethods.Pop)
+			{
+				var stacktarget = Target.Target.Type as BTypeStack;
+
+				if (stacktarget == null) throw new ClassMethodTypeNotValidException(Position, Method, Target.Target.Type);
+				if (CallParameter.Count != 0) throw new WrongParameterCountException(CallParameter.Count, 0, Position);
+
+				ResultType = stacktarget.InternalType;
+			}
+			else if (Method == AutoClassMethods.Count)
+			{
+				var stacktarget = Target.Target.Type as BTypeStack;
+
+				if (stacktarget == null) throw new ClassMethodTypeNotValidException(Position, Method, Target.Target.Type);
+				if (CallParameter.Count != 0) throw new WrongParameterCountException(CallParameter.Count, 0, Position);
+
+				ResultType = new BTypeInt(Position);
+			}
+			else if (Method == AutoClassMethods.Empty)
+			{
+				var stacktarget = Target.Target.Type as BTypeStack;
+
+				if (stacktarget == null) throw new ClassMethodTypeNotValidException(Position, Method, Target.Target.Type);
+				if (CallParameter.Count != 0) throw new WrongParameterCountException(CallParameter.Count, 0, Position);
+
+				ResultType = new BTypeBool(Position);
+			}
+			else if (Method == AutoClassMethods.Full)
+			{
+				var stacktarget = Target.Target.Type as BTypeStack;
+
+				if (stacktarget == null) throw new ClassMethodTypeNotValidException(Position, Method, Target.Target.Type);
+				if (CallParameter.Count != 0) throw new WrongParameterCountException(CallParameter.Count, 0, Position);
+
+				ResultType = new BTypeBool(Position);
+			}
+			else
+			{
+				throw new InvalidAstStateException(Position);
+			}
+		}
+
+		public override void LinkVariables(Method owner)
+		{
+			Target.LinkVariables(owner);
+
+			foreach (Expression e in CallParameter)
+				e.LinkVariables(owner);
 		}
 	}
 

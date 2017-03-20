@@ -70,20 +70,20 @@ namespace BefunGenTest
 		public void codeGenTest_Program_ParameterMethodCalls()
 		{
 			BFTestHelper.debugProgram_Terminate(@"
-program example
-	begin
-		out euclid(44, 12);
-	end
+			program example
+				begin
+					out euclid(44, 12);
+				end
 
-	int euclid(int a, int b) 
-	begin
-		OUT a;
-		OUT ''  '';
-		OUT b;
-		OUT ''  '';
-		return 1337;
-	end
-end
+				int euclid(int a, int b) 
+				begin
+					OUT a;
+					OUT ''  '';
+					OUT b;
+					OUT ''  '';
+					return 1337;
+				end
+			end
 			");
 		}
 
@@ -140,28 +140,28 @@ end
 		public void codeGenTest_Program_Euklid()
 		{
 			BFTestHelper.debugProgram_Output("4 ", @"
-program example
-	begin
-		out euclid(44, 12);
-	end
+			program example
+				begin
+					out euclid(44, 12);
+				end
 
-	int euclid(int a, int b) 
-	begin
-		if (a == 0) then
-			return b;
-		else 
-			if (b == 0) then
-				return a;
-			else 
-				if (a > b) then
-					return euclid(a - b, b);
-				else
-					return euclid(a, b - a);
+				int euclid(int a, int b) 
+				begin
+					if (a == 0) then
+						return b;
+					else 
+						if (b == 0) then
+							return a;
+						else 
+							if (a > b) then
+								return euclid(a - b, b);
+							else
+								return euclid(a, b - a);
+							end
+						end
+					end
 				end
 			end
-		end
-	end
-end
 			");
 		}
 
@@ -169,36 +169,36 @@ end
 		public void codeGenTest_Program_GlobalVar()
 		{
 			BFTestHelper.debugProgram_Output("99 ", @"
-program example
-	global
-	 int i;
-	begin
-		i = 0;
+			program example
+				global
+				 int i;
+				begin
+					i = 0;
 		
-		doodle();
+					doodle();
 		
-		OUT i;
-	end
+					OUT i;
+				end
 
-	void doodle() 
-	begin
-		i = 10;
+				void doodle() 
+				begin
+					i = 10;
 		
-		doodle2();
-	end
+					doodle2();
+				end
 	 
-	void doodle2() 
-	begin
-		i = i * 10;
+				void doodle2() 
+				begin
+					i = i * 10;
 		
-		doodle3();
-	end
+					doodle3();
+				end
 	 
-	void doodle3() 
-	begin
-		i--;
-	end
-end
+				void doodle3() 
+				begin
+					i--;
+				end
+			end
 			");
 		}
 
@@ -206,39 +206,39 @@ end
 		public void codeGenTest_Program_Constants()
 		{
 			BFTestHelper.debugProgram_Output("99 ", @"
-program example
-	const
-		int FALSCH := 0;
-		int WAHR   := 1;
-	global
-		int i;
-	begin
-		i = FALSCH;
+			program example
+				const
+					int FALSCH := 0;
+					int WAHR   := 1;
+				global
+					int i;
+				begin
+					i = FALSCH;
 		
-		doodle();
+					doodle();
 		
-		OUT i;
-	end
+					OUT i;
+				end
 
-	void doodle() 
-	begin
-		i = 10;
+				void doodle() 
+				begin
+					i = 10;
 		
-		doodle2();
-	end
+					doodle2();
+				end
 	 
-	void doodle2() 
-	begin
-		i = i * 10;
+				void doodle2() 
+				begin
+					i = i * 10;
 		
-		doodle3();
-	end
+					doodle3();
+				end
 	 
-	void doodle3() 
-	begin
-		i = i - WAHR;
-	end
-end
+				void doodle3() 
+				begin
+					i = i - WAHR;
+				end
+			end
 			");
 		}
 
@@ -248,33 +248,33 @@ end
 			ASTObject.CGO.DisplayModuloAccess = true;
 
 			BFTestHelper.debugProgram(@"
-program example : display[64, 16]
-	begin
-		FOR(;;) DO
-			paintR();
-		END
-	end
+			program example : display[64, 16]
+				begin
+					FOR(;;) DO
+						paintR();
+					END
+				end
 
-	void paintR() 
-	var
-	 int x;
-	 int y;
-	begin
-		x = ((((((((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND);
-		y = ((((((((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND);
+				void paintR() 
+				var
+				 int x;
+				 int y;
+				begin
+					x = ((((((((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND);
+					y = ((((((((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND)*2) + ((int)RAND))*2 + ((int)RAND) ) * 2 + ((int)RAND);
 
-		OUT x;
-		OUT '','';		
-		OUT y;
-		OUT ''\r\n'';		
+					OUT x;
+					OUT '','';		
+					OUT y;
+					OUT ''\r\n'';		
 
-		display[x, y] = '#';
+					display[x, y] = '#';
 
-		OUT ''\r\n'';
+					OUT ''\r\n'';
 
-	end
-end
-");
+				end
+			end
+			");
 		}
 
 		[TestMethod]
@@ -283,29 +283,29 @@ end
 			ASTObject.CGO.DisplayModuloAccess = true;
 
 			BFTestHelper.debugProgram_Output("WIN", @"
-program example
-	begin
-		switch (9 * 9 / 9 / 9)
-		begin
-			case 1: 
-				OUT ''WIN'';
+			program example
+				begin
+					switch (9 * 9 / 9 / 9)
+					begin
+						case 1: 
+							OUT ''WIN'';
+						end
+						case 4:
+							OUT ''FAIL'';
+						end
+						case 0:
+							OUT ''FAIL'';
+						end
+						case -9:
+							OUT ''FAIL'';
+						end
+						case 111:
+							OUT ''FAIL'';
+						end
+					end
+				end
 			end
-			case 4:
-				OUT ''FAIL'';
-			end
-			case 0:
-				OUT ''FAIL'';
-			end
-			case -9:
-				OUT ''FAIL'';
-			end
-			case 111:
-				OUT ''FAIL'';
-			end
-		end
-	end
-end
-");
+			");
 		}
 
 		[TestMethod]
@@ -314,29 +314,29 @@ end
 			ASTObject.CGO.DisplayModuloAccess = true;
 
 			BFTestHelper.debugProgram(@"
-program p 
-	begin
-		for (;;) do
-			switch RAND[1]
-			begin
-				case 0:
-					OUT ''0 '';
-				end
-				case 1:
-					OUT ''1 '';
-				end
-				case 2:
-					OUT ''2 '';
-				end
-				case 3:
-					OUT ''3 '';
+			program p 
+				begin
+					for (;;) do
+						switch RAND[1]
+						begin
+							case 0:
+								OUT ''0 '';
+							end
+							case 1:
+								OUT ''1 '';
+							end
+							case 2:
+								OUT ''2 '';
+							end
+							case 3:
+								OUT ''3 '';
+							end
+						end
+					end
+
 				end
 			end
-		end
-
-	end
-end
-");
+			");
 		}
 
 		[TestMethod]
@@ -345,102 +345,102 @@ end
 			ASTObject.CGO.DisplayModuloAccess = true;
 
 			BFTestHelper.debugProgram(@"
-program p 
-	begin
-		OUT '''';
-		for (;;) do
-			switch RAND[1]
-			begin
-				case 0:
-					OUT ''0 '';
-				end
-				case 1:
-					OUT ''1 '';
-				end
-				case 2:
-					OUT ''2 '';
-				end
-				case 3:
-					OUT ''3 '';
+			program p 
+				begin
+					OUT '''';
+					for (;;) do
+						switch RAND[1]
+						begin
+							case 0:
+								OUT ''0 '';
+							end
+							case 1:
+								OUT ''1 '';
+							end
+							case 2:
+								OUT ''2 '';
+							end
+							case 3:
+								OUT ''3 '';
+							end
+						end
+					end
+
 				end
 			end
-		end
-
-	end
-end
-");
+			");
 		}
 
 		[TestMethod]
 		public void codeGenTest_Program_recursive_calls()
 		{
 			BFTestHelper.debugProgram_Terminate(@"
-program example : display[0, 0]
-	begin
-		push(peek());
-	end
+			program example : display[0, 0]
+				begin
+					push(peek());
+				end
 	
-	void push(int v)
-	begin
-		out ''<in_push>'';
-	end
+				void push(int v)
+				begin
+					out ''<in_push>'';
+				end
 
-	int peek()
-	begin
-		out ''<in_peek>'';
-		return 42;
-	end
-end
-");
+				int peek()
+				begin
+					out ''<in_peek>'';
+					return 42;
+				end
+			end
+			");
 		}
 
 		[TestMethod]
 		public void codeGenTest_Program_call_order()
 		{
 			BFTestHelper.debugProgram_Output("ab", @"
-program example : display[0, 0]
-	begin
-		b(a());
-	end
+			program example : display[0, 0]
+				begin
+					b(a());
+				end
 	
-	void b(int v)
-	begin
-		out ''b'';
-	end
+				void b(int v)
+				begin
+					out ''b'';
+				end
 
-	int a()
-	begin
-		out ''a'';
-		return 0;
-	end
-end
-");
+				int a()
+				begin
+					out ''a'';
+					return 0;
+				end
+			end
+			");
 		}
 
 		[TestMethod]
 		public void codeGenTest_Program_call_order_2()
 		{
 			BFTestHelper.debugProgram_Output("aab", @"
-program example
-	var 
-		int x;
-	begin
-		x = a() * b(a());
-	end
+			program example
+				var 
+					int x;
+				begin
+					x = a() * b(a());
+				end
 	
-	int b(int v)
-	begin
-		out ''b'';
-		return 0;
-	end
+				int b(int v)
+				begin
+					out ''b'';
+					return 0;
+				end
 
-	int a()
-	begin
-		out ''a'';
-		return 0;
-	end
-end
-");
+				int a()
+				begin
+					out ''a'';
+					return 0;
+				end
+			end
+			");
 		}
 
 		[TestMethod]
@@ -449,55 +449,84 @@ end
 			ASTObject.CGO.CompileTimeEvaluateExpressions = true;
 
 			BFTestHelper.debugProgram_Output("", @"
-program example
-	var 
-		int x;
-	begin
-		x = 0 * a();
-		x = a() * 0;
-	end
+			program example
+				var 
+					int x;
+				begin
+					x = 0 * a();
+					x = a() * 0;
+				end
 
-	int a()
-	begin
-		out ''a'';
-		return 0;
-	end
-end
-");
+				int a()
+				begin
+					out ''a'';
+					return 0;
+				end
+			end
+			");
 		}
 
 		[TestMethod]
 		public void codeGenTest_Program_ArrayParameter()
 		{
 			BFTestHelper.debugProgram_Output("110308", @"
-program p0
-	var 
-		digit[6] x := {#1, #1, #2, #3, #5, #8};
-	begin
-		x[2] = #0;
-		x[4] = #0;
-		a(x);
-	end
+			program p0
+				var 
+					digit[6] x := {#1, #1, #2, #3, #5, #8};
+				begin
+					x[2] = #0;
+					x[4] = #0;
+					a(x);
+				end
 
-	void a(digit[6] px)
-	begin
-		out b(px, 0);
-		out b(px, 1);
-		out b(px, 2);
-		out b(px, 3);
-		out b(px, 4);
-		out b(px, 5);
-	end
+				void a(digit[6] px)
+				begin
+					out b(px, 0);
+					out b(px, 1);
+					out b(px, 2);
+					out b(px, 3);
+					out b(px, 4);
+					out b(px, 5);
+				end
 
-	digit b(digit[6] a, int i)
-	var 
-		digit[6] tmp;
-	begin
-		tmp = a;
-		return tmp[i];
-	end
-end
-");
+				digit b(digit[6] a, int i)
+				var 
+					digit[6] tmp;
+				begin
+					tmp = a;
+					return tmp[i];
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_StackIdentity()
+		{
+			BFTestHelper.debugProgram_Output("4 8 15 16 23 42 ", @"
+			program p0
+				var 
+					stack<int>[16] s;
+				begin
+					s.Push(42);
+					s.Push(identity(16) + identity(8) - 1);
+					s.Push(identity(16));
+					s.Push(identity(identity(identity(15))));
+					s.Push(identity(identity(8)));
+					s.Push(identity(4));
+
+					while (!s.empty()) do
+						out s.peek();
+						s.pop();
+					end
+				end
+
+				int identity(int i)
+				begin
+					return i;
+				end
+			end
+			");
 		}
 	}
 }
