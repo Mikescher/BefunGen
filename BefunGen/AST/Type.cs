@@ -69,8 +69,8 @@ namespace BefunGen.AST
 
 		public abstract CodePiece GenerateCodeAssignment(SourceCodePosition pos, Expression source, ExpressionValuePointer target, bool reversed);
 		public abstract CodePiece GenerateCodePopValueFromStack(SourceCodePosition pos, bool reversed);
-		public abstract CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed);
-		public abstract CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed);
+		public abstract CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed);
+		public abstract CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed);
 		public abstract CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed);
 	}
 
@@ -118,7 +118,7 @@ namespace BefunGen.AST
 			return new CodePiece(BCHelper.StackPop);
 		}
 
-		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 			if (reversed)
@@ -137,7 +137,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 			if (reversed)
@@ -238,14 +238,14 @@ namespace BefunGen.AST
 			if (reversed)
 			{
 				p.AppendLeft(source.GenerateCode(reversed));
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(type.ArraySize, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(vPointer.Target.CodeDeclarationPos, reversed));
 
 				p.NormalizeX();
 			}
 			else
 			{
 				p.AppendRight(source.GenerateCode(reversed));
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(type.ArraySize, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(vPointer.Target.CodeDeclarationPos, reversed));
 
 				p.NormalizeX();
 			}
@@ -258,14 +258,14 @@ namespace BefunGen.AST
 			return CodePieceStore.PopMultipleStackValues(ArraySize, reversed);
 		}
 
-		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
-			return CodePieceStore.WriteArrayFromStack(ArraySize, gridPos, reversed);
+			return CodePieceStore.WriteArrayFromStack(gridPos, reversed);
 		}
 
-		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
-			return CodePieceStore.ReadArrayToStack(ArraySize, gridPos.X, gridPos.Y, reversed);
+			return CodePieceStore.ReadArrayToStack(gridPos, reversed);
 		}
 
 		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
@@ -280,10 +280,10 @@ namespace BefunGen.AST
 
 				// Switch ReturnValue (Array)  and  BackJumpAddr
 
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendLeft(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
-				p.AppendLeft(CodePieceStore.ReadArrayToStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.ReadArrayToStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendLeft(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
 
@@ -301,10 +301,10 @@ namespace BefunGen.AST
 
 				// Switch ReturnValue (Array)  and  BackJumpAddr
 
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendRight(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
-				p.AppendRight(CodePieceStore.ReadArrayToStack(ArraySize, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.ReadArrayToStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendRight(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
 
@@ -364,12 +364,12 @@ namespace BefunGen.AST
 			return new CodePiece(BCHelper.StackPop);
 		}
 
-		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
 			return new CodePiece(BCHelper.StackPop); // Nobody cares about the result ...
 		}
 
-		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
 			return CodePiece.Empty; // Do nothing
 		}
@@ -429,12 +429,12 @@ namespace BefunGen.AST
 			throw new InvalidAstStateException(pos);
 		}
 
-		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
 			throw new InvalidAstStateException(pos);
 		}
 
-		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
 			throw new InvalidAstStateException(pos);
 		}
@@ -487,14 +487,14 @@ namespace BefunGen.AST
 			if (reversed)
 			{
 				p.AppendLeft(source.GenerateCode(reversed));
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(type.ArraySize + 1, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(vPointer.Target.CodeDeclarationPos, reversed));
 
 				p.NormalizeX();
 			}
 			else
 			{
 				p.AppendRight(source.GenerateCode(reversed));
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(type.ArraySize+1, vPointer.Target.CodePositionX, vPointer.Target.CodePositionY, reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(vPointer.Target.CodeDeclarationPos, reversed));
 
 				p.NormalizeX();
 			}
@@ -507,14 +507,14 @@ namespace BefunGen.AST
 			return CodePieceStore.PopMultipleStackValues(StackSize + 1, reversed);
 		}
 
-		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeWriteFromStackToGrid(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
-			return CodePieceStore.WriteArrayFromStack(StackSize+1, gridPos, reversed);
+			return CodePieceStore.WriteArrayFromStack(gridPos, reversed);
 		}
 
-		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, MathExt.Point gridPos, bool reversed)
+		public override CodePiece GenerateCodeReadFromGridToStack(SourceCodePosition pos, VarDeclarationPosition gridPos, bool reversed)
 		{
-			return CodePieceStore.ReadArrayToStack(StackSize + 1, gridPos.X, gridPos.Y, reversed);
+			return CodePieceStore.ReadArrayToStack(gridPos, reversed);
 		}
 
 		public override CodePiece GenerateCodeReturnFromMethodCall(SourceCodePosition pos, Expression value, bool reversed)
@@ -529,10 +529,10 @@ namespace BefunGen.AST
 
 				// Switch ReturnValue (Array)  and  BackJumpAddr
 
-				p.AppendLeft(CodePieceStore.WriteArrayFromStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.WriteArrayFromStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendLeft(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
-				p.AppendLeft(CodePieceStore.ReadArrayToStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendLeft(CodePieceStore.ReadArrayToStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendLeft(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 				
 				p.AppendLeft(BCHelper.Digit0); // Right Lane
@@ -549,10 +549,10 @@ namespace BefunGen.AST
 
 				// Switch ReturnValue (Array)  and  BackJumpAddr
 
-				p.AppendRight(CodePieceStore.WriteArrayFromStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.WriteArrayFromStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendRight(CodePieceStore.WriteValueToField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 
-				p.AppendRight(CodePieceStore.ReadArrayToStack(StackSize + 1, CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
+				p.AppendRight(CodePieceStore.ReadArrayToStack(CodeGenConstants.TMP_ARRFIELD_RETURNVAL, reversed));
 				p.AppendRight(CodePieceStore.ReadValueFromField(CodeGenConstants.TMP_FIELD_JMP_ADDR, reversed));
 				
 				p.AppendRight(BCHelper.Digit0); // Right Lane

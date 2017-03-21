@@ -163,7 +163,7 @@ namespace BefunGen.AST
 			CodePiece p = new CodePiece();
 
 			// Generate Space for Variables
-			p.AppendBottom(GenerateCode_Variables(methOffsetX, methOffsetY));
+			p.AppendBottom(CodePieceStore.CreateVariableSpace(Variables, methOffsetX, methOffsetY, CGO, CGO.DefaultVarDeclarationWidth)); //TODO auto calc max width - not simply use constant
 
 			// Generate Initialization of Variables
 			CodePiece pVi = GenerateCode_VariableIntialization();
@@ -175,49 +175,6 @@ namespace BefunGen.AST
 
 			// Generate Statements
 			p.AppendBottom(GenerateCode_Body());
-
-			return p;
-		}
-
-		private CodePiece GenerateCode_Variables(int moX, int moY)
-		{
-			CodePiece p = new CodePiece();
-
-			int paramX = 0;
-			int paramY = 0;
-
-			int maxArr = 0;
-			if (Variables.Count(t => t is VarDeclarationArray) > 0)
-				maxArr = Variables.Where(t => t is VarDeclarationArray).Select(t => t as VarDeclarationArray).Max(t => t.Size);
-
-			int maxwidth = Math.Max(maxArr, CGO.DefaultVarDeclarationWidth);
-
-			for (int i = 0; i < Variables.Count; i++)
-			{
-				VarDeclaration var = Variables[i];
-
-				CodePiece lit = new CodePiece();
-
-				if (paramX >= maxwidth)
-				{	// Next Line
-					paramX = 0;
-					paramY++;
-				}
-
-				if (paramX > 0 && var is VarDeclarationArray && (paramX + (var as VarDeclarationArray).Size) > maxwidth)
-				{	// Next Line
-					paramX = 0;
-					paramY++;
-				}
-
-				lit.Fill(0, 0, var.Type.GetCodeSize(), 1, BCHelper.Chr(CGO.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
-
-				var.CodePositionX = moX + paramX;
-				var.CodePositionY = moY + paramY;
-
-				p.SetAt(paramX, paramY, lit);
-				paramX += lit.Width;
-			}
 
 			return p;
 		}

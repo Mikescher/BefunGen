@@ -5,7 +5,7 @@ namespace BefunGenTest
 	public class MultiCPTester
 	{
 		private const int RAND_RUN_COUNT = 64;
-		private const int MAX_STEP = 65536;
+		private const int MAX_STEP = 1048576;
 
 		public static void Test_Common(string prog)
 		{
@@ -56,7 +56,7 @@ namespace BefunGenTest
 			tester.run(MAX_STEP);
 
 			if (tester.StepCount >= (MAX_STEP - 8))
-				Assert.Fail();
+				Assert.Fail("Did not finish in MAX_STEP");
 
 			Assert.AreEqual(0, tester.Stack.Count);
 

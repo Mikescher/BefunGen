@@ -267,7 +267,7 @@ namespace BefunGen.AST
 			return MathExt.Max(1, MethodList.Select(p => p.ResultType.GetCodeSize()).ToArray());
 		}
 
-		public CodePiece GenerateCode(string initialDisp = "")
+		public CodePiece GenerateCode(string initialDisp = "") //TODO Make two runs - use first run for width estimation
 		{
 			// v {TEMP..}
 			// 1 v{STACKFLOODER}        <
@@ -316,6 +316,8 @@ namespace BefunGen.AST
 			pTopLane[CodeGenConstants.TMP_FIELD_IO_ARR.X, CodeGenConstants.TMP_FIELD_IO_ARR.Y] = BCHelper.Chr(CGO.DefaultTempSymbol, new TemporaryCodeFieldTag());
 			pTopLane[CodeGenConstants.TMP_FIELD_OUT_ARR.X, CodeGenConstants.TMP_FIELD_OUT_ARR.Y] = BCHelper.Chr(CGO.DefaultTempSymbol, new TemporaryCodeFieldTag());
 			pTopLane[CodeGenConstants.TMP_FIELD_JMP_ADDR.X, CodeGenConstants.TMP_FIELD_JMP_ADDR.Y] = BCHelper.Chr(CGO.DefaultTempSymbol, new TemporaryCodeFieldTag());
+
+			CodeGenConstants.TMP_ARRFIELD_RETURNVAL = new VarDeclarationPosition(CodeGenConstants.TMP_ARRFIELD_RETURNVAL_TL, maxReturnValWidth, 1, maxReturnValWidth); //TODO Multiline
 			pTopLane.Fill(CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X, CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y,
 				CodeGenConstants.TMP_ARRFIELD_RETURNVAL.X + maxReturnValWidth, CodeGenConstants.TMP_ARRFIELD_RETURNVAL.Y + 1,
 				BCHelper.Chr(CGO.DefaultResultTempSymbol),
@@ -354,7 +356,8 @@ namespace BefunGen.AST
 
 			#region Insert VariableSpace
 
-			CodePiece pVars = GenerateCode_Variables(methOffsetX, methOffsetY);
+			var maxw = Math.Max(pDisplay.Width, CGO.DefaultVarDeclarationWidth);
+			CodePiece pVars = CodePieceStore.CreateVariableSpace(Variables, methOffsetX, methOffsetY, CGO, maxw);
 
 			p.SetAt(methOffsetX, methOffsetY, pVars);
 
@@ -488,57 +491,6 @@ namespace BefunGen.AST
 			}
 
 			#endregion
-
-			return p;
-		}
-
-		private CodePiece GenerateCode_Variables(int moX, int moY)
-		{
-			CodePiece p = new CodePiece();
-
-			int paramX = 0;
-			int paramY = 0;
-
-			int maxArr = 0;
-			if (Variables.Count(t => t is VarDeclarationArray) > 0)
-				maxArr = Variables.Where(t => t is VarDeclarationArray).Select(t => t as VarDeclarationArray).Max(t => t.Size);
-
-			int maxwidth = Math.Max(maxArr, CGO.DefaultVarDeclarationWidth);
-
-			for (int i = 0; i < Variables.Count; i++)
-			{
-				VarDeclaration var = Variables[i];
-
-				CodePiece lit = new CodePiece();
-
-				if (paramX >= maxwidth)
-				{	// Next Line
-					paramX = 0;
-					paramY++;
-				}
-
-				if (paramX > 0 && var is VarDeclarationArray && (paramX + (var as VarDeclarationArray).Size) > maxwidth)
-				{	// Next Line
-					paramX = 0;
-					paramY++;
-				}
-
-				if (var is VarDeclarationValue)
-				{
-					lit[0, 0] = BCHelper.Chr(CGO.DefaultVarDeclarationSymbol, new VarDeclarationTag(var));
-				}
-				else
-				{
-					int sz = (var as VarDeclarationArray).Size;
-					lit.Fill(0, 0, sz, 1, BCHelper.Chr(CGO.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
-				}
-
-				var.CodePositionX = moX + paramX;
-				var.CodePositionY = moY + paramY;
-
-				p.SetAt(paramX, paramY, lit);
-				paramX += lit.Width;
-			}
 
 			return p;
 		}

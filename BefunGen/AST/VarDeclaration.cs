@@ -18,51 +18,28 @@ namespace BefunGen.AST
 		public bool HasCompleteUserDefiniedInitialValue;
 		public bool IsConstant { get; private set; }
 
-		public MathExt.Point CodePosition => new MathExt.Point(CodePositionX, CodePositionY);
-
-		private int codePositionX = -1;
-		public int CodePositionX
+		private VarDeclarationPosition _codeDeclPos = null;
+		public VarDeclarationPosition CodeDeclarationPos
 		{
 			get
 			{
 				if (IsConstant)
 					throw new ConstantValueChangedException(Position, Identifier);
 
-				if (codePositionX < 0)
+				if (_codeDeclPos == null)
 					throw new InternalCodeGenException();
-				else
-					return codePositionX;
-			}
 
+				return _codeDeclPos;
+			}
 			set
 			{
 				if (IsConstant)
 					throw new ConstantValueChangedException(Position, Identifier);
 
-				codePositionX = value;
-			}
-		}
-
-		private int codePositionY = -1;
-		public int CodePositionY
-		{
-			get
-			{
-				if (IsConstant)
-					throw new ConstantValueChangedException(Position, Identifier);
-
-				if (codePositionY < 0)
+				if (_codeDeclPos != null)
 					throw new InternalCodeGenException();
-				else
-					return codePositionY;
-			}
 
-			set
-			{
-				if (IsConstant)
-					throw new ConstantValueChangedException(Position, Identifier);
-
-				codePositionY = value;
+				_codeDeclPos = value;
 			}
 		}
 
@@ -147,8 +124,8 @@ namespace BefunGen.AST
 
 			CodePiece p = new CodePiece();
 
-			int varX = CodePositionX;
-			int varY = CodePositionY;
+			int varX = CodeDeclarationPos.X;
+			int varY = CodeDeclarationPos.Y;
 
 			if (reversed)
 			{
@@ -177,8 +154,8 @@ namespace BefunGen.AST
 
 			CodePiece p = new CodePiece();
 
-			int varX = CodePositionX;
-			int varY = CodePositionY;
+			int varX = CodeDeclarationPos.X;
+			int varY = CodeDeclarationPos.Y;
 
 			if (reversed)
 			{
@@ -250,11 +227,11 @@ namespace BefunGen.AST
 			}
 		}
 
-		private CodePiece GenerateCode_Uniform(bool reversed, LiteralArray value)
+		private CodePiece GenerateCode_Uniform(bool reversed, LiteralArray value) //TODO [Multiline]
 		{
-			int varXStart = CodePositionX;
-			int varXEnd = CodePositionX + Size - 1;
-			int varY = CodePositionY;
+			int varXStart = CodeDeclarationPos.X;
+			int varXEnd = CodeDeclarationPos.X + Size - 1;
+			int varY = CodeDeclarationPos.Y;
 
 			if (reversed)
 			{
@@ -335,12 +312,12 @@ namespace BefunGen.AST
 			}
 		}
 
-		private CodePiece GenerateCode_Universal(bool reversed, LiteralArray value)
+		private CodePiece GenerateCode_Universal(bool reversed, LiteralArray value) //TODO [Multiline]
 		{
 			CodePiece p = new CodePiece();
 
-			int varX = CodePositionX - 1;
-			int varY = CodePositionY;
+			int varX = CodeDeclarationPos.X - 1;
+			int varY = CodeDeclarationPos.Y;
 
 			if (reversed)
 			{
@@ -424,7 +401,7 @@ namespace BefunGen.AST
 			if (IsConstant)
 				throw new ConstantValueChangedException(Position, Identifier);
 
-			return CodePieceStore.WriteArrayFromStack(this, reversed);
+			return CodePieceStore.WriteArrayFromStack(this.CodeDeclarationPos, reversed);
 		}
 	}
 
@@ -440,14 +417,14 @@ namespace BefunGen.AST
 			if (Size < 2) throw new ArrayTooSmallException(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(bool reversed) //TODO [Multiline]
 		{
 			if (IsConstant) throw new ConstantValueChangedException(Position, Identifier);
 
 			CodePiece p = new CodePiece();
 
-			int varX = CodePositionX;
-			int varY = CodePositionY;
+			int varX = CodeDeclarationPos.X;
+			int varY = CodeDeclarationPos.Y;
 
 			if (reversed)
 			{
@@ -474,7 +451,38 @@ namespace BefunGen.AST
 			if (IsConstant)
 				throw new ConstantValueChangedException(Position, Identifier);
 
-			return CodePieceStore.WriteArrayFromStack(Size + 1, CodePositionX, CodePositionY, reversed);
+			return CodePieceStore.WriteArrayFromStack(CodeDeclarationPos, reversed);
+		}
+	}
+
+	#endregion
+
+	#region Other
+
+	public sealed class VarDeclarationPosition
+	{
+		public readonly int X;
+		public readonly int Y;
+		public readonly int Width;
+		public readonly int Height;
+		public readonly int Size; // _not_ W*H, can be less
+
+		public VarDeclarationPosition(int x, int y, int w, int h, int s)
+		{
+			X = x;
+			Y = y;
+			Width = w;
+			Height = h;
+			Size = s;
+		}
+
+		public VarDeclarationPosition(MathExt.Point p, int w, int h, int s)
+		{
+			X = p.X;
+			Y = p.Y;
+			Width = w;
+			Height = h;
+			Size = s;
 		}
 	}
 

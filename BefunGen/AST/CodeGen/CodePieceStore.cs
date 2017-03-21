@@ -1,4 +1,5 @@
 ﻿using BefunGen.AST.CodeGen.NumberCode;
+using BefunGen.AST.CodeGen.Tags;
 using BefunGen.MathExtensions;
 using System;
 using System.Collections.Generic;
@@ -43,22 +44,17 @@ namespace BefunGen.AST.CodeGen
 
 		#region ReadArrayToStack
 
-		public static CodePiece ReadArrayToStack(VarDeclarationArray v, bool reversed)
+		public static CodePiece ReadArrayToStack(VarDeclarationPosition v, bool reversed)
 		{
-			return ReadArrayToStack(v.Type.GetCodeSize(), v.CodePositionX, v.CodePositionY, reversed);
+			return ReadArrayToStack(v.Size, v.X, v.Y, reversed); //TODO [MULTILINE]
 		}
 
-		public static CodePiece ReadArrayToStack(VarDeclarationStack v, bool reversed)
-		{
-			return ReadArrayToStack(v.Type.GetCodeSize(), v.CodePositionX, v.CodePositionY, reversed);
-		}
-
-		public static CodePiece ReadArrayToStack(int arrLen, MathExt.Point arr, bool reversed)
+		private static CodePiece ReadArrayToStack(int arrLen, MathExt.Point arr, bool reversed)
 		{
 			return ReadArrayToStack(arrLen, arr.X, arr.Y, reversed);
 		}
 
-		public static CodePiece ReadArrayToStack(int arrLen, int arrX, int arrY, bool reversed)
+		private static CodePiece ReadArrayToStack(int arrLen, int arrX, int arrY, bool reversed)
 		{
 			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
 
@@ -168,17 +164,17 @@ namespace BefunGen.AST.CodeGen
 
 		#region WriteArrayFromStack
 
-		public static CodePiece WriteArrayFromStack(VarDeclarationArray v, bool reversed)
+		public static CodePiece WriteArrayFromStack(VarDeclarationPosition v, bool reversed)
 		{
-			return WriteArrayFromStack(v.Size, v.CodePositionX, v.CodePositionY, reversed);
+			return WriteArrayFromStack(v.Size, v.X, v.Y, reversed); //TODO [MULTILINE]
 		}
 
-		public static CodePiece WriteArrayFromStack(int arrLen, MathExt.Point arr, bool reversed)
+		private static CodePiece WriteArrayFromStack(int arrLen, MathExt.Point arr, bool reversed)
 		{
 			return WriteArrayFromStack(arrLen, arr.X, arr.Y, reversed);
 		}
 
-		public static CodePiece WriteArrayFromStack(int arrLen, int arrX, int arrY, bool reversed)
+		private static CodePiece WriteArrayFromStack(int arrLen, int arrX, int arrY, bool reversed)
 		{
 			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
 
@@ -372,7 +368,12 @@ namespace BefunGen.AST.CodeGen
 			}
 		}
 
-		public static CodePiece WriteArrayFromReversedStack(int arrLen, int arrX, int arrY, bool reversed)
+		public static CodePiece WriteArrayFromReversedStack(int arrLen, VarDeclarationPosition v, bool reversed)
+		{
+			return WriteArrayFromReversedStack(arrLen, v.X, v.Y, reversed); //TODO [MULTILINE]
+		}
+
+		private static CodePiece WriteArrayFromReversedStack(int arrLen, int arrX, int arrY, bool reversed)
 		{
 			// Normally Arrays are reversed on Stack -> this Method is for the reversed case --> Stack is normal on stack
 
@@ -1060,5 +1061,61 @@ namespace BefunGen.AST.CodeGen
 			return CodePiece.CreateFromVerticalList(pieces);
 		}
 
+		public static CodePiece CreateVariableSpace(List<VarDeclaration> variables, int moX, int moY, CodeGenOptions cgo, int maxWidth)
+		{
+			CodePiece p = new CodePiece();
+
+			int paramX = 0;
+			int paramY = 0;
+			
+			foreach (var var in variables.OrderBy(v => v.Type.GetCodeSize()))
+			{
+				CodePiece lit = new CodePiece();
+
+				int size = var.Type.GetCodeSize();
+
+				if (paramX > 0 && paramX + size > maxWidth)
+				{
+					// Next Line
+					paramX = 0;
+					paramY++;
+				}
+
+				if (size > maxWidth && false) //TODO [Multiline]
+				{
+					// Multiline
+
+					int w = maxWidth;
+					int h = (int)Math.Ceiling((size * 1d) / w);
+
+					for (int i = 0; i < h-1; i++)
+						lit.Fill(0, i, w, i, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
+					lit.Fill(0, h-1, size % w, h-1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol));
+
+					var.CodeDeclarationPos = new VarDeclarationPosition(moX + paramX, moY + paramY, w, h, size);
+
+					paramX = 0;
+					paramY += w;
+				}
+				else
+				{
+					//Single Line
+
+					lit.Fill(0, 0, size, 1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
+					p.SetAt(paramX, paramY, lit);
+
+					var.CodeDeclarationPos = new VarDeclarationPosition(moX + paramX, moY + paramY, size, 1, size);
+
+					paramX += lit.Width;
+				}
+
+
+
+				
+				paramX += lit.Width;
+			}
+
+			return p;
+		}
 	}
 }

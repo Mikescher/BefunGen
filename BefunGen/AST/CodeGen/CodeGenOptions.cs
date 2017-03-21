@@ -83,7 +83,7 @@ namespace BefunGen.AST.CodeGen
 			c.CompressHorizontalCombining = true;
 			c.CompressVerticalCombining = true;
 
-			c.DefaultVarDeclarationWidth = 16;
+			c.DefaultVarDeclarationWidth = 48;
 
 			c.DefaultVarDeclarationSymbol = 'V';
 			c.DefaultTempSymbol = 'R';
@@ -121,7 +121,7 @@ namespace BefunGen.AST.CodeGen
 			c.CompressHorizontalCombining = true;
 			c.CompressVerticalCombining = true;
 
-			c.DefaultVarDeclarationWidth = 16;
+			c.DefaultVarDeclarationWidth = 48;
 
 			c.DefaultVarDeclarationSymbol = ' ';
 			c.DefaultTempSymbol = ' ';

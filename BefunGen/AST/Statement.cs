@@ -1107,18 +1107,18 @@ namespace BefunGen.AST
 					VarDeclarationArray var = Owner.Variables[i] as VarDeclarationArray;
 
 					if (reversed)
-						current.AppendLeft(CodePieceStore.ReadArrayToStack(var, reversed));
+						current.AppendLeft(CodePieceStore.ReadArrayToStack(var.CodeDeclarationPos, reversed));
 					else
-						current.AppendRight(CodePieceStore.ReadArrayToStack(var, reversed));
+						current.AppendRight(CodePieceStore.ReadArrayToStack(var.CodeDeclarationPos, reversed));
 				}
 				else if (Owner.Variables[i] is VarDeclarationStack)
 				{
 					VarDeclarationStack var = Owner.Variables[i] as VarDeclarationStack;
 
 					if (reversed)
-						current.AppendLeft(CodePieceStore.ReadArrayToStack(var, reversed));
+						current.AppendLeft(CodePieceStore.ReadArrayToStack(var.CodeDeclarationPos, reversed));
 					else
-						current.AppendRight(CodePieceStore.ReadArrayToStack(var, reversed));
+						current.AppendRight(CodePieceStore.ReadArrayToStack(var.CodeDeclarationPos, reversed));
 				}
 				else
 					throw new WTFException();
@@ -1245,7 +1245,7 @@ namespace BefunGen.AST
 			}
 		}
 
-		private CodePiece GenerateCodePush(bool reversed, bool popResult)
+		private CodePiece GenerateCodePush(bool reversed, bool popResult) //TODO [MULTILINE]
 		{
 			var stack = Target.Target as VarDeclarationStack;
 			if (stack.IsConstant) throw new ConstantValueChangedException(Position, stack.Identifier);
@@ -1254,23 +1254,23 @@ namespace BefunGen.AST
 
 			// {V}    {X}:{Y}g1++{Y}p{X}:{Y}g1+\{Y}p
 
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
 			p.AppendRight(BCHelper.StackDup);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 			p.AppendRight(BCHelper.Digit1);
 			p.AppendRight(BCHelper.Add);
 			p.AppendRight(BCHelper.Add);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectSet);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
 			p.AppendRight(BCHelper.StackDup);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 			p.AppendRight(BCHelper.Digit1);
 			p.AppendRight(BCHelper.Add);
 			p.AppendRight(BCHelper.StackSwap);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectSet);
 
 			if (reversed) p.ReverseX(false);
@@ -1283,7 +1283,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		private CodePiece GenerateCodePeek(bool reversed, bool popResult)
+		private CodePiece GenerateCodePeek(bool reversed, bool popResult) //TODO [MULTILINE]
 		{
 			var stack = Target.Target as VarDeclarationStack;
 
@@ -1291,12 +1291,12 @@ namespace BefunGen.AST
 
 			// {X}:{Y}g+{Y}g
 
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
 			p.AppendRight(BCHelper.StackDup);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 			p.AppendRight(BCHelper.Add);
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 
 			if (popResult) p.AppendRight(BCHelper.StackPop);
@@ -1306,7 +1306,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		private CodePiece GenerateCodePop(bool reversed, bool popResult)
+		private CodePiece GenerateCodePop(bool reversed, bool popResult) //TODO [MULTILINE]
 		{
 			var stack = Target.Target as VarDeclarationStack;
 			if (stack.IsConstant) throw new ConstantValueChangedException(Position, stack.Identifier);
@@ -1317,36 +1317,36 @@ namespace BefunGen.AST
 			{
 				// {X}:{Y}g1-\{Y}p
 
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
 				p.AppendRight(BCHelper.StackDup);
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
 				p.AppendRight(BCHelper.StackSwap);
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 				p.AppendRight(BCHelper.ReflectSet);
 			}
 			else
 			{
 				// {X}::{Y}g+{Y}g\:{Y}g1-\{Y}p
 
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
 				p.AppendRight(BCHelper.StackDup);
 				p.AppendRight(BCHelper.StackDup);
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.Add);
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.StackSwap);
 				p.AppendRight(BCHelper.StackDup);
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
 				p.AppendRight(BCHelper.StackSwap);
-				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+				p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 				p.AppendRight(BCHelper.ReflectSet);
 
 				if (reversed) p.ReverseX(false);
@@ -1363,8 +1363,8 @@ namespace BefunGen.AST
 
 			// {X}{Y}g
 
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 
 			if (popResult) p.AppendRight(BCHelper.StackPop);
@@ -1382,8 +1382,8 @@ namespace BefunGen.AST
 
 			// {X}{Y}g!
 
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 			p.AppendRight(BCHelper.Not);
 
@@ -1403,8 +1403,8 @@ namespace BefunGen.AST
 			// {L}{X}{Y}g`!
 
 			p.AppendRight(NumberCodeHelper.GenerateCode(stack.Size, false));
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionX, false));
-			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodePositionY, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.X, false));
+			p.AppendRight(NumberCodeHelper.GenerateCode(stack.CodeDeclarationPos.Y, false));
 			p.AppendRight(BCHelper.ReflectGet);
 			p.AppendRight(BCHelper.GreaterThan);
 			p.AppendRight(BCHelper.Not);
@@ -2453,7 +2453,7 @@ namespace BefunGen.AST
 			int len = (ValueTarget.GetResultType() as BTypeArray).ArraySize;
 
 			CodePiece pLen = NumberCodeHelper.GenerateCode(len, reversed);
-			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
+			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodeDeclarationPos, reversed); //TODO [Multiline]
 
 			if (reversed)
 			{
@@ -2485,7 +2485,7 @@ namespace BefunGen.AST
 			int len = (ValueTarget.GetResultType() as BTypeArray).ArraySize;
 
 			CodePiece pLen = NumberCodeHelper.GenerateCode(len, reversed);
-			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodePositionX, vp.Target.CodePositionY, reversed);
+			CodePiece pWrite = CodePieceStore.WriteArrayFromReversedStack(len, vp.Target.CodeDeclarationPos, reversed); //TODO [Multiline]
 
 			if (reversed)
 			{
