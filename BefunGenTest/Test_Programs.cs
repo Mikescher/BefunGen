@@ -644,5 +644,101 @@ namespace BefunGenTest
 			end
 			");
 		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace4()
+		{
+			BFTestHelper.debugProgram_Output("113010 ", @"
+			program p0
+				var 
+					int a, b, c ,d, e, f, g, h, i, j;
+					int[100] s1;
+					int k, l, m, n, o, p, q, r, s, t;
+					int[100] s2;
+
+					int ii;
+				begin
+					s1 = arrinit(s1, 0000);
+					s2 = arrinit(s2, 1000);
+
+					out sumfunc(s1, s2);
+				end
+
+				int[100] arrinit(int[100] base, int offset)
+				var
+					int ii;
+					int[100] ss;
+				begin
+					FOR(ii = 0; ii < 100; ii++) DO
+						ss[ii] = base[ii] + offset + ii;
+					END
+					return ss;
+				end
+
+				int sumfunc(int[100] sp1, int[100] sp2)
+				var
+					int a, b, c ,d, e, f, g, h, i, j;
+					int[100] s1;
+					int k, l, m, n, o, p, q, r, s, t;
+					int[100] s2;
+
+					int sum := 0;
+					int ii;
+				begin
+					a=101;b=102;c=103;d=104;e=105;f=106;g=107;h=108;i=109;j=110;
+					k=201;l=202;m=203;n=204;o=205;p=206;q=207;r=208;s=209;t=210;
+
+					s1 = sp1;
+					s2 = sp2;
+
+					FOR(ii = 0; ii < 100; ii++) DO
+						sum += s1[ii] + s2[ii];
+					END
+					sum += a+b+c+d+e+f+g+h+i+j;
+					sum += k+l+m+n+o+p+q+r+s+t;
+
+					return sum;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_BigArrayLiteral()
+		{
+			BFTestHelper.debugProgram_Output("576 ", @"
+			program p0
+				var 
+					int i, s;
+					int[128] a := 
+					{
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8,
+						1,2,3,4,5,6,7,8
+					};
+				begin
+					s=0; 
+					for (i=0;i<128;s += a[i++]) do end
+					out s;
+				end
+			end
+			");
+		}
 	}
 }

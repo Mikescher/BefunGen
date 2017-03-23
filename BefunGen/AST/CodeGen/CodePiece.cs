@@ -552,6 +552,22 @@ namespace BefunGen.AST.CodeGen
 
 		#region Append
 
+		public void Append(BefungeCommand c, bool reverse)
+		{
+			if (reverse)
+				AppendLeft(c);
+			else
+				AppendRight(c);
+		}
+
+		public void Append(CodePiece c, bool reverse)
+		{
+			if (reverse)
+				AppendLeft(c);
+			else
+				AppendRight(c);
+		}
+
 		public void AppendRight(BefungeCommand c)
 		{
 			AppendRight(0, c);
@@ -802,6 +818,18 @@ namespace BefunGen.AST.CodeGen
 		public bool IsEmpty()
 		{
 			return Size == 0;
+		}
+
+		private bool IsXDeltaIndependent()
+		{
+			for (int x = MinX; x < MaxX; x++)
+			{
+				for (int y = MinY; y < MaxY; y++)
+				{
+					if (!this[x, y].IsXDeltaIndependent()) return false;
+				}
+			}
+			return true;
 		}
 
 		#endregion

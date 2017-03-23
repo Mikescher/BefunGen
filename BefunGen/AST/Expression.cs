@@ -40,7 +40,7 @@ namespace BefunGen.AST
 
 		public abstract BType GetResultType();
 
-		public abstract CodePiece GenerateCode(bool reversed);
+		public abstract CodePiece GenerateCode(CodeGenEnvironment env, bool reversed);
 	}
 
 	#region Parents
@@ -133,10 +133,10 @@ namespace BefunGen.AST
 			return Left.GetResultType();
 		}
 
-		protected CodePiece GenerateCode_Operands(bool reversed, BefungeCommand cmd)
+		protected CodePiece GenerateCode_Operands(CodeGenEnvironment env, bool reversed, BefungeCommand cmd)
 		{
-			CodePiece cpL = Left.GenerateCode(reversed);
-			CodePiece cpR = Right.GenerateCode(reversed);
+			CodePiece cpL = Left.GenerateCode(env, reversed);
+			CodePiece cpR = Right.GenerateCode(env, reversed);
 
 			if (reversed)
 			{
@@ -323,11 +323,11 @@ namespace BefunGen.AST
 		}
 
 		// Puts X and Y on the stack: [X, Y]
-		public abstract CodePiece GenerateCodeSingle(bool reversed);
+		public abstract CodePiece GenerateCodeSingle(CodeGenEnvironment env, bool reversed);
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public abstract CodePiece GenerateCodeDoubleX(bool reversed);
+		public abstract CodePiece GenerateCodeDoubleX(CodeGenEnvironment env, bool reversed);
 		// Puts Y on the stack: [Y]
-		public abstract CodePiece GenerateCodeSingleY(bool reversed);
+		public abstract CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed);
 	}
 
 	public abstract class ExpressionRand : Expression
@@ -451,9 +451,9 @@ namespace BefunGen.AST
 			return Target.Type;
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			return Target.Type.GenerateCodeReadFromGridToStack(Position, Target.CodeDeclarationPos, reversed);
+			return Target.Type.GenerateCodeReadFromGridToStack(env, Position, Target.CodeDeclarationPos, reversed);
 		}
 
 		public override Expression EvaluateExpressions()
@@ -462,7 +462,7 @@ namespace BefunGen.AST
 		}
 
 		// Puts X and Y on the stack: [X, Y]
-		public override CodePiece GenerateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -483,7 +483,7 @@ namespace BefunGen.AST
 		}
 
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public override CodePiece GenerateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -506,7 +506,7 @@ namespace BefunGen.AST
 		}
 
 		/// Puts Y on the stack: [Y]
-		public override CodePiece GenerateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed)
 		{
 			return NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed);
 		}
@@ -590,9 +590,9 @@ namespace BefunGen.AST
 			return new BTypeChar(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = GenerateCodeSingle(reversed);
+			CodePiece p = GenerateCodeSingle(env, reversed);
 
 			if (reversed)
 			{
@@ -609,34 +609,34 @@ namespace BefunGen.AST
 		}
 
 		// Puts X and Y on the stack: [X, Y]
-		public override CodePiece GenerateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(CodeGenEnvironment env, bool reversed)
 		{
 			if (reversed)
 			{
-				return CodePiece.CombineHorizontal(GenerateCodeSingleY(reversed), GenerateCodeSingleX(reversed));
+				return CodePiece.CombineHorizontal(GenerateCodeSingleY(env, reversed), GenerateCodeSingleX(env, reversed));
 			}
 			else
 			{
-				return CodePiece.CombineHorizontal(GenerateCodeSingleX(reversed), GenerateCodeSingleY(reversed));
+				return CodePiece.CombineHorizontal(GenerateCodeSingleX(env, reversed), GenerateCodeSingleY(env, reversed));
 			}
 		}
 
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public override CodePiece GenerateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(GenerateCodeSingleX(reversed));
+				p.AppendLeft(GenerateCodeSingleX(env, reversed));
 				p.AppendLeft(BCHelper.StackDup);
-				p.AppendLeft(GenerateCodeSingleY(reversed));
+				p.AppendLeft(GenerateCodeSingleY(env, reversed));
 			}
 			else
 			{
-				p.AppendRight(GenerateCodeSingleX(reversed));
+				p.AppendRight(GenerateCodeSingleX(env, reversed));
 				p.AppendRight(BCHelper.StackDup);
-				p.AppendRight(GenerateCodeSingleY(reversed));
+				p.AppendRight(GenerateCodeSingleY(env, reversed));
 			}
 
 			p.NormalizeX();
@@ -645,7 +645,7 @@ namespace BefunGen.AST
 		}
 
 		/// Puts X on the stack: [X]
-		public CodePiece GenerateCodeSingleX(bool reversed)
+		public CodePiece GenerateCodeSingleX(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -655,7 +655,7 @@ namespace BefunGen.AST
 				//  +{(MODULO)}{TargetX}{OffsetX}
 
 				p.AppendLeft(NumberCodeHelper.GenerateCode(owner.DisplayOffsetX));
-				p.AppendLeft(TargetX.GenerateCode(reversed));
+				p.AppendLeft(TargetX.GenerateCode(env, reversed));
 				if (CGO.DisplayModuloAccess)
 					p.AppendLeft(CodePieceStore.ModuloRangeLimiter(owner.DisplayWidth, reversed));
 				p.AppendLeft(BCHelper.Add);
@@ -668,7 +668,7 @@ namespace BefunGen.AST
 				//  {OffsetX}{TargetX}{(MODULO)}+
 
 				p.AppendRight(NumberCodeHelper.GenerateCode(owner.DisplayOffsetX));
-				p.AppendRight(TargetX.GenerateCode(reversed));
+				p.AppendRight(TargetX.GenerateCode(env, reversed));
 				if (CGO.DisplayModuloAccess)
 					p.AppendRight(CodePieceStore.ModuloRangeLimiter(owner.DisplayWidth, reversed));
 				p.AppendRight(BCHelper.Add);
@@ -682,7 +682,7 @@ namespace BefunGen.AST
 		}
 
 		/// Puts Y on the stack: [Y]
-		public override CodePiece GenerateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -692,7 +692,7 @@ namespace BefunGen.AST
 				//  +{(MODULO)}{TargetY}{OffsetY}
 
 				p.AppendLeft(NumberCodeHelper.GenerateCode(owner.DisplayOffsetY));
-				p.AppendLeft(TargetY.GenerateCode(reversed));
+				p.AppendLeft(TargetY.GenerateCode(env, reversed));
 				if (CGO.DisplayModuloAccess)
 					p.AppendLeft(CodePieceStore.ModuloRangeLimiter(owner.DisplayHeight, reversed));
 				p.AppendLeft(BCHelper.Add);
@@ -705,7 +705,7 @@ namespace BefunGen.AST
 				//  {OffsetY}{TargetY}{(MODULO)}+
 
 				p.AppendRight(NumberCodeHelper.GenerateCode(owner.DisplayOffsetY));
-				p.AppendRight(TargetY.GenerateCode(reversed));
+				p.AppendRight(TargetY.GenerateCode(env, reversed));
 				if (CGO.DisplayModuloAccess)
 					p.AppendRight(CodePieceStore.ModuloRangeLimiter(owner.DisplayHeight, reversed));
 				p.AppendRight(BCHelper.Add);
@@ -789,98 +789,182 @@ namespace BefunGen.AST
 			return Target.InternalType;
 		}
 
-		public override CodePiece GenerateCode(bool reversed) //TODO [Multiline]
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			if (reversed)
+			if (Target.CodeDeclarationPos.IsSingleLine())
 			{
-				p.AppendLeft(Index.GenerateCode(reversed));
+				#region Single Line
 
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed));
-				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed));
+				//{IDX}{X}+{Y}g
 
-				p.AppendLeft(BCHelper.ReflectGet);
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed), reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+				p.Append(BCHelper.ReflectGet, reversed);
+
+				p.NormalizeX();
+
+				#endregion
 			}
 			else
 			{
-				p.AppendRight(Index.GenerateCode(reversed));
+				#region Multiline
 
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed));
-				p.AppendRight(BCHelper.Add);
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed));
+				//{IDX}:{X}\{W}%+\{Y}\{W}/+g
 
-				p.AppendRight(BCHelper.ReflectGet);
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(BCHelper.StackDup, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed), reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Modulo, reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Div, reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(BCHelper.ReflectGet, reversed);
+
+				p.NormalizeX();
+
+				#endregion
 			}
-
-			p.NormalizeX();
-
+			
 			return p;
 		}
 
 		// This puts X and Y of the var on the stack
-		public override CodePiece GenerateCodeSingle(bool reversed) //TODO Multline
+		public override CodePiece GenerateCodeSingle(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			if (reversed)
+			if (Target.CodeDeclarationPos.IsSingleLine())
 			{
-				p.AppendLeft(Index.GenerateCode(reversed));
+				#region Single Line
 
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed));
-				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed));
+				//{IDX}{X}+{Y}
+
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed), reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+
+				p.NormalizeX();
+
+				#endregion
 			}
 			else
 			{
-				p.AppendRight(Index.GenerateCode(reversed));
+				#region Multiline
 
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed));
-				p.AppendRight(BCHelper.Add);
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed));
+				//{IDX}:{X}\{W}%+\{Y}\{W}/+
+
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(BCHelper.StackDup, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed), reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Modulo, reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Div, reversed);
+				p.Append(BCHelper.Add, reversed);
+
+				p.NormalizeX();
+
+				#endregion
 			}
-
-			p.NormalizeX();
 
 			return p;
 		}
 
 		// Puts X and Y 1 1/2 -times on the stack: [X, X, Y]
-		public override CodePiece GenerateCodeDoubleX(bool reversed) //TODO Multiline
+		public override CodePiece GenerateCodeDoubleX(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
-			if (reversed)
+			if (Target.CodeDeclarationPos.IsSingleLine())
 			{
-				p.AppendLeft(Index.GenerateCode(reversed));
+				#region Single Line
 
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed));
-				p.AppendLeft(BCHelper.Add);
-				p.AppendLeft(BCHelper.StackDup);
+				//{IDX}{X}+:{Y}
 
-				p.AppendLeft(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed));
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed), reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(BCHelper.StackDup, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+
+				p.NormalizeX();
+
+				#endregion
 			}
 			else
 			{
-				p.AppendRight(Index.GenerateCode(reversed));
+				#region Multiline
 
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed));
-				p.AppendRight(BCHelper.Add);
-				p.AppendRight(BCHelper.StackDup);
+				//{IDX}:{X}\{W}%+\{Y}\{W}/+{TX}{TY}p:{TX}{TY}g
 
-				p.AppendRight(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed));
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(BCHelper.StackDup, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.X, reversed), reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Modulo, reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+				p.Append(BCHelper.StackSwap, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Div, reversed);
+				p.Append(BCHelper.Add, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(env.TMP_FIELD_GENERAL.X), reversed);
+				p.Append(NumberCodeHelper.GenerateCode(env.TMP_FIELD_GENERAL.Y), reversed);
+				p.Append(BCHelper.ReflectSet, reversed);
+				p.Append(BCHelper.StackDup, reversed);
+				p.Append(NumberCodeHelper.GenerateCode(env.TMP_FIELD_GENERAL.X), reversed);
+				p.Append(NumberCodeHelper.GenerateCode(env.TMP_FIELD_GENERAL.Y), reversed);
+				p.Append(BCHelper.ReflectGet, reversed);
+
+				p.NormalizeX();
+
+				#endregion
 			}
-
-			p.NormalizeX();
 
 			return p;
 		}
 
 		/// Puts Y on the stack: [Y]
-		public override CodePiece GenerateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed)
 		{
-			return NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed);
+			if (Target.CodeDeclarationPos.IsSingleLine())
+			{
+				// Single Line
+
+				return NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed);
+			}
+			else
+			{
+				// Multiline
+
+				//{Y}{IDX}{W}/+
+
+				CodePiece p = new CodePiece();
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed), reversed);
+				p.Append(Index.GenerateCode(env, reversed), reversed);
+				p.Append(NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Width, reversed), reversed);
+				p.Append(BCHelper.Div, reversed);
+				p.Append(BCHelper.Add, reversed);
+				return p;
+			}
 		}
 	}
 
@@ -921,22 +1005,22 @@ namespace BefunGen.AST
 			return new BTypeVoid(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new InvalidAstStateException(Position);
 		}
 
-		public override CodePiece GenerateCodeSingle(bool reversed)
+		public override CodePiece GenerateCodeSingle(CodeGenEnvironment env, bool reversed)
 		{
 			throw new InvalidAstStateException(Position);
 		}
 
-		public override CodePiece GenerateCodeDoubleX(bool reversed)
+		public override CodePiece GenerateCodeDoubleX(CodeGenEnvironment env, bool reversed)
 		{
 			throw new InvalidAstStateException(Position);
 		}
 
-		public override CodePiece GenerateCodeSingleY(bool reversed)
+		public override CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed)
 		{
 			throw new InvalidAstStateException(Position);
 		}
@@ -992,9 +1076,9 @@ namespace BefunGen.AST
 			return string.Format("({0} * {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Mult);
+			CodePiece p = GenerateCode_Operands(env, reversed, BCHelper.Mult);
 
 			return p;
 		}
@@ -1043,9 +1127,9 @@ namespace BefunGen.AST
 			return string.Format("({0} / {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Div);
+			CodePiece p = GenerateCode_Operands(env, reversed, BCHelper.Div);
 
 			return p;
 		}
@@ -1094,9 +1178,9 @@ namespace BefunGen.AST
 			return string.Format("({0} % {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Modulo);
+			CodePiece p = GenerateCode_Operands(env, reversed, BCHelper.Modulo);
 
 			return p;
 		}
@@ -1145,9 +1229,9 @@ namespace BefunGen.AST
 			return string.Format("({0} + {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Add);
+			CodePiece p = GenerateCode_Operands(env, reversed, BCHelper.Add);
 
 			return p;
 		}
@@ -1192,9 +1276,9 @@ namespace BefunGen.AST
 			return string.Format("({0} - {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = GenerateCode_Operands(reversed, BCHelper.Sub);
+			CodePiece p = GenerateCode_Operands(env, reversed, BCHelper.Sub);
 
 			return p;
 		}
@@ -1251,7 +1335,7 @@ namespace BefunGen.AST
 			return string.Format("({0} AND {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			if (reversed)
 			{
@@ -1285,8 +1369,8 @@ namespace BefunGen.AST
 				p[3, 1] = BCHelper.PCLeft;
 				p[4, 1] = BCHelper.Unused;
 
-				p.AppendRight(Right.GenerateCode(reversed));
-				p.AppendRight(Left.GenerateCode(reversed));
+				p.AppendRight(Right.GenerateCode(env, reversed));
+				p.AppendRight(Left.GenerateCode(env, reversed));
 
 				p.NormalizeX();
 
@@ -1324,8 +1408,8 @@ namespace BefunGen.AST
 				p[3, 1] = BCHelper.Digit0;
 				p[4, 1] = BCHelper.PCUp;
 
-				p.AppendLeft(Right.GenerateCode(reversed));
-				p.AppendLeft(Left.GenerateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(env, reversed));
+				p.AppendLeft(Left.GenerateCode(env, reversed));
 
 				p.NormalizeX();
 
@@ -1381,7 +1465,7 @@ namespace BefunGen.AST
 			return string.Format("({0} OR {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			if (reversed)
 			{
@@ -1415,8 +1499,8 @@ namespace BefunGen.AST
 				p[3, 2] = BCHelper.Digit0;
 				p[4, 2] = BCHelper.PCLeft;
 
-				p.AppendRight(Right.GenerateCode(reversed));
-				p.AppendRight(Left.GenerateCode(reversed));
+				p.AppendRight(Right.GenerateCode(env, reversed));
+				p.AppendRight(Left.GenerateCode(env, reversed));
 				p.NormalizeX();
 
 				return p;
@@ -1454,8 +1538,8 @@ namespace BefunGen.AST
 				p[3, 2] = BCHelper.Walkway;
 				p[4, 2] = BCHelper.PCUp;
 
-				p.AppendLeft(Right.GenerateCode(reversed));
-				p.AppendLeft(Left.GenerateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(env, reversed));
+				p.AppendLeft(Left.GenerateCode(env, reversed));
 				p.NormalizeX();
 
 				return p;
@@ -1514,7 +1598,7 @@ namespace BefunGen.AST
 			return string.Format("({0} XOR {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			if (reversed)
 			{
@@ -1555,8 +1639,8 @@ namespace BefunGen.AST
 				p[3, 2] = BCHelper.PCLeft;
 				p[4, 2] = BCHelper.Unused;
 
-				p.AppendRight(Right.GenerateCode(reversed));
-				p.AppendRight(Left.GenerateCode(reversed));
+				p.AppendRight(Right.GenerateCode(env, reversed));
+				p.AppendRight(Left.GenerateCode(env, reversed));
 				p.NormalizeX();
 
 				return p;
@@ -1600,8 +1684,8 @@ namespace BefunGen.AST
 				p[3, 2] = BCHelper.PCUp;
 				p[4, 2] = BCHelper.Unused;
 
-				p.AppendLeft(Right.GenerateCode(reversed));
-				p.AppendLeft(Left.GenerateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(env, reversed));
+				p.AppendLeft(Left.GenerateCode(env, reversed));
 				p.NormalizeX();
 
 				return p;
@@ -1655,7 +1739,7 @@ namespace BefunGen.AST
 			return string.Format("({0} == {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			//  >0v
 			// -| >
@@ -1684,13 +1768,13 @@ namespace BefunGen.AST
 
 			if (reversed)
 			{
-				p.AppendRight(Right.GenerateCode(reversed));
-				p.AppendRight(Left.GenerateCode(reversed));
+				p.AppendRight(Right.GenerateCode(env, reversed));
+				p.AppendRight(Left.GenerateCode(env, reversed));
 			}
 			else
 			{
-				p.AppendLeft(Right.GenerateCode(reversed));
-				p.AppendLeft(Left.GenerateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(env, reversed));
+				p.AppendLeft(Left.GenerateCode(env, reversed));
 			}
 
 			p.NormalizeX();
@@ -1736,7 +1820,7 @@ namespace BefunGen.AST
 			return string.Format("({0} != {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			//  >1v
 			// -| >
@@ -1765,13 +1849,13 @@ namespace BefunGen.AST
 
 			if (reversed)
 			{
-				p.AppendRight(Right.GenerateCode(reversed));
-				p.AppendRight(Left.GenerateCode(reversed));
+				p.AppendRight(Right.GenerateCode(env, reversed));
+				p.AppendRight(Left.GenerateCode(env, reversed));
 			}
 			else
 			{
-				p.AppendLeft(Right.GenerateCode(reversed));
-				p.AppendLeft(Left.GenerateCode(reversed));
+				p.AppendLeft(Right.GenerateCode(env, reversed));
+				p.AppendLeft(Left.GenerateCode(env, reversed));
 			}
 
 			p.NormalizeX();
@@ -1817,23 +1901,23 @@ namespace BefunGen.AST
 			return string.Format("({0} > {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p;
 
 			if (reversed)
 			{
 				//First Left than Right -->  RIGHT < LEFT
-				p = Left.GenerateCode(reversed);
-				p.AppendLeft(Right.GenerateCode(reversed));
+				p = Left.GenerateCode(env, reversed);
+				p.AppendLeft(Right.GenerateCode(env, reversed));
 
 				p.AppendLeft(BCHelper.GreaterThan);
 			}
 			else
 			{
 				//First Left than Right -->  RIGHT < LEFT
-				p = Left.GenerateCode(reversed);
-				p.AppendRight(Right.GenerateCode(reversed));
+				p = Left.GenerateCode(env, reversed);
+				p.AppendRight(Right.GenerateCode(env, reversed));
 
 				p.AppendRight(BCHelper.GreaterThan);
 			}
@@ -1881,23 +1965,23 @@ namespace BefunGen.AST
 			return string.Format("({0} < {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p;
 
 			if (reversed)
 			{
 				//First Right than Left -->  LEFT < RIGHT
-				p = Right.GenerateCode(reversed);
-				p.AppendLeft(Left.GenerateCode(reversed));
+				p = Right.GenerateCode(env, reversed);
+				p.AppendLeft(Left.GenerateCode(env, reversed));
 
 				p.AppendLeft(BCHelper.GreaterThan);
 			}
 			else
 			{
 				//First Right than Left -->  LEFT < RIGHT
-				p = Right.GenerateCode(reversed);
-				p.AppendRight(Left.GenerateCode(reversed));
+				p = Right.GenerateCode(env, reversed);
+				p.AppendRight(Left.GenerateCode(env, reversed));
 
 				p.AppendRight(BCHelper.GreaterThan);
 			}
@@ -1945,7 +2029,7 @@ namespace BefunGen.AST
 			return string.Format("({0} >= {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			if (reversed)
 			{
@@ -1953,8 +2037,8 @@ namespace BefunGen.AST
 				// ^`\0<
 
 				//First Right than Left -->  RIGHT <= LEFT
-				CodePiece ep = Right.GenerateCode(reversed);
-				ep.AppendLeft(Left.GenerateCode(reversed));
+				CodePiece ep = Right.GenerateCode(env, reversed);
+				ep.AppendLeft(Left.GenerateCode(env, reversed));
 
 				CodePiece p = new CodePiece();
 				p[0, 0] = BCHelper.PCLeft;
@@ -1989,8 +2073,8 @@ namespace BefunGen.AST
 				//    >0\`^
 
 				//First Right than Left -->  RIGHT <= LEFT
-				CodePiece ep = Right.GenerateCode(reversed);
-				ep.AppendRight(Left.GenerateCode(reversed));
+				CodePiece ep = Right.GenerateCode(env, reversed);
+				ep.AppendRight(Left.GenerateCode(env, reversed));
 
 				CodePiece p = new CodePiece();
 				p[0, 0] = BCHelper.Sub;
@@ -2057,7 +2141,7 @@ namespace BefunGen.AST
 			return string.Format("({0} <= {1})", Left.GetDebugString(), Right.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			if (reversed)
 			{
@@ -2065,8 +2149,8 @@ namespace BefunGen.AST
 				// ^`\0<
 
 				//First Left than Right -->  LEFT <= RIGHT
-				CodePiece ep = Left.GenerateCode(reversed);
-				ep.AppendLeft(Right.GenerateCode(reversed));
+				CodePiece ep = Left.GenerateCode(env, reversed);
+				ep.AppendLeft(Right.GenerateCode(env, reversed));
 
 				CodePiece p = new CodePiece();
 				p[0, 0] = BCHelper.PCLeft;
@@ -2101,8 +2185,8 @@ namespace BefunGen.AST
 				//    >0\`^
 
 				//First Left than Right -->  LEFT <= RIGHT
-				CodePiece ep = Left.GenerateCode(reversed);
-				ep.AppendRight(Right.GenerateCode(reversed));
+				CodePiece ep = Left.GenerateCode(env, reversed);
+				ep.AppendRight(Right.GenerateCode(env, reversed));
 
 				CodePiece p = new CodePiece();
 				p[0, 0] = BCHelper.Sub;
@@ -2178,9 +2262,9 @@ namespace BefunGen.AST
 			return new BTypeBool(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = Expr.GenerateCode(reversed);
+			CodePiece p = Expr.GenerateCode(env, reversed);
 
 			if (reversed)
 			{
@@ -2239,9 +2323,9 @@ namespace BefunGen.AST
 			return new BTypeInt(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			CodePiece p = Expr.GenerateCode(reversed);
+			CodePiece p = Expr.GenerateCode(env, reversed);
 
 			if (reversed)
 			{
@@ -2292,11 +2376,11 @@ namespace BefunGen.AST
 			return Type;
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			if (CGO.ExtendedBooleanCast && Type.GetType() == typeof(BTypeBool))
 			{
-				CodePiece p = Expr.GenerateCode(reversed);
+				CodePiece p = Expr.GenerateCode(env, reversed);
 
 				if (reversed)
 				{
@@ -2324,7 +2408,7 @@ namespace BefunGen.AST
 			}
 			else
 			{
-				return Expr.GenerateCode(reversed);
+				return Expr.GenerateCode(env, reversed);
 			}
 
 		}
@@ -2347,33 +2431,33 @@ namespace BefunGen.AST
 			return string.Format("{0}++", Target.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.GenerateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(env, reversed));
 
 				p.AppendLeft(BCHelper.StackDup);
 
 				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Add);
 
-				p.AppendLeft(Target.GenerateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.GenerateCode(reversed));
+				p.AppendRight(Target.GenerateCode(env, reversed));
 
 				p.AppendRight(BCHelper.StackDup);
 
 				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Add);
 
-				p.AppendRight(Target.GenerateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendRight(BCHelper.ReflectSet);
 			}
@@ -2397,33 +2481,33 @@ namespace BefunGen.AST
 			return string.Format("++{0}", Target.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.GenerateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(env, reversed));
 
 				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Add);
 
 				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(Target.GenerateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.GenerateCode(reversed));
+				p.AppendRight(Target.GenerateCode(env, reversed));
 
 				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Add);
 
 				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(Target.GenerateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendRight(BCHelper.ReflectSet);
 			}
@@ -2447,33 +2531,33 @@ namespace BefunGen.AST
 			return string.Format("{0}--", Target.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.GenerateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(env, reversed));
 
 				p.AppendLeft(BCHelper.StackDup);
 
 				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Sub);
 
-				p.AppendLeft(Target.GenerateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.GenerateCode(reversed));
+				p.AppendRight(Target.GenerateCode(env, reversed));
 
 				p.AppendRight(BCHelper.StackDup);
 
 				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
 
-				p.AppendRight(Target.GenerateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendRight(BCHelper.ReflectSet);
 			}
@@ -2497,33 +2581,33 @@ namespace BefunGen.AST
 			return string.Format("--{0}", Target.GetDebugString());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
 			if (reversed)
 			{
-				p.AppendLeft(Target.GenerateCode(reversed));
+				p.AppendLeft(Target.GenerateCode(env, reversed));
 
 				p.AppendLeft(BCHelper.Digit1);
 				p.AppendLeft(BCHelper.Sub);
 
 				p.AppendLeft(BCHelper.StackDup);
 
-				p.AppendLeft(Target.GenerateCodeSingle(reversed));
+				p.AppendLeft(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendLeft(BCHelper.ReflectSet);
 			}
 			else
 			{
-				p.AppendRight(Target.GenerateCode(reversed));
+				p.AppendRight(Target.GenerateCode(env, reversed));
 
 				p.AppendRight(BCHelper.Digit1);
 				p.AppendRight(BCHelper.Sub);
 
 				p.AppendRight(BCHelper.StackDup);
 
-				p.AppendRight(Target.GenerateCodeSingle(reversed));
+				p.AppendRight(Target.GenerateCodeSingle(env, reversed));
 
 				p.AppendRight(BCHelper.ReflectSet);
 			}
@@ -2588,9 +2672,9 @@ namespace BefunGen.AST
 			return Value.GetBType();
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			return Value.GenerateCode(reversed);
+			return Value.GenerateCode(env, reversed);
 		}
 	}
 
@@ -2642,7 +2726,7 @@ namespace BefunGen.AST
 			return new BTypeBool(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			//  >>1v
 			// #^?0>>
@@ -2750,7 +2834,7 @@ namespace BefunGen.AST
 			return new BTypeInt(Position);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -2759,7 +2843,7 @@ namespace BefunGen.AST
 				#region Reversed
 
 				p.AppendRight(CodePieceStore.Base4DigitJoiner(reversed));
-				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.GenerateCode(reversed), reversed));
+				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.GenerateCode(env, reversed), reversed));
 
 				#endregion
 			}
@@ -2767,7 +2851,7 @@ namespace BefunGen.AST
 			{
 				#region Normal
 
-				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.GenerateCode(reversed), reversed));
+				p.AppendRight(CodePieceStore.RandomDigitGenerator(Exponent.GenerateCode(env, reversed), reversed));
 				p.AppendRight(CodePieceStore.Base4DigitJoiner(reversed));
 
 				#endregion
@@ -2838,9 +2922,9 @@ namespace BefunGen.AST
 			return MethodCall.Target.ResultType;
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			return MethodCall.GenerateCode(reversed, false);
+			return MethodCall.GenerateCode(env, reversed, false);
 		}
 	}
 
@@ -2864,9 +2948,9 @@ namespace BefunGen.AST
 			return this;
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
-			return MethodCall.GenerateCode(reversed, false);
+			return MethodCall.GenerateCode(env, reversed, false);
 		}
 
 		public override string GetDebugString()

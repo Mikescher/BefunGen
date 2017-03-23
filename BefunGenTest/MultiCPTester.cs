@@ -30,7 +30,7 @@ namespace BefunGenTest
 			tester.run(MAX_STEP);
 
 			if (tester.StepCount >= (MAX_STEP - 8))
-				Assert.Fail();
+				Assert.Fail("Too many steps");
 
 			Assert.AreEqual(0, tester.Stack.Count);
 

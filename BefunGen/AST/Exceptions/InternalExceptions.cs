@@ -49,6 +49,9 @@ namespace BefunGen.AST.Exceptions
 	{
 		public CodePieceReverseException(CodePiece p)
 			: base("Cannot reverse Codepiece " + p + ".") { }
+
+		public CodePieceReverseException(BefungeCommand p)
+			: base("Cannot reverse Command " + p + ".") { }
 	}
 
 	public class CommandPathFindingFailureException : BefunGenInternalException

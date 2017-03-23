@@ -158,28 +158,28 @@ namespace BefunGen.AST
 
 		#region GenerateCode
 
-		public CodePiece GenerateCode(int methOffsetX, int methOffsetY)
+		public CodePiece GenerateCode(CodeGenEnvironment env, int methOffsetX, int methOffsetY)
 		{
 			CodePiece p = new CodePiece();
 
 			// Generate Space for Variables
-			p.AppendBottom(CodePieceStore.CreateVariableSpace(Variables, methOffsetX, methOffsetY, CGO, CGO.DefaultVarDeclarationWidth)); //TODO auto calc max width - not simply use constant
+			p.AppendBottom(CodePieceStore.CreateVariableSpace(Variables, methOffsetX, methOffsetY, CGO, env.MaxVarDeclarationWidth)); //TODO auto calc max width (by option) - not simply use constant - use two generator runs
 
 			// Generate Initialization of Variables
-			CodePiece pVi = GenerateCode_VariableIntialization();
+			CodePiece pVi = GenerateCode_VariableIntialization(env);
 			pVi.SetTag(0, 0, new MethodEntryFullInitializationTag(this));  //v<-- Entry Point
 			p.AppendBottom(pVi);
 
 			// Generate Initialization of Parameters
-			p.AppendBottom(GenerateCode_ParameterIntialization());
+			p.AppendBottom(GenerateCode_ParameterIntialization(env));
 
 			// Generate Statements
-			p.AppendBottom(GenerateCode_Body());
+			p.AppendBottom(GenerateCode_Body(env));
 
 			return p;
 		}
 
-		private CodePiece GenerateCode_VariableIntialization()
+		private CodePiece GenerateCode_VariableIntialization(CodeGenEnvironment env)
 		{
 			CodePiece p = new CodePiece();
 
@@ -192,7 +192,7 @@ namespace BefunGen.AST
 				if (Parameter.Contains(var))
 					continue;
 
-				varDecls.Add(new TwoDirectionCodePiece(var.GenerateCode(false), var.GenerateCode(true)));
+				varDecls.Add(new TwoDirectionCodePiece(var.GenerateCode(env, false), var.GenerateCode(env, true)));
 			}
 
 			if (varDecls.Count % 2 != 0)
@@ -242,7 +242,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		private CodePiece GenerateCode_ParameterIntialization()
+		private CodePiece GenerateCode_ParameterIntialization(CodeGenEnvironment env)
 		{
 			CodePiece p = new CodePiece();
 
@@ -252,7 +252,7 @@ namespace BefunGen.AST
 			{
 				VarDeclaration var = Parameter[i];
 
-				paramDecls.Add(new TwoDirectionCodePiece(var.GenerateCode_SetToStackVal(false), var.GenerateCode_SetToStackVal(true)));
+				paramDecls.Add(new TwoDirectionCodePiece(var.GenerateCode_SetToStackVal(env, false), var.GenerateCode_SetToStackVal(env, true)));
 			}
 
 			if (paramDecls.Count % 2 != 0)
@@ -297,9 +297,9 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		private CodePiece GenerateCode_Body()
+		private CodePiece GenerateCode_Body(CodeGenEnvironment env)
 		{
-			CodePiece p = Body.GenerateStrippedCode();
+			CodePiece p = Body.GenerateStrippedCode(env);
 
 			p.NormalizeX();
 

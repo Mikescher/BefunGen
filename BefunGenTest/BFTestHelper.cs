@@ -105,6 +105,16 @@ namespace BefunGenTest
 			Program e = parseStatement(stmt);
 			CodePiece pc = e.GenerateCode();
 
+			TestCP_Terminate(pc);
+		}
+
+		public static void debugStatement_NonTerminate(string stmt)
+		{
+			stmt = stmt.Replace(@"''", "\"");
+
+			Program e = parseStatement(stmt);
+			CodePiece pc = e.GenerateCode();
+
 			TestCP(pc);
 		}
 
@@ -119,6 +129,19 @@ namespace BefunGenTest
 		}
 
 		public static void debugMethod(string call, string meth)
+		{
+			meth = Regex.Replace(meth, @"[\r\n]{1,2}[ \t]+[\r\n]{1,2}", "\r\n");
+			meth = Regex.Replace(meth, @"^[ \t]*[\r\n]{1,2}", "");
+			meth = Regex.Replace(meth, @"[\r\n]{1,2}[ \t]*$", "");
+			meth = meth.Replace(@"''", "\"");
+
+			Program e = parseMethod(call, meth);
+			CodePiece pc = e.GenerateCode();
+
+			TestCP_Terminate(pc);
+		}
+
+		public static void debugMethod_NonTerminate(string call, string meth)
 		{
 			meth = Regex.Replace(meth, @"[\r\n]{1,2}[ \t]+[\r\n]{1,2}", "\r\n");
 			meth = Regex.Replace(meth, @"^[ \t]*[\r\n]{1,2}", "");

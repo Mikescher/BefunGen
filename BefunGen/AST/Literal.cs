@@ -43,7 +43,7 @@ namespace BefunGen.AST
 
 		public abstract BType GetBType();
 
-		public abstract CodePiece GenerateCode(bool reversed);
+		public abstract CodePiece GenerateCode(CodeGenEnvironment env, bool reversed);
 
 	}
 
@@ -81,7 +81,7 @@ namespace BefunGen.AST
 				AppendDefaultValue();
 		}
 
-		public abstract CodePiece GenerateCode(int pos, bool reversed);
+		public abstract CodePiece GenerateCode(CodeGenEnvironment env, int pos, bool reversed);
 
 		public abstract bool IsUniform();
 	}
@@ -123,7 +123,7 @@ namespace BefunGen.AST
 			return new BTypeInt(new SourceCodePosition());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return NumberCodeHelper.GenerateCode(Value, reversed);
 		}
@@ -159,7 +159,7 @@ namespace BefunGen.AST
 			return new BTypeChar(new SourceCodePosition());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return NumberCodeFactoryStringmodeChar.GenerateCode(Value, reversed) ?? NumberCodeHelper.GenerateCode(Value, reversed);
 		}
@@ -195,7 +195,7 @@ namespace BefunGen.AST
 			return new BTypeBool(new SourceCodePosition());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return NumberCodeFactoryBoolean.GenerateCode(Value);
 		}
@@ -231,7 +231,7 @@ namespace BefunGen.AST
 			return new BTypeDigit(new SourceCodePosition());
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return NumberCodeFactoryDigit.GenerateCode(Value);
 		}
@@ -286,7 +286,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultNumeralValue);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -303,7 +303,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public override CodePiece GenerateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, int pos, bool reversed)
 		{
 			return NumberCodeHelper.GenerateCode(Value[pos], reversed);
 		}
@@ -350,7 +350,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultCharacterValue);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 
@@ -376,7 +376,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public override CodePiece GenerateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, int pos, bool reversed)
 		{
 			return NumberCodeFactoryStringmodeChar.GenerateCode(Value[pos], reversed) ?? NumberCodeHelper.GenerateCode(pos, reversed);
 		}
@@ -417,7 +417,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultBooleanValue);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 			int i = 0;
@@ -442,7 +442,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public override CodePiece GenerateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, int pos, bool reversed)
 		{
 			return NumberCodeFactoryBoolean.GenerateCode(Value[pos]);
 		}
@@ -483,7 +483,7 @@ namespace BefunGen.AST
 			Value.Add(CGO.DefaultNumeralValue);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			CodePiece p = new CodePiece();
 			int i = 0;
@@ -508,7 +508,7 @@ namespace BefunGen.AST
 			return p;
 		}
 
-		public override CodePiece GenerateCode(int pos, bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, int pos, bool reversed)
 		{
 			return NumberCodeFactoryDigit.GenerateCode(Value[pos]);
 		}
@@ -543,7 +543,7 @@ namespace BefunGen.AST
 			return new BTypeIntStack(new SourceCodePosition(), StackSize);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
 		}
@@ -574,7 +574,7 @@ namespace BefunGen.AST
 			return new BTypeCharStack(new SourceCodePosition(), StackSize);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
 		}
@@ -605,7 +605,7 @@ namespace BefunGen.AST
 			return new BTypeBoolStack(new SourceCodePosition(), StackSize);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
 		}
@@ -636,7 +636,7 @@ namespace BefunGen.AST
 			return new BTypeDigitStack(new SourceCodePosition(), StackSize);
 		}
 
-		public override CodePiece GenerateCode(bool reversed)
+		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
 		}

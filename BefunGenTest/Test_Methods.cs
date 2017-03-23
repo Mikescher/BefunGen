@@ -31,7 +31,7 @@ namespace BefunGenTest
 		{
 			BFTestHelper.debugMethod("doIt()",
 			@"
-			int doIt()
+			void doIt()
 			var
 				char cr;
 				char lf;
@@ -65,7 +65,6 @@ namespace BefunGenTest
 				out '' ... '';
 				out '' World'';
 				out (char)(48+(int)RAND);
-				QUIT;
 			end
 			");
 		}
@@ -73,7 +72,7 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_OutExpression()
 		{
-			BFTestHelper.debugMethod("doIt()",
+			BFTestHelper.debugMethod_NonTerminate("doIt()",
 			@"
 			int doIt()
 			begin
@@ -81,7 +80,7 @@ namespace BefunGenTest
 				out (char)(48+(int)RAND);
 				out (char)(48+(int)RAND);
 				out (char)(48+(int)RAND);
-				QUIT;
+				quit;
 			end
 			");
 		}
@@ -89,7 +88,7 @@ namespace BefunGenTest
 		[TestMethod]
 		public void codeGenTest_Method_NestedStatementLists()
 		{
-			BFTestHelper.debugStatement(@"
+			BFTestHelper.debugStatement_NonTerminate(@"
 			while (true) do
 				out (char)(48+(int)RAND);
 				begin
@@ -142,8 +141,6 @@ namespace BefunGenTest
 					out lb[1];
 					i++;
 				end
-				
-				QUIT;
 			end
 			");
 		}
@@ -169,8 +166,6 @@ namespace BefunGenTest
 					out lb[1];
 					i++;
 				end
-				
-				QUIT;
 			end
 			");
 		}
@@ -211,8 +206,6 @@ namespace BefunGenTest
 				OUT lb[1];
 
 				OUT ''C'';
-
-				QUIT;
 			END
 			");
 		}
@@ -236,8 +229,6 @@ namespace BefunGenTest
 					out lb[1];
 					i++;
 				end
-				
-				QUIT;
 			END
 			");
 		}
@@ -276,8 +267,6 @@ namespace BefunGenTest
 
 				END
 
-				QUIT;
-
 			END
 			");
 		}
@@ -312,9 +301,6 @@ namespace BefunGenTest
 					OUT lb[(int)RAND];
 
 				END
-
-				QUIT;
-
 			END
 			");
 		}
@@ -357,7 +343,7 @@ namespace BefunGenTest
 				OUT ''::'';
 				OUT e;
 
-				QUIT;
+				RETURN;
 			END
 			");
 		}
@@ -388,8 +374,6 @@ namespace BefunGenTest
 				OUT c;
 				OUT '' -> '';
 				OUT e;
-
-				QUIT;
 			END
 			");
 		}
@@ -443,8 +427,6 @@ namespace BefunGenTest
 
 					i++;
 				END
-
-				QUIT;
 			END
 			");
 
@@ -500,7 +482,7 @@ namespace BefunGenTest
 					i++;
 				END
 
-				QUIT;
+				RETURN;
 			END
 			");
 		}
@@ -531,7 +513,7 @@ namespace BefunGenTest
 				OUT ''WADWAD'';
 
 				lblend:
-				QUIT;
+				RETURN;
 
 			end
 			");
@@ -763,6 +745,23 @@ namespace BefunGenTest
 					while (!stck.empty()) do stck.pop(); end
 
 					out stck.count();
+				end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Method_UniformArr()
+		{
+			BFTestHelper.debugMethod_Output("6 6 6 6 6 6 6 6 6 6 6 6 ", "a()",
+			@"
+				void a()
+				var 
+					int[12] arr := {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6};
+					int i;
+				begin
+	 				for (i=0; i < 12; i++) do
+						out arr[i];
+	 				end
 				end
 			");
 		}

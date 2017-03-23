@@ -10,8 +10,8 @@ namespace BefunGen.AST.CodeGen
 	public class CodePieceStoreElement
 	{
 		public string Name;
-		public Func<CodePiece> Function;
-		public CodePieceStoreElement(string n, Func<CodePiece> f)
+		public Func<bool, CodePiece> Function;
+		public CodePieceStoreElement(string n, Func<bool, CodePiece> f)
 		{
 			Name = n;
 			Function = f;
@@ -24,37 +24,38 @@ namespace BefunGen.AST.CodeGen
 		
 		public static CodePieceStoreElement[] CODEPIECES = new[]
 		{
-			new CodePieceStoreElement("ReadArrayToStack", () => ReadArrayToStack(8, 0, 0, false)),
-			new CodePieceStoreElement("WriteArrayFromStack", () => ReadArrayToStack(8, 0, 0, false)),
-			new CodePieceStoreElement("WriteArrayFromReversedStack", () => WriteArrayFromReversedStack(8, 0, 0, false)),
-			new CodePieceStoreElement("VerticalLaneTurnout_Test", () => VerticalLaneTurnout_Test()),
-			new CodePieceStoreElement("VerticalLaneTurnout_Dec", () => VerticalLaneTurnout_Dec(false)),
-			new CodePieceStoreElement("BooleanStackFlooder", () => BooleanStackFlooder()),
-			new CodePieceStoreElement("PopMultipleStackValues", () => PopMultipleStackValues(8, false)),
-			new CodePieceStoreElement("ReadValueFromField", () => ReadValueFromField(new MathExt.Point(0, 0), false)),
-			new CodePieceStoreElement("WriteValueToField", () => WriteValueToField(new MathExt.Point(0, 0), false)),
-			new CodePieceStoreElement("ModuloRangeLimiter", () => ModuloRangeLimiter(8, false)),
-			new CodePieceStoreElement("RandomDigitGenerator", () => RandomDigitGenerator(CodePiece.ParseFromLine("8"), false)),
-			new CodePieceStoreElement("Base4DigitJoiner", () => Base4DigitJoiner(false)),
-			new CodePieceStoreElement("SwitchStatementTester", () => SwitchStatementTester(false)),
-			new CodePieceStoreElement("SwitchLaneTurnout", () => SwitchLaneTurnout()),
+			new CodePieceStoreElement("ReadLinearArrayToStack",               (r) => ReadLinearArrayToStack(CodeGenEnvironment.CreateDummy(), 10,1,1,r)),
+			new CodePieceStoreElement("ReadMultilineArrayToStack",            (r) => ReadMultilineArrayToStack(CodeGenEnvironment.CreateDummy(), new VarDeclarationPosition(1,1,4,3,10), r)),
+			new CodePieceStoreElement("WriteLinearArrayFromStack",            (r) => WriteLinearArrayFromStack(CodeGenEnvironment.CreateDummy(), 10,1,1,r)),
+			new CodePieceStoreElement("WriteMultilineArrayFromStack",         (r) => WriteMultilineArrayFromStack(CodeGenEnvironment.CreateDummy(), new VarDeclarationPosition(1,1,4,3,10), r)),
+			new CodePieceStoreElement("WriteLinearArrayFromReversedStack",    (r) => WriteLinearArrayFromReversedStack(CodeGenEnvironment.CreateDummy(), 10,1,1,r)),
+			new CodePieceStoreElement("WriteMultilineArrayFromReversedStack", (r) => WriteMultilineArrayFromReversedStack(CodeGenEnvironment.CreateDummy(), new VarDeclarationPosition(1,1,4,3,10), r)),
+			new CodePieceStoreElement("VerticalLaneTurnout_Test",             (r) => VerticalLaneTurnout_Test()),
+			new CodePieceStoreElement("VerticalLaneTurnout_Dec",              (r) => VerticalLaneTurnout_Dec(r)),
+			new CodePieceStoreElement("BooleanStackFlooder",                  (r) => BooleanStackFlooder()),
+			new CodePieceStoreElement("PopMultipleStackValues",               (r) => PopMultipleStackValues(8, r)),
+			new CodePieceStoreElement("ReadValueFromField",                   (r) => ReadValueFromField(new MathExt.Point(1,1), r)),
+			new CodePieceStoreElement("WriteValueToField",                    (r) => WriteValueToField(new MathExt.Point(1,1), r)),
+			new CodePieceStoreElement("ModuloRangeLimiter",                   (r) => ModuloRangeLimiter(8, r)),
+			new CodePieceStoreElement("RandomDigitGenerator",                 (r) => RandomDigitGenerator(CodePiece.ParseFromLine("8"), r)),
+			new CodePieceStoreElement("Base4DigitJoiner",                     (r) => Base4DigitJoiner(r)),
+			new CodePieceStoreElement("SwitchStatementTester",                (r) => SwitchStatementTester(r)),
+			new CodePieceStoreElement("SwitchLaneTurnout",                    (r) => SwitchLaneTurnout()),
 		};
 
 		#endregion
 
 		#region ReadArrayToStack
 
-		public static CodePiece ReadArrayToStack(VarDeclarationPosition v, bool reversed)
+		public static CodePiece ReadArrayToStack(CodeGenEnvironment env, VarDeclarationPosition v, bool reversed)
 		{
-			return ReadArrayToStack(v.Size, v.X, v.Y, reversed); //TODO [MULTILINE]
+			if (v.IsSingleLine())
+				return ReadLinearArrayToStack(env, v.Size, v.X, v.Y, reversed);
+			else
+				return ReadMultilineArrayToStack(env, v, reversed);
 		}
-
-		private static CodePiece ReadArrayToStack(int arrLen, MathExt.Point arr, bool reversed)
-		{
-			return ReadArrayToStack(arrLen, arr.X, arr.Y, reversed);
-		}
-
-		private static CodePiece ReadArrayToStack(int arrLen, int arrX, int arrY, bool reversed)
+		
+		private static CodePiece ReadLinearArrayToStack(CodeGenEnvironment env, int arrLen, int arrX, int arrY, bool reversed)
 		{
 			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
 
@@ -75,11 +76,12 @@ namespace BefunGen.AST.CodeGen
 
 			if (reversed)
 			{
-				// $_v#!:\g{Y}+{X}:<{M}
+				// $_v#!:\g{Y}+{X}:<{Last}
 				//   >1-           ^
 				CodePiece p = new CodePiece();
 
 				#region Reversed
+
 				int botStart;
 				int botEnd;
 
@@ -111,25 +113,26 @@ namespace BefunGen.AST.CodeGen
 				p.FillRowWw(1, botStart + 3, botEnd);
 
 				p.NormalizeX();
+
 				#endregion
 
 				return p;
 			}
 			else
 			{
-				// {LEN}>:{X}+{Y}g\:#v_$
-				//      ^-1          <
+				// {Last}>:{X}+{Y}g\:#v_$
+				//       ^-1          <
 				CodePiece p = new CodePiece();
 
 				#region Normal
+
 				int botStart;
 				int botEnd;
 
 				botStart = 0;
 
-				p[0, 0] = BCHelper.PCRight;
-				p[1, 0] = BCHelper.StackDup;
-
+				p.AppendRight(BCHelper.PCRight);
+				p.AppendRight(BCHelper.StackDup);
 				p.AppendRight(pArx);
 				p.AppendRight(BCHelper.Add);
 				p.AppendRight(pAry);
@@ -154,6 +157,134 @@ namespace BefunGen.AST.CodeGen
 				p.FillRowWw(1, botStart + 3, botEnd);
 
 				p.NormalizeX();
+
+				#endregion
+
+				return p;
+			}
+		}
+
+		private static CodePiece ReadMultilineArrayToStack(CodeGenEnvironment env, VarDeclarationPosition v, bool reversed)
+		{
+			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
+
+			// Array will land reversed on Stack
+			// [A, B, C, D] ->
+			// [E, F, G   ]
+			//
+			// _____
+			// | A |
+			// | B |
+			// | C |
+			// | D |
+			// | E |
+			// | F |
+			// | G |
+			// ¯¯¯¯¯
+			//
+
+			CodePiece pLast = NumberCodeHelper.GenerateCode(v.Size - 1, reversed);
+			CodePiece pArx  = NumberCodeHelper.GenerateCode(v.X, reversed);
+			CodePiece pAry  = NumberCodeHelper.GenerateCode(v.Y, reversed);
+			CodePiece pArw  = NumberCodeHelper.GenerateCode(v.Width, reversed);
+
+			if (reversed)
+			{
+				// $_v#!:\g+{Y}/{W}\+{X}%{W}::<{Last}
+				//   >1-                      ^
+				CodePiece p = new CodePiece();
+
+				#region Reversed
+
+				int botStart;
+				int botEnd;
+
+				botStart = 0;
+
+				p[-2, 0] = BCHelper.StackPop;
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p.AppendRight(BCHelper.PCJump);
+				p.AppendRight(BCHelper.Not);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(pAry);
+				p.AppendRight(BCHelper.Div);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(pArx);
+				p.AppendRight(BCHelper.Modulo);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.StackDup);
+				botEnd = p.MaxX;
+				p.AppendRight(BCHelper.PCLeft);
+				p.AppendRight(pLast);
+
+				p[botStart, 1] = BCHelper.PCRight;
+				p[botStart + 1, 1] = BCHelper.Digit1;
+				p[botStart + 2, 1] = BCHelper.Sub;
+
+				p[botEnd, 1] = BCHelper.PCUp;
+
+				p.FillRowWw(1, botStart + 3, botEnd);
+
+				p.NormalizeX();
+
+				#endregion
+
+				return p;
+			}
+			else
+			{
+				// {Last}>::{W}%{X}+\{W}/{Y}+g\:#v_$
+				//       ^-1                     <
+				CodePiece p = new CodePiece();
+
+				#region Normal
+
+				int botStart;
+				int botEnd;
+
+				botStart = 0;
+
+				p.AppendRight(BCHelper.PCRight);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.Modulo);
+				p.AppendRight(pArx);
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.Div);
+				p.AppendRight(pAry);
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.StackDup);
+				p.AppendRight(BCHelper.PCJump);
+
+				botEnd = p.MaxX;
+
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
+				p.AppendRight(BCHelper.StackPop);
+
+				p[botStart, 1] = BCHelper.PCUp;
+				p[botStart + 1, 1] = BCHelper.Sub;
+				p[botStart + 2, 1] = BCHelper.Digit1;
+				p[botEnd, 1] = BCHelper.PCLeft;
+
+				p.AppendLeft(pLast);
+
+				p.FillRowWw(1, botStart + 3, botEnd);
+
+				p.NormalizeX();
+
 				#endregion
 
 				return p;
@@ -164,17 +295,15 @@ namespace BefunGen.AST.CodeGen
 
 		#region WriteArrayFromStack
 
-		public static CodePiece WriteArrayFromStack(VarDeclarationPosition v, bool reversed)
+		public static CodePiece WriteArrayFromStack(CodeGenEnvironment env, VarDeclarationPosition v, bool reversed)
 		{
-			return WriteArrayFromStack(v.Size, v.X, v.Y, reversed); //TODO [MULTILINE]
+			if (v.IsSingleLine())
+				return WriteLinearArrayFromStack(env, v.Size, v.X, v.Y, reversed);
+			else
+				return WriteMultilineArrayFromStack(env, v, reversed);
 		}
-
-		private static CodePiece WriteArrayFromStack(int arrLen, MathExt.Point arr, bool reversed)
-		{
-			return WriteArrayFromStack(arrLen, arr.X, arr.Y, reversed);
-		}
-
-		private static CodePiece WriteArrayFromStack(int arrLen, int arrX, int arrY, bool reversed)
+		
+		private static CodePiece WriteLinearArrayFromStack(CodeGenEnvironment env, int arrLen, int arrX, int arrY, bool reversed)
 		{
 			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
 
@@ -189,20 +318,20 @@ namespace BefunGen.AST.CodeGen
 			// [A, B, C, D]
 			//
 
-			CodePiece pTpx = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, reversed);
-			CodePiece pTpy = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, reversed);
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, reversed);
 
-			CodePiece pTpxR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, !reversed);
-			CodePiece pTpyR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, !reversed);
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, !reversed);
 
-			CodePiece pLen = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
-			CodePiece pArx = NumberCodeHelper.GenerateCode(arrX, reversed);
-			CodePiece pAry = NumberCodeHelper.GenerateCode(arrY, reversed);
+			CodePiece pLast = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
+			CodePiece pArx  = NumberCodeHelper.GenerateCode(arrX, reversed);
+			CodePiece pAry  = NumberCodeHelper.GenerateCode(arrY, reversed);
 
 			if (reversed)
 			{
-				// _v#!-{M}p{Y}+g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}0
-				//  >{TX}:{TY}g1+\{TY}p               ^          
+				// _v#!-{Last}p{Y}+g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}0
+				//  >{TX}:{TY}g1+\{TY}p                  ^          
 				CodePiece p = new CodePiece();
 
 				#region Reversed
@@ -218,7 +347,7 @@ namespace BefunGen.AST.CodeGen
 				p[2, 0] = BCHelper.Not;
 				p[3, 0] = BCHelper.Sub;
 
-				p.AppendRight(pLen);
+				p.AppendRight(pLast);
 
 				p.AppendRight(BCHelper.ReflectSet);
 
@@ -286,8 +415,8 @@ namespace BefunGen.AST.CodeGen
 			}
 			else
 			{
-				// 0{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g+{Y}p{M}-#v_
-				//           ^p{TY}\+1g{TY}:{TX}              < 
+				// 0{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g+{Y}p{Last}-#v_
+				//           ^p{TY}\+1g{TY}:{TX}                 < 
 				CodePiece p = new CodePiece();
 
 				#region Normal
@@ -321,7 +450,7 @@ namespace BefunGen.AST.CodeGen
 
 				p.AppendRight(BCHelper.ReflectSet);
 
-				p.AppendRight(pLen);
+				p.AppendRight(pLast);
 
 				p.AppendRight(BCHelper.Sub);
 				p.AppendRight(BCHelper.PCJump);
@@ -368,12 +497,229 @@ namespace BefunGen.AST.CodeGen
 			}
 		}
 
-		public static CodePiece WriteArrayFromReversedStack(int arrLen, VarDeclarationPosition v, bool reversed)
+		private static CodePiece WriteMultilineArrayFromStack(CodeGenEnvironment env, VarDeclarationPosition v, bool reversed)
 		{
-			return WriteArrayFromReversedStack(arrLen, v.X, v.Y, reversed); //TODO [MULTILINE]
+			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
+
+			// Array is reversed in Stack --> will land normal on Field
+			// _____
+			// | A |
+			// | B |
+			// | C | -->
+			// | D |
+			// | E |
+			// | F |
+			// ¯¯¯¯¯
+			//
+			// [A, B, C, D]
+			// [E, F      ]
+			//
+
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, reversed);
+
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, !reversed);
+
+			CodePiece pLast = NumberCodeHelper.GenerateCode(v.Size - 1, reversed);
+			CodePiece pArx = NumberCodeHelper.GenerateCode(v.X, reversed);
+			CodePiece pAry = NumberCodeHelper.GenerateCode(v.Y, reversed);
+			CodePiece pArw = NumberCodeHelper.GenerateCode(v.Width, reversed);
+
+			if (reversed)
+			{
+				// _v#!-{Last}p+/g{TY}{TX}{Y}+%{W}g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}0
+				//  >{TX}:{TY}g1+\{TY}p                                 ^
+				CodePiece p = new CodePiece();
+
+				#region Reversed
+
+				int botStart;
+				int botEnd;
+
+				botStart = 0;
+
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p[1, 0] = BCHelper.PCJump;
+				p[2, 0] = BCHelper.Not;
+				p[3, 0] = BCHelper.Sub;
+
+				p.AppendRight(pLast);
+
+				p.AppendRight(BCHelper.ReflectSet);
+
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.Div);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pAry);
+
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.Modulo);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pArx);
+
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+
+				botEnd = p.MaxX;
+
+				p.AppendRight(BCHelper.PCLeft);
+				p.AppendRight(BCHelper.ReflectSet);
+
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+
+				p.AppendRight(BCHelper.Digit0);
+
+				CodePiece pBottom = new CodePiece();
+				{
+					#region Generate_Bottom
+
+					pBottom.AppendRight(pTpxR);
+
+					pBottom.AppendRight(BCHelper.StackDup);
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.ReflectGet);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.Add);
+					pBottom.AppendRight(BCHelper.StackSwap);
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.ReflectSet);
+
+					pBottom.NormalizeX();
+
+					#endregion
+				}
+
+				p[botStart, 1] = BCHelper.PCRight;
+				p[botEnd, 1] = BCHelper.PCUp;
+
+				p.SetAt(botStart + 1, 1, pBottom);
+
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
+
+				p.NormalizeX();
+
+				#endregion
+
+				return p;
+			}
+			else
+			{
+				// 0{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g{W}%+{Y}{TX}{TY}g{W}/+p{Last}-#v_
+				//           ^p{TY}\+1g{TY}:{TX}                                   < 
+				CodePiece p = new CodePiece();
+
+				#region Normal
+
+				int botStart;
+				int botEnd;
+
+				p.AppendRight(BCHelper.Digit0);
+
+				p.AppendRight(pTpx); // {TX}
+				p.AppendRight(pTpy); // {TY}
+
+				p.AppendRight(BCHelper.ReflectSet);
+				botStart = p.MaxX;
+				p.AppendRight(BCHelper.PCRight);
+
+				p.AppendRight(pTpx); // {TX}
+				p.AppendRight(pTpy); // {TY}
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
+
+				p.AppendRight(pArx); // {X}
+				p.AppendRight(pTpx); // {TX}
+				p.AppendRight(pTpy); // {TY}
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pArw); // {W}
+				p.AppendRight(BCHelper.Modulo);
+				p.AppendRight(BCHelper.Add);
+
+				p.AppendRight(pAry); // {Y}
+				p.AppendRight(pTpx); // {TX}
+				p.AppendRight(pTpy); // {TY}
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pArw); // {W}
+				p.AppendRight(BCHelper.Div);
+				p.AppendRight(BCHelper.Add);
+
+				p.AppendRight(BCHelper.ReflectSet);
+
+				p.AppendRight(pLast); // {Last}
+
+				p.AppendRight(BCHelper.Sub);
+				p.AppendRight(BCHelper.PCJump);
+				botEnd = p.MaxX;
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
+
+				CodePiece pBottom = new CodePiece();
+				{
+					#region Generate_Bottom
+
+					pBottom[0, 0] = BCHelper.ReflectSet;
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.StackSwap);
+					pBottom.AppendRight(BCHelper.Add);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.ReflectGet);
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.StackDup);
+
+					pBottom.AppendRight(pTpxR);
+
+					pBottom.NormalizeX();
+
+					#endregion
+				}
+
+				p[botStart, 1] = BCHelper.PCUp;
+				p[botEnd, 1] = BCHelper.PCLeft;
+
+				p.SetAt(botStart + 1, 1, pBottom);
+
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
+
+				p.NormalizeX();
+
+				#endregion
+
+				return p;
+			}
 		}
 
-		private static CodePiece WriteArrayFromReversedStack(int arrLen, int arrX, int arrY, bool reversed)
+		#endregion
+
+		#region WriteArrayFromReversedStack
+
+		public static CodePiece WriteArrayFromReversedStack(CodeGenEnvironment env, int arrLen, VarDeclarationPosition v, bool reversed)
+		{
+			if (v.IsSingleLine())
+				return WriteLinearArrayFromReversedStack(env, arrLen, v.X, v.Y, reversed);
+			else
+				return WriteMultilineArrayFromReversedStack(env, v, reversed);
+		}
+
+		private static CodePiece WriteLinearArrayFromReversedStack(CodeGenEnvironment env, int arrLen, int arrX, int arrY, bool reversed)
 		{
 			// Normally Arrays are reversed on Stack -> this Method is for the reversed case --> Stack is normal on stack
 
@@ -386,23 +732,23 @@ namespace BefunGen.AST.CodeGen
 			// | B | -->
 			// | A |
 			// ¯¯¯¯¯
-			//			
+			// 
 			// [A, B, C, D]
 			//
 
-			CodePiece pTpx = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, reversed);
-			CodePiece pTpy = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, reversed);
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, reversed);
 
-			CodePiece pTpxR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.X, !reversed);
-			CodePiece pTpyR = NumberCodeHelper.GenerateCode(CodeGenConstants.TMP_FIELD_IO_ARR.Y, !reversed);
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, !reversed);
 
-			CodePiece pLen = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
+			CodePiece pLast = NumberCodeHelper.GenerateCode(arrLen - 1, reversed);
 			CodePiece pArx = NumberCodeHelper.GenerateCode(arrX, reversed);
 			CodePiece pAry = NumberCodeHelper.GenerateCode(arrY, reversed);
 
 			if (reversed)
 			{
-				// _v#!p{Y}+g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}{M}
+				// _v#!p{Y}+g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}{Last}
 				//  >{TX}:{TY}g1-\{TY}p           ^        
 				CodePiece p = new CodePiece();
 
@@ -440,6 +786,206 @@ namespace BefunGen.AST.CodeGen
 				p.AppendRight(BCHelper.PCLeft);
 				p.AppendRight(BCHelper.ReflectSet);
 
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+
+				p.AppendRight(pLast);
+
+				CodePiece pBottom = new CodePiece();
+				{
+					#region Generate_Bottom
+
+					pBottom.AppendRight(pTpxR);
+
+					pBottom.AppendRight(BCHelper.StackDup);
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.ReflectGet);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.Sub);
+					pBottom.AppendRight(BCHelper.StackSwap);
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.ReflectSet);
+
+					pBottom.NormalizeX();
+
+					#endregion
+				}
+
+				p[botStart, 1] = BCHelper.PCRight;
+				p[botEnd, 1] = BCHelper.PCUp;
+
+				p.SetAt(botStart + 1, 1, pBottom);
+
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
+
+				p.NormalizeX();
+
+				#endregion
+
+				return p;
+			}
+			else
+			{
+				// {Last}{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g+{Y}p#v_
+				//                ^p{TY}\-1g{TY}:{TX}          < 
+				CodePiece p = new CodePiece();
+
+				#region Normal
+
+				int botStart;
+				int botEnd;
+
+				p.AppendRight(pLast);
+
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
+
+				p.AppendRight(BCHelper.ReflectSet);
+				botStart = p.MaxX;
+				p.AppendRight(BCHelper.PCRight);
+
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
+
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.StackSwap);
+
+				p.AppendRight(pArx);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
+
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(BCHelper.Add);
+
+				p.AppendRight(pAry);
+
+				p.AppendRight(BCHelper.ReflectSet);
+
+				p.AppendRight(BCHelper.PCJump);
+				botEnd = p.MaxX;
+				p.AppendRight(BCHelper.PCDown);
+				p.AppendRight(BCHelper.IfHorizontal);
+
+				CodePiece pBottom = new CodePiece();
+				{
+					#region Generate_Bottom
+
+					pBottom[0, 0] = BCHelper.ReflectSet;
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.StackSwap);
+					pBottom.AppendRight(BCHelper.Sub);
+					pBottom.AppendRight(BCHelper.Digit1);
+					pBottom.AppendRight(BCHelper.ReflectGet);
+
+					pBottom.AppendRight(pTpyR);
+
+					pBottom.AppendRight(BCHelper.StackDup);
+
+					pBottom.AppendRight(pTpxR);
+
+					pBottom.NormalizeX();
+
+					#endregion
+				}
+
+				p[botStart, 1] = BCHelper.PCUp;
+				p[botEnd, 1] = BCHelper.PCLeft;
+
+				p.SetAt(botStart + 1, 1, pBottom);
+
+				p.FillRowWw(1, botStart + 1 + pBottom.Width, botEnd);
+
+				p.NormalizeX();
+
+				#endregion
+
+				return p;
+			}
+		}
+
+		private static CodePiece WriteMultilineArrayFromReversedStack(CodeGenEnvironment env, VarDeclarationPosition v, bool reversed)
+		{
+			// Normally Arrays are reversed on Stack -> this Method is for the reversed case --> Stack is normal on stack
+
+			// Result: Horizontal     [LEFT, 0] IN ... [RIGHT, 0] OUT (or the other way when reversed)
+
+			// Array is !! NOT !! reversed in Stack --> will land normal on Field
+			// _____
+			// | F |
+			// | E |
+			// | D |
+			// | C |
+			// | B | -->
+			// | A |
+			// ¯¯¯¯¯
+			// 
+			// [A, B, C, D]
+			// [E, F      ]
+			// 
+
+			CodePiece pTpx = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, reversed);
+			CodePiece pTpy = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, reversed);
+
+			CodePiece pTpxR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.X, !reversed);
+			CodePiece pTpyR = NumberCodeHelper.GenerateCode(env.TMP_FIELD_IO_ARR.Y, !reversed);
+
+			CodePiece pLen = NumberCodeHelper.GenerateCode(v.Size - 1, reversed);
+			CodePiece pArx = NumberCodeHelper.GenerateCode(v.X, reversed);
+			CodePiece pAry = NumberCodeHelper.GenerateCode(v.Y, reversed);
+			CodePiece pArw = NumberCodeHelper.GenerateCode(v.Width, reversed);
+
+			if (reversed)
+			{
+				// _v#!p+/{W}g{TY}{TX}{Y}+%{W}g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}{Last}
+				//  >{TX}:{TY}g1-\{TY}p                             ^
+				CodePiece p = new CodePiece();
+
+				#region Reversed
+
+				int botStart;
+				int botEnd;
+
+				botStart = 0;
+
+				p[-1, 0] = BCHelper.IfHorizontal;
+				p[0, 0] = BCHelper.PCDown;
+				p[1, 0] = BCHelper.PCJump;
+				p[2, 0] = BCHelper.Not;
+
+				p.AppendRight(BCHelper.ReflectSet);
+
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.Div);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pAry);
+
+				p.AppendRight(BCHelper.Add);
+				p.AppendRight(BCHelper.Modulo);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+				p.AppendRight(pArx);
+
+				p.AppendRight(BCHelper.StackSwap);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
+
+				botEnd = p.MaxX;
+
+				p.AppendRight(BCHelper.PCLeft);
+
+				p.AppendRight(BCHelper.ReflectSet);
 				p.AppendRight(pTpy);
 				p.AppendRight(pTpx);
 
@@ -484,8 +1030,8 @@ namespace BefunGen.AST.CodeGen
 			}
 			else
 			{
-				// {M}{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g+{Y}p#v_
-				//           ^p{TY}\-1g{TY}:{TX}            < 
+				// {Last}{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g{W}%+{Y}{TX}{TY}g{W}/+p#v_
+				//                ^p{TY}\-1g{TY}:{TX}                            < 
 				CodePiece p = new CodePiece();
 
 				#region Normal
@@ -504,18 +1050,24 @@ namespace BefunGen.AST.CodeGen
 
 				p.AppendRight(pTpx);
 				p.AppendRight(pTpy);
-
 				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.StackSwap);
 
 				p.AppendRight(pArx);
 				p.AppendRight(pTpx);
 				p.AppendRight(pTpy);
-
 				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.Modulo);
 				p.AppendRight(BCHelper.Add);
 
 				p.AppendRight(pAry);
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pArw);
+				p.AppendRight(BCHelper.Div);
+				p.AppendRight(BCHelper.Add);
 
 				p.AppendRight(BCHelper.ReflectSet);
 
@@ -634,7 +1186,7 @@ namespace BefunGen.AST.CodeGen
 			CodePiece p = new CodePiece();
 
 			p.SetAt(0, 0, CodePiece.ParseFromLine(@"$_v#!:-1<\1+1:"));
-			p.SetAt(2, 1, CodePiece.ParseFromLine(@">0\   ^", true));
+			p.SetAt(2, 1, CodePiece.ParseFromLine(  @">0\   ^", true));
 
 			return p;
 		}
@@ -1081,7 +1633,7 @@ namespace BefunGen.AST.CodeGen
 					paramY++;
 				}
 
-				if (size > maxWidth && false) //TODO [Multiline]
+				if (size > maxWidth)
 				{
 					// Multiline
 
@@ -1089,13 +1641,14 @@ namespace BefunGen.AST.CodeGen
 					int h = (int)Math.Ceiling((size * 1d) / w);
 
 					for (int i = 0; i < h-1; i++)
-						lit.Fill(0, i, w, i, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
-					lit.Fill(0, h-1, size % w, h-1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol));
+						lit.Fill(0, i, w, i + 1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), new VarDeclarationTag(var));
+					lit.Fill(0, h - 1, size % w, h, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol));
+					p.SetAt(paramX, paramY, lit);
 
 					var.CodeDeclarationPos = new VarDeclarationPosition(moX + paramX, moY + paramY, w, h, size);
 
 					paramX = 0;
-					paramY += w;
+					paramY += h;
 				}
 				else
 				{
@@ -1108,14 +1661,29 @@ namespace BefunGen.AST.CodeGen
 
 					paramX += lit.Width;
 				}
-
-
-
-				
-				paramX += lit.Width;
 			}
 
 			return p;
+		}
+
+
+		public static Tuple<CodePiece, VarDeclarationPosition> CreateVariableSpace(int size, CodeGenOptions cgo, int maxWidth, BefungeCommand cmd, CodeTag t)
+		{
+			CodePiece lit = new CodePiece();
+
+			int w = maxWidth;
+			int h = (int)Math.Ceiling((size * 1d) / w);
+
+			for (int i = 0; i < h - 1; i++)
+			{
+				lit.Fill(0, i, w, i + 1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), t);
+			}
+
+			lit.Fill(0, h - 1, size % w, h, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol));
+			
+			var cdp = new VarDeclarationPosition(0, 0, w, h, size);
+
+			return Tuple.Create(lit, cdp);
 		}
 	}
 }

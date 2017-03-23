@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AST\ASTObject.cs" />
+    <Compile Include="AST\CodeGen\CodeGenEnvironment.cs" />
     <Compile Include="AST\CodeGen\NumberCode\NumberCodeFactory_Boolean.cs" />
     <Compile Include="AST\CodeGen\NumberCode\NumberCodeFactory_Digit.cs" />
     <Compile Include="AST\CodeGen\NumberCode\NumberCodeFactory_Stringify.cs" />
