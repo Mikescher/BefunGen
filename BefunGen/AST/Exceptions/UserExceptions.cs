@@ -118,6 +118,12 @@ namespace BefunGen.AST.Exceptions
 			: base("The Constant " + ident + " has no well defined value", pos) { }
 	}
 
+	public class UndefiniedValueInitValueException : BefunGenUserException
+	{
+		public UndefiniedValueInitValueException(SourceCodePosition pos, string ident)
+			: base("The Global variable " + ident + " has no well defined initial value", pos) { }
+	}
+
 	public class IllegalIdentifierException : BefunGenUserException
 	{
 		public IllegalIdentifierException(SourceCodePosition pos, string ident)

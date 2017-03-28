@@ -530,7 +530,40 @@ namespace BefunGenTest
 		}
 
 		[TestMethod]
-		public void codeGenTest_Program_VariableSpace1()
+		public void codeGenTest_Program_ParameterIdentity()
+		{
+			BFTestHelper.debugProgram_Terminate(@"
+			program p0 
+				begin 
+					id(); 
+				end 
+
+				int[8] id() 
+				var 
+					int[8] uv := {7,7,7,7,7,7,7,7}; 
+				begin 
+					return uv; 
+				end 
+			end
+			");
+
+			BFTestHelper.debugProgram_Terminate(@"
+			program p0
+				var 
+					int[8] x;
+				begin
+					x = id(x);
+				end
+				int[8] id(int[8] input)
+				begin
+					return input;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace1_1()
 		{
 			BFTestHelper.debugProgram_Output("8060 ", @"
 			program p0
@@ -560,7 +593,39 @@ namespace BefunGenTest
 		}
 
 		[TestMethod]
-		public void codeGenTest_Program_VariableSpace2()
+		public void codeGenTest_Program_VariableSpace1_2()
+		{
+			BFTestHelper.debugProgram_Output("8060 ", @"
+			program p0
+				global 
+					int ii;
+					int a, b, c ,d, e, f, g, h, i, j;
+					int[100] s1;
+					int k, l, m, n, o, p, q, r, s, t;
+					int sum;
+				begin
+					sum = 0;
+
+					FOR(ii = 0; ii < 100; ii++) DO
+						s1[ii] = ii;
+					END
+					a=101;b=102;c=103;d=104;e=105;f=106;g=107;h=108;i=109;j=110;
+					k=201;l=202;m=203;n=204;o=205;p=206;q=207;r=208;s=209;t=210;
+					
+					FOR(ii = 0; ii < 100; ii++) DO
+						sum += s1[ii];
+					END
+					sum += a+b+c+d+e+f+g+h+i+j;
+					sum += k+l+m+n+o+p+q+r+s+t;
+
+					out sum;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace2_1()
 		{
 			BFTestHelper.debugProgram_Output("113010 ", @"
 			program p0
@@ -594,7 +659,62 @@ namespace BefunGenTest
 		}
 
 		[TestMethod]
-		public void codeGenTest_Program_VariableSpace3()
+		public void codeGenTest_Program_VariableSpace2_2()
+		{
+			BFTestHelper.debugProgram_Output("113010 ", @"
+			program p0
+				global 
+					int ii;
+					int a, b, c ,d, e, f, g, h, i, j;
+					int[100] s1;
+					int k, l, m, n, o, p, q, r, s, t;
+					int[100] s2;
+					int sum;
+				begin
+					sum = 0;
+
+					FOR(ii = 0; ii < 100; ii++) DO
+						s1[ii] = ii;
+					END
+					a=101;b=102;c=103;d=104;e=105;f=106;g=107;h=108;i=109;j=110;
+					k=201;l=202;m=203;n=204;o=205;p=206;q=207;r=208;s=209;t=210;
+					FOR(ii = 0; ii < 100; ii++) DO
+						s2[ii] = 1000 + ii;
+					END
+					
+					FOR(ii = 0; ii < 100; ii++) DO
+						sum += s1[ii] + s2[ii];
+					END
+					sum += a+b+c+d+e+f+g+h+i+j;
+					sum += k+l+m+n+o+p+q+r+s+t;
+
+					out sum;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace2_3()
+		{
+			BFTestHelper.debugProgram_Output("0 ", @"
+			program p0
+				var 
+					int ii;
+					int[100] s1,s2;
+					int sum := 0;
+				begin
+					FOR(ii = 0; ii < 100; ii++) DO
+						sum += s1[ii] + s2[ii];
+					END
+					out sum;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace3_1()
 		{
 			BFTestHelper.debugProgram_Output("113010 ", @"
 			program p0
@@ -632,6 +752,49 @@ namespace BefunGenTest
 
 					s1 = sp1;
 					s2 = sp2;
+
+					FOR(ii = 0; ii < 100; ii++) DO
+						sum += s1[ii] + s2[ii];
+					END
+					sum += a+b+c+d+e+f+g+h+i+j;
+					sum += k+l+m+n+o+p+q+r+s+t;
+
+					return sum;
+				end
+			end
+			");
+
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace3_2()
+		{
+			BFTestHelper.debugProgram_Output("113010 ", @"
+			program p0
+				global 
+					int a, b, c ,d, e, f, g, h, i, j;
+					int[100] s1;
+					int k, l, m, n, o, p, q, r, s, t;
+					int[100] s2;
+
+					int ii;
+				begin
+					FOR(ii = 0; ii < 100; ii++) DO
+						s1[ii] = ii;
+					END
+					FOR(ii = 0; ii < 100; ii++) DO
+						s2[ii] = 1000 + ii;
+					END
+					
+					out sumfunc();
+				end
+
+				int sumfunc()
+				var
+					int sum := 0;
+				begin
+					a=101;b=102;c=103;d=104;e=105;f=106;g=107;h=108;i=109;j=110;
+					k=201;l=202;m=203;n=204;o=205;p=206;q=207;r=208;s=209;t=210;
 
 					FOR(ii = 0; ii < 100; ii++) DO
 						sum += s1[ii] + s2[ii];
@@ -736,6 +899,52 @@ namespace BefunGenTest
 					s=0; 
 					for (i=0;i<128;s += a[i++]) do end
 					out s;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace5_1()
+		{
+			BFTestHelper.debugProgram_Output("3110 ", @"
+			program p0
+				var 
+					int a, b, c ,d, e, f, g, h, i, j;
+					int k, l, m, n, o, p, q, r, s, t;
+					int sum := 0;
+				begin
+					a=101;b=102;c=103;d=104;e=105;f=106;g=107;h=108;i=109;j=110;
+					k=201;l=202;m=203;n=204;o=205;p=206;q=207;r=208;s=209;t=210;
+					
+					sum += a+b+c+d+e+f+g+h+i+j;
+					sum += k+l+m+n+o+p+q+r+s+t;
+
+					out sum;
+				end
+			end
+			");
+		}
+
+		[TestMethod]
+		public void codeGenTest_Program_VariableSpace5_2()
+		{
+			BFTestHelper.debugProgram_Output("3110 ", @"
+			program p0
+				global 
+					int a, b, c ,d, e, f, g, h, i, j;
+					int k, l, m, n, o, p, q, r, s, t;
+					int sum;
+				begin
+					sum = 0;
+
+					a=101;b=102;c=103;d=104;e=105;f=106;g=107;h=108;i=109;j=110;
+					k=201;l=202;m=203;n=204;o=205;p=206;q=207;r=208;s=209;t=210;
+					
+					sum += a+b+c+d+e+f+g+h+i+j;
+					sum += k+l+m+n+o+p+q+r+s+t;
+
+					out sum;
 				end
 			end
 			");

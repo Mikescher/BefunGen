@@ -1,5 +1,4 @@
-﻿using System;
-using BefunGen.AST.CodeGen;
+﻿using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.AST.Exceptions;
 using BefunGen.MathExtensions;
@@ -333,12 +332,10 @@ namespace BefunGen.AST
 
 					#region Reversed
 
-					p[0, 0] = BCHelper.PCRight;
+					p[0, 0] = BCHelper.PCLeft;
 					p[0, 1] = BCHelper.PCUp;
-					p[-1, 1] = BCHelper.Sub;
-					p[-2, 1] = BCHelper.Digit1;
 
-					p.AppendLeft(pLast);
+					p.AppendRight(pLast);
 
 					p.AppendLeft(BCHelper.StackDup);
 					p.AppendLeft(pValue);
@@ -357,11 +354,15 @@ namespace BefunGen.AST
 					p.AppendLeft(BCHelper.Add);
 					p.AppendLeft(BCHelper.ReflectSet);
 					p.AppendLeft(BCHelper.StackDup);
+					p.AppendLeft(BCHelper.Not);
 					p.AppendLeft(BCHelper.PCJump);
 					p.AppendLeft(BCHelper.PCDown);
 
+					p[-1, 1] = BCHelper.Sub;
+					p[-2, 1] = BCHelper.Digit1;
+
 					p.CreateRowWw(1, p.MinX+1, -2);
-					p[p.MaxX, 1] = BCHelper.PCLeft;
+					p[p.MinX, 1] = BCHelper.PCRight;
 
 					p.AppendLeft(BCHelper.IfHorizontal);
 					p.AppendLeft(BCHelper.StackPop);
@@ -377,8 +378,6 @@ namespace BefunGen.AST
 
 					p[0, 0] = BCHelper.PCRight;
 					p[0, 1] = BCHelper.PCUp;
-					p[1, 1] = BCHelper.Sub;
-					p[2, 1] = BCHelper.Digit1;
 
 					p.AppendLeft(pLast);
 
@@ -402,8 +401,11 @@ namespace BefunGen.AST
 					p.AppendRight(BCHelper.PCJump);
 					p.AppendRight(BCHelper.PCDown);
 
-					p.CreateRowWw(1, 3, p.MaxX);
-					p[p.MaxX, 1] = BCHelper.PCLeft;
+					p[1, 1] = BCHelper.Sub;
+					p[2, 1] = BCHelper.Digit1;
+
+					p.CreateRowWw(1, 3, p.MaxX - 1);
+					p[p.MaxX - 1, 1] = BCHelper.PCLeft;
 
 					p.AppendRight(BCHelper.IfHorizontal);
 					p.AppendRight(BCHelper.StackPop);
@@ -609,6 +611,11 @@ namespace BefunGen.AST
 		public bool IsSingleLine()
 		{
 			return Height == 1;
+		}
+
+		public static VarDeclarationPosition operator +(VarDeclarationPosition va, MathExt.Point vb)
+		{
+			return new VarDeclarationPosition(va.X+vb.X, va.Y+vb.Y, va.Width, va.Height, va.Size);
 		}
 	}
 

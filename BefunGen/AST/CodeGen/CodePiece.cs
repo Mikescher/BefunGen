@@ -588,8 +588,8 @@ namespace BefunGen.AST.CodeGen
 			CodePiece compressConn;
 			if (ASTObject.CGO.CompressHorizontalCombining && (compressConn = DoCompressHorizontally(this, right)) != null)
 			{
-				this.RemoveColumn(this.MaxX - 1);
-				right.RemoveColumn(right.MinX);
+				this.RemoveLastColumn();
+				right.RemoveFirstColumn();
 
 				this.AppendRightDirect(compressConn);
 			}
@@ -632,8 +632,8 @@ namespace BefunGen.AST.CodeGen
 			CodePiece compressConn;
 			if (ASTObject.CGO.CompressHorizontalCombining && (compressConn = DoCompressHorizontally(left, this)) != null)
 			{
-				this.RemoveColumn(this.MinX);
-				left.RemoveColumn(left.MaxX - 1);
+				this.RemoveFirstColumn();
+				left.RemoveLastColumn();
 
 				this.AppendLeftDirect(compressConn);
 			}
@@ -968,18 +968,24 @@ namespace BefunGen.AST.CodeGen
 
 		#region Modify
 
-		public void RemoveColumn(int col)
+		public void RemoveFirstColumn() => RemoveColumn(MinX, false);
+		public void RemoveLastColumn() => RemoveColumn(MaxX - 1, true);
+
+		public void RemoveColumn(int col, bool fillFromRight = true)
 		{
 			int abs = col - MinX;
 
 			commandArr.RemoveAt(abs);
 
-			MaxX = MaxX - 1;
+			if (fillFromRight)
+				MaxX--;
+			else
+				MinX++;
 
 			RecalcTagCache();
 		}
 
-		public void RemoveRow(int row)
+		public void RemoveRow(int row, bool fillFromBottom = true)
 		{
 			int abs = row - MinY;
 
@@ -988,7 +994,10 @@ namespace BefunGen.AST.CodeGen
 				commandArr[i].RemoveAt(abs);
 			}
 
-			MaxY = MaxY - 1;
+			if (fillFromBottom)
+				MaxY--;
+			else
+				MinY++;
 
 			RecalcTagCache();
 		}

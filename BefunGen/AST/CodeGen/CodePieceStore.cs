@@ -330,8 +330,8 @@ namespace BefunGen.AST.CodeGen
 
 			if (reversed)
 			{
-				// _v#!-{Last}p{Y}+g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}0
-				//  >{TX}:{TY}g1+\{TY}p                  ^          
+				// _v#!-{Last}g{TY}{TX}p{Y}+{X}g{TY}{TX}<p{TY}{TX}0
+				//  >{TX}{TY}g1+{TX}{TY}p               ^
 				CodePiece p = new CodePiece();
 
 				#region Reversed
@@ -343,26 +343,21 @@ namespace BefunGen.AST.CodeGen
 
 				p[-1, 0] = BCHelper.IfHorizontal;
 				p[0, 0] = BCHelper.PCDown;
-				p[1, 0] = BCHelper.PCJump;
-				p[2, 0] = BCHelper.Not;
-				p[3, 0] = BCHelper.Sub;
 
+				p.AppendRight(BCHelper.PCJump);
+
+				p.AppendRight(BCHelper.Not);
+				p.AppendRight(BCHelper.Sub);
 				p.AppendRight(pLast);
-
-				p.AppendRight(BCHelper.ReflectSet);
-
-				p.AppendRight(pAry);
-
-				p.AppendRight(BCHelper.Add);
 				p.AppendRight(BCHelper.ReflectGet);
-
 				p.AppendRight(pTpy);
 				p.AppendRight(pTpx);
+
+				p.AppendRight(BCHelper.ReflectSet);
+				p.AppendRight(pAry);
+				p.AppendRight(BCHelper.Add);
 				p.AppendRight(pArx);
-
-				p.AppendRight(BCHelper.StackSwap);
 				p.AppendRight(BCHelper.ReflectGet);
-
 				p.AppendRight(pTpy);
 				p.AppendRight(pTpx);
 
@@ -381,18 +376,14 @@ namespace BefunGen.AST.CodeGen
 					#region Generate_Bottom
 
 					pBottom.AppendRight(pTpxR);
-
-					pBottom.AppendRight(BCHelper.StackDup);
-
 					pBottom.AppendRight(pTpyR);
-
 					pBottom.AppendRight(BCHelper.ReflectGet);
+
 					pBottom.AppendRight(BCHelper.Digit1);
 					pBottom.AppendRight(BCHelper.Add);
-					pBottom.AppendRight(BCHelper.StackSwap);
 
+					pBottom.AppendRight(pTpxR);
 					pBottom.AppendRight(pTpyR);
-
 					pBottom.AppendRight(BCHelper.ReflectSet);
 
 					pBottom.NormalizeX();
@@ -415,8 +406,8 @@ namespace BefunGen.AST.CodeGen
 			}
 			else
 			{
-				// 0{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g+{Y}p{Last}-#v_
-				//           ^p{TY}\+1g{TY}:{TX}                 < 
+				// 0{TX}{TY}p>{TX}{TY}g{X}+{Y}p{TX}{TY}g{Last}-#v_
+				//           ^p{TY}{TX}+1g{TY}{TX}              < 
 				CodePiece p = new CodePiece();
 
 				#region Normal
@@ -435,24 +426,18 @@ namespace BefunGen.AST.CodeGen
 
 				p.AppendRight(pTpx);
 				p.AppendRight(pTpy);
-
 				p.AppendRight(BCHelper.ReflectGet);
-				p.AppendRight(BCHelper.StackSwap);
-
 				p.AppendRight(pArx);
-				p.AppendRight(pTpx);
-				p.AppendRight(pTpy);
-
-				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(BCHelper.Add);
-
 				p.AppendRight(pAry);
-
 				p.AppendRight(BCHelper.ReflectSet);
 
+				p.AppendRight(pTpx);
+				p.AppendRight(pTpy);
+				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(pLast);
-
 				p.AppendRight(BCHelper.Sub);
+
 				p.AppendRight(BCHelper.PCJump);
 				botEnd = p.MaxX;
 				p.AppendRight(BCHelper.PCDown);
@@ -462,19 +447,15 @@ namespace BefunGen.AST.CodeGen
 				{
 					#region Generate_Bottom
 
-					pBottom[0, 0] = BCHelper.ReflectSet;
-
+					pBottom.AppendRight(BCHelper.ReflectSet);
 					pBottom.AppendRight(pTpyR);
+					pBottom.AppendRight(pTpxR);
 
-					pBottom.AppendRight(BCHelper.StackSwap);
 					pBottom.AppendRight(BCHelper.Add);
 					pBottom.AppendRight(BCHelper.Digit1);
+
 					pBottom.AppendRight(BCHelper.ReflectGet);
-
 					pBottom.AppendRight(pTpyR);
-
-					pBottom.AppendRight(BCHelper.StackDup);
-
 					pBottom.AppendRight(pTpxR);
 
 					pBottom.NormalizeX();
@@ -528,8 +509,8 @@ namespace BefunGen.AST.CodeGen
 
 			if (reversed)
 			{
-				// _v#!-{Last}p+/g{TY}{TX}{Y}+%{W}g{TY}{TX}{X}\g{TY}{TX}<p{TY}{TX}0
-				//  >{TX}:{TY}g1+\{TY}p                                 ^
+				// _v#!-{Last}g{TY}{TX}p+/g{TY}{TX}{Y}+%{W}g{TY}{TX}{X}<p{TY}{TX}0
+				//  >{TX}{TY}g1+{TX}{TY}p                              ^
 				CodePiece p = new CodePiece();
 
 				#region Reversed
@@ -546,6 +527,9 @@ namespace BefunGen.AST.CodeGen
 				p[3, 0] = BCHelper.Sub;
 
 				p.AppendRight(pLast);
+				p.AppendRight(BCHelper.ReflectGet);
+				p.AppendRight(pTpy);
+				p.AppendRight(pTpx);
 
 				p.AppendRight(BCHelper.ReflectSet);
 
@@ -565,11 +549,6 @@ namespace BefunGen.AST.CodeGen
 				p.AppendRight(pTpx);
 				p.AppendRight(pArx);
 
-				p.AppendRight(BCHelper.StackSwap);
-				p.AppendRight(BCHelper.ReflectGet);
-				p.AppendRight(pTpy);
-				p.AppendRight(pTpx);
-
 				botEnd = p.MaxX;
 
 				p.AppendRight(BCHelper.PCLeft);
@@ -585,18 +564,14 @@ namespace BefunGen.AST.CodeGen
 					#region Generate_Bottom
 
 					pBottom.AppendRight(pTpxR);
-
-					pBottom.AppendRight(BCHelper.StackDup);
-
 					pBottom.AppendRight(pTpyR);
-
 					pBottom.AppendRight(BCHelper.ReflectGet);
+
 					pBottom.AppendRight(BCHelper.Digit1);
 					pBottom.AppendRight(BCHelper.Add);
-					pBottom.AppendRight(BCHelper.StackSwap);
 
+					pBottom.AppendRight(pTpxR);
 					pBottom.AppendRight(pTpyR);
-
 					pBottom.AppendRight(BCHelper.ReflectSet);
 
 					pBottom.NormalizeX();
@@ -619,8 +594,8 @@ namespace BefunGen.AST.CodeGen
 			}
 			else
 			{
-				// 0{TX}{TY}p>{TX}{TY}g\{X}{TX}{TY}g{W}%+{Y}{TX}{TY}g{W}/+p{Last}-#v_
-				//           ^p{TY}\+1g{TY}:{TX}                                   < 
+				// 0{TX}{TY}p>{X}{TX}{TY}g{W}%+{Y}{TX}{TY}g{W}/+p{TX}{TY}g{Last}-#v_
+				//           ^p{TY}{TX}+1g{TY}{TX}                                < 
 				CodePiece p = new CodePiece();
 
 				#region Normal
@@ -636,11 +611,6 @@ namespace BefunGen.AST.CodeGen
 				p.AppendRight(BCHelper.ReflectSet);
 				botStart = p.MaxX;
 				p.AppendRight(BCHelper.PCRight);
-
-				p.AppendRight(pTpx); // {TX}
-				p.AppendRight(pTpy); // {TY}
-				p.AppendRight(BCHelper.ReflectGet);
-				p.AppendRight(BCHelper.StackSwap);
 
 				p.AppendRight(pArx); // {X}
 				p.AppendRight(pTpx); // {TX}
@@ -660,9 +630,12 @@ namespace BefunGen.AST.CodeGen
 
 				p.AppendRight(BCHelper.ReflectSet);
 
+				p.AppendRight(pTpx); // {TX}
+				p.AppendRight(pTpy); // {TY}
+				p.AppendRight(BCHelper.ReflectGet);
 				p.AppendRight(pLast); // {Last}
-
 				p.AppendRight(BCHelper.Sub);
+
 				p.AppendRight(BCHelper.PCJump);
 				botEnd = p.MaxX;
 				p.AppendRight(BCHelper.PCDown);
@@ -672,19 +645,15 @@ namespace BefunGen.AST.CodeGen
 				{
 					#region Generate_Bottom
 
-					pBottom[0, 0] = BCHelper.ReflectSet;
-
+					pBottom.AppendRight(BCHelper.ReflectSet);
 					pBottom.AppendRight(pTpyR);
+					pBottom.AppendRight(pTpxR);
 
-					pBottom.AppendRight(BCHelper.StackSwap);
 					pBottom.AppendRight(BCHelper.Add);
 					pBottom.AppendRight(BCHelper.Digit1);
+
 					pBottom.AppendRight(BCHelper.ReflectGet);
-
 					pBottom.AppendRight(pTpyR);
-
-					pBottom.AppendRight(BCHelper.StackDup);
-
 					pBottom.AppendRight(pTpxR);
 
 					pBottom.NormalizeX();
@@ -1676,7 +1645,7 @@ namespace BefunGen.AST.CodeGen
 
 			for (int i = 0; i < h - 1; i++)
 			{
-				lit.Fill(0, i, w, i + 1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), t);
+				lit.Fill(0, i, w, i + 1, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol), i==0 ? t : null);
 			}
 
 			lit.Fill(0, h - 1, size % w, h, BCHelper.Chr(cgo.DefaultVarDeclarationSymbol));
