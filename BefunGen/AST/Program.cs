@@ -269,6 +269,13 @@ namespace BefunGen.AST
 
 		public CodePiece GenerateCode(string initialDisp = "") //TODO Make two runs - use first run for width estimation
 		{
+			var estimationRun = GenerateCode(0, initialDisp);
+
+			return GenerateCode(estimationRun.Width, initialDisp);
+		}
+
+		private CodePiece GenerateCode(int estimatedWidth, string initialDisp)
+		{
 			// v {TEMP..}
 			// 0 v{STACKFLOODER}        <
 			//    {++++++++++++}        |
@@ -294,10 +301,12 @@ namespace BefunGen.AST
 			//  # $   {METHOD}
 			//  # $   {++++++}
 
+			ResetBeforeCodeGen();
+
 			List<Tuple<MathExt.Point, CodePiece>> methPieces = new List<Tuple<MathExt.Point, CodePiece>>();
 
 			CodeGenEnvironment env = new CodeGenEnvironment();
-			env.MaxVarDeclarationWidth = MathExt.Max(CodeGenConstants.MinVarDeclarationWidth, DisplayWidth, CGO.DefaultVarDeclarationWidth);
+			env.MaxVarDeclarationWidth = MathExt.Max(estimatedWidth - 4 - CodeGenConstants.LANE_VERTICAL_MARGIN - 2, CodeGenConstants.MinVarDeclarationWidth, DisplayWidth, CGO.DefaultVarDeclarationWidth);
 
 			CodePiece p = new CodePiece();
 
@@ -595,6 +604,15 @@ namespace BefunGen.AST
 			}
 
 			return r;
+		}
+
+		private void ResetBeforeCodeGen()
+		{
+			foreach (var v in Variables) v.ResetBeforeCodeGen();
+
+			Method.ResetCounter();
+			VarDeclaration.ResetCounter();
+			Statement.ResetCounter();
 		}
 	}
 

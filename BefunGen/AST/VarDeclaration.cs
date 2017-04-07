@@ -96,6 +96,11 @@ namespace BefunGen.AST
 			_vIDCounter = 1;
 		}
 
+		public void ResetBeforeCodeGen()
+		{
+			_codeDeclPos = null;
+		}
+
 		// Code for Variable Initialization
 		public abstract CodePiece GenerateCode(CodeGenEnvironment env, bool reversed);
 		public abstract CodePiece GenerateCode_SetToStackVal(CodeGenEnvironment env, bool reversed);
