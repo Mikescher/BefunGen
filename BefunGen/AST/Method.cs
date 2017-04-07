@@ -313,6 +313,11 @@ namespace BefunGen.AST
 		}
 
 		#endregion
+
+		public void ResetBeforeCodeGen()
+		{
+			foreach (var v in Variables) v.ResetBeforeCodeGen();
+		}
 	}
 
 	public class MethodHeader : ASTObject // TEMPORARY -- NOT IN RESULTING AST

@@ -609,6 +609,7 @@ namespace BefunGen.AST
 		private void ResetBeforeCodeGen()
 		{
 			foreach (var v in Variables) v.ResetBeforeCodeGen();
+			foreach (var m in MethodList) m.ResetBeforeCodeGen();
 
 			Method.ResetCounter();
 			VarDeclaration.ResetCounter();
