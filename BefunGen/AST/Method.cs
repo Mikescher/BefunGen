@@ -4,6 +4,7 @@ using BefunGen.AST.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BefunGen.AST.DirectRun;
 
 namespace BefunGen.AST
 {
@@ -317,6 +318,43 @@ namespace BefunGen.AST
 		public void ResetBeforeCodeGen()
 		{
 			foreach (var v in Variables) v.ResetBeforeCodeGen();
+		}
+
+		public RunnerResult RunDirect(RunnerEnvironment env, List<long> parameter, out long? returnValue)
+		{
+			env.StackFrameDown(Identifier);
+
+			for (int i = 0; i < Parameter.Count; i++) env.RegisterVariable(Parameter[i], parameter[i]);
+			foreach (var vv in Variables.Except(Parameter)) env.RegisterVariable(vv);
+
+			var r = Body.RunDirect(env);
+			while (true)
+			{
+				if (r.ResultType == RunnerResult.RRType.Exit)
+				{
+					returnValue = null;
+					return r;
+				}
+				else if (r.ResultType == RunnerResult.RRType.Return)
+				{
+					returnValue = env.StackFrameUp();
+					return RunnerResult.Normal();
+				}
+				else if (r.ResultType == RunnerResult.RRType.Normal)
+				{
+					returnValue = env.StackFrameUp();
+					return RunnerResult.Normal();
+				}
+				else if (r.ResultType == RunnerResult.RRType.Jump)
+				{
+					int iskip = Body.List.IndexOf(env.JumpTarget);
+					if (iskip < 0) throw new InternalCodeRunException($"Label '{env.JumpTarget.Identifier}' not found in {env.CurrentFrame.Name}");
+
+					env.JumpTarget = null;
+
+					r = Body.RunDirect(env, iskip);
+				}
+			}
 		}
 	}
 

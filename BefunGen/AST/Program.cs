@@ -1,5 +1,6 @@
 using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.Tags;
+using BefunGen.AST.DirectRun;
 using BefunGen.AST.Exceptions;
 using BefunGen.MathExtensions;
 using System;
@@ -614,6 +615,17 @@ namespace BefunGen.AST
 			Method.ResetCounter();
 			VarDeclaration.ResetCounter();
 			Statement.ResetCounter();
+		}
+
+		public void RunDirect(RunnerEnvironment env, string initialDisp)
+		{
+			env.ResetDisplay(DisplayWidth, DisplayHeight, initialDisp, ' ');
+
+			foreach (var ml in MethodList) env.RegisterMethod(ml);
+			foreach (var cc in Constants) env.RegisterGlobalVariable(cc);
+			foreach (var vv in Variables) env.RegisterGlobalVariable(vv);
+
+			MainMethod.RunDirect(env, new List<long>(), out _);
 		}
 	}
 

@@ -84,6 +84,8 @@
     <Compile Include="AST\CodeGen\NumberCode\NumberCodeHelper.cs" />
     <Compile Include="AST\CodeGen\NumberCode\NumberCodeFactory_Factorization.cs" />
     <Compile Include="AST\CodeGen\SourceCodePosition.cs" />
+    <Compile Include="AST\DirectRun\RunnerEnvironment.cs" />
+    <Compile Include="AST\DirectRun\RunnerResult.cs" />
     <Compile Include="AST\Exceptions\BefunGenException.cs" />
     <Compile Include="AST\Exceptions\BefunGenInternalException.cs" />
     <Compile Include="AST\Exceptions\BefunGenUserException.cs" />

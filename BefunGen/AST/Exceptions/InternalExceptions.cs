@@ -66,6 +66,15 @@ namespace BefunGen.AST.Exceptions
 			: base("Internal CodeGen Exception") { }
 	}
 
+	public class InternalCodeRunException : BefunGenInternalException
+	{
+		public InternalCodeRunException()
+			: base("Internal CodeGen Runner Exception") { }
+
+		public InternalCodeRunException(string msg)
+			: base("Internal CodeGen Runner Exception: " + msg) { }
+	}
+
 	public class InvalidCodeManipulationException : BefunGenInternalException
 	{
 		public InvalidCodeManipulationException(string msg)

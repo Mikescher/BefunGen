@@ -1,5 +1,6 @@
 ﻿using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
+using BefunGen.AST.Exceptions;
 using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
@@ -45,6 +46,8 @@ namespace BefunGen.AST
 
 		public abstract CodePiece GenerateCode(CodeGenEnvironment env, bool reversed);
 
+		public abstract long AsNumber();
+		public abstract IEnumerable<long> AsNumberList();
 	}
 
 	#region Parents
@@ -60,6 +63,9 @@ namespace BefunGen.AST
 		public abstract bool ValueEquals(LiteralValue o);
 
 		public abstract long GetValueAsInt();
+
+		public override long AsNumber() => GetValueAsInt();
+		public override IEnumerable<long> AsNumberList() { throw new InternalCodeRunException("Cannot cast Number to Array"); }
 	}
 
 	public abstract class LiteralArray : Literal
@@ -84,11 +90,20 @@ namespace BefunGen.AST
 		public abstract CodePiece GenerateCode(CodeGenEnvironment env, int pos, bool reversed);
 
 		public abstract bool IsUniform();
+
+		public override long AsNumber() { throw new InternalCodeRunException("Cannot cast Array to Number"); }
+
+		public abstract long GetValueAsNumber(int idx);
+		public abstract void SetValueToNumber(int idx, long value);
+		public abstract LiteralArray Clone();
+
+		public char[] ToCharArray() => AsNumberList().Select(p => (char)p).ToArray();
 	}
 
 	public abstract class LiteralStack : Literal
 	{
-		public int StackSize { get { return GetStackSize(); } }
+		public int StackCapacity => GetStackCapacity();
+		public int StackCount    => GetStackCount();
 
 		public LiteralStack(SourceCodePosition pos)
 			: base(pos)
@@ -96,7 +111,16 @@ namespace BefunGen.AST
 			//--
 		}
 
-		protected abstract int GetStackSize();
+		protected abstract int GetStackCapacity();
+		protected abstract int GetStackCount();
+
+		public override long AsNumber() { throw new InternalCodeRunException("Cannot cast Stack to Number"); }
+
+		public abstract void PushValue(long v);
+		public abstract long PopValue();
+		public abstract long PeekValue();
+
+		public abstract LiteralStack Clone();
 	}
 
 	#endregion Parents
@@ -266,6 +290,8 @@ namespace BefunGen.AST
 			return "{" + string.Join(",", Value.Select(p => p.ToString())) + "}";
 		}
 
+		public override IEnumerable<long> AsNumberList() => Value;
+
 		protected override int GetCount()
 		{
 			return Value.Count;
@@ -307,6 +333,18 @@ namespace BefunGen.AST
 		{
 			return NumberCodeHelper.GenerateCode(Value[pos], reversed);
 		}
+
+		public override long GetValueAsNumber(int idx) => Value[idx];
+
+		public override void SetValueToNumber(int idx, long value)
+		{
+			Value[idx] = value;
+		}
+
+		public override LiteralArray Clone()
+		{
+			return new LiteralIntArr(Position, Value.ToList());
+		}
 	}
 
 	public class LiteralCharArr : LiteralArray
@@ -329,6 +367,8 @@ namespace BefunGen.AST
 		{
 			return EscapeString(string.Join("", Value));
 		}
+
+		public override IEnumerable<long> AsNumberList() => Value.Select(p => (long)p);
 
 		protected override int GetCount()
 		{
@@ -380,6 +420,18 @@ namespace BefunGen.AST
 		{
 			return NumberCodeFactoryStringmodeChar.GenerateCode(Value[pos], reversed) ?? NumberCodeHelper.GenerateCode(pos, reversed);
 		}
+
+		public override long GetValueAsNumber(int idx) => Value[idx];
+
+		public override void SetValueToNumber(int idx, long value)
+		{
+			Value[idx] = (char)value;
+		}
+
+		public override LiteralArray Clone()
+		{
+			return new LiteralCharArr(Position, Value.ToList());
+		}
 	}
 
 	public class LiteralBoolArr : LiteralArray
@@ -396,6 +448,8 @@ namespace BefunGen.AST
 		{
 			return "{" + string.Join(",", Value.Select(p => p.ToString())) + "}";
 		}
+
+		public override IEnumerable<long> AsNumberList() => Value.Select(p => p?1L:0L);
 
 		protected override int GetCount()
 		{
@@ -446,6 +500,18 @@ namespace BefunGen.AST
 		{
 			return NumberCodeFactoryBoolean.GenerateCode(Value[pos]);
 		}
+
+		public override long GetValueAsNumber(int idx) => Value[idx] ? 1 : 0;
+
+		public override void SetValueToNumber(int idx, long value)
+		{
+			Value[idx] = (value!=0);
+		}
+
+		public override LiteralArray Clone()
+		{
+			return new LiteralBoolArr(Position, Value.ToList());
+		}
 	}
 
 	public class LiteralDigitArr : LiteralArray
@@ -462,6 +528,8 @@ namespace BefunGen.AST
 		{
 			return "{" + string.Join(",", Value.Select(p => p.ToString())) + "}";
 		}
+
+		public override IEnumerable<long> AsNumberList() => Value.Select(p => (long)p);
 
 		protected override int GetCount()
 		{
@@ -512,6 +580,18 @@ namespace BefunGen.AST
 		{
 			return NumberCodeFactoryDigit.GenerateCode(Value[pos]);
 		}
+
+		public override long GetValueAsNumber(int idx) => Value[idx];
+
+		public override void SetValueToNumber(int idx, long value)
+		{
+			Value[idx] = (byte)value;
+		}
+
+		public override LiteralArray Clone()
+		{
+			return new LiteralDigitArr(Position, Value.ToList());
+		}
 	}
 
 	#endregion Array Literals
@@ -520,125 +600,249 @@ namespace BefunGen.AST
 
 	public class LiteralIntStack : LiteralStack
 	{
-		private readonly int size;
+		public readonly int capacity;
+		public List<long> Value = new List<long>();
 
-		public LiteralIntStack(SourceCodePosition pos, int stacksize)
+		public LiteralIntStack(SourceCodePosition pos, List<long> v, int c)
 			: base(pos)
 		{
-			size = stacksize;
+			Value = v.ToList();
+			capacity = c;
 		}
 
 		public override string GetDebugString()
 		{
-			return "stack<int," + size + ">";
+			return "stack<int," + capacity + ">";
 		}
 
-		protected override int GetStackSize()
+		public override IEnumerable<long> AsNumberList() => Value;
+
+		protected override int GetStackCapacity()
 		{
-			return size;
+			return capacity;
+		}
+
+		protected override int GetStackCount()
+		{
+			return Value.Count;
 		}
 
 		public override BType GetBType()
 		{
-			return new BTypeIntStack(new SourceCodePosition(), StackSize);
+			return new BTypeIntStack(new SourceCodePosition(), StackCapacity);
 		}
 
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
+		}
+
+		public override void PushValue(long v)
+		{
+			Value.Add(v);
+		}
+
+		public override long PopValue()
+		{
+			var r = Value[Value.Count - 1];
+			Value.RemoveAt(Value.Count - 1);
+			return r;
+		}
+
+		public override long PeekValue()
+		{
+			return Value[Value.Count - 1];
+		}
+
+		public override LiteralStack Clone()
+		{
+			return new LiteralIntStack(Position, Value, capacity);
 		}
 	}
 
 	public class LiteralCharStack : LiteralStack
 	{
-		private readonly int size;
+		public readonly int capacity;
+		public List<char> Value = new List<char>();
 
-		public LiteralCharStack(SourceCodePosition pos, int stacksize)
+		public LiteralCharStack(SourceCodePosition pos, List<char> v, int c)
 			: base(pos)
 		{
-			size = stacksize;
+			capacity = c;
+			Value = v.ToList();
 		}
 
 		public override string GetDebugString()
 		{
-			return "stack<char," + size + ">";
+			return "stack<char," + capacity + ">";
 		}
 
-		protected override int GetStackSize()
+		public override IEnumerable<long> AsNumberList() => Value.Select(p => (long)p);
+
+		protected override int GetStackCapacity()
 		{
-			return size;
+			return capacity;
+		}
+
+		protected override int GetStackCount()
+		{
+			return Value.Count;
 		}
 
 		public override BType GetBType()
 		{
-			return new BTypeCharStack(new SourceCodePosition(), StackSize);
+			return new BTypeCharStack(new SourceCodePosition(), StackCapacity);
 		}
 
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
+		}
+
+		public override void PushValue(long v)
+		{
+			Value.Add((char)v);
+		}
+
+		public override long PopValue()
+		{
+			var r = Value[Value.Count - 1];
+			Value.RemoveAt(Value.Count - 1);
+			return r;
+		}
+
+		public override long PeekValue()
+		{
+			return Value[Value.Count - 1];
+		}
+
+		public override LiteralStack Clone()
+		{
+			return new LiteralCharStack(Position, Value.ToList(), capacity);
 		}
 	}
 
 	public class LiteralBoolStack : LiteralStack
 	{
-		private readonly int size;
+		public readonly int capacity;
+		public List<bool> Value = new List<bool>();
 
-		public LiteralBoolStack(SourceCodePosition pos, int stacksize)
+		public LiteralBoolStack(SourceCodePosition pos, List<bool> v, int c)
 			: base(pos)
 		{
-			size = stacksize;
+			capacity = c;
+			Value = v.ToList();
 		}
 
 		public override string GetDebugString()
 		{
-			return "stack<bool," + size + ">";
+			return "stack<bool," + capacity + ">";
 		}
 
-		protected override int GetStackSize()
+		public override IEnumerable<long> AsNumberList() => Value.Select(p => p?1L:0L);
+
+		protected override int GetStackCapacity()
 		{
-			return size;
+			return capacity;
+		}
+
+		protected override int GetStackCount()
+		{
+			return Value.Count;
 		}
 
 		public override BType GetBType()
 		{
-			return new BTypeBoolStack(new SourceCodePosition(), StackSize);
+			return new BTypeBoolStack(new SourceCodePosition(), StackCapacity);
 		}
 
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
+		}
+
+		public override void PushValue(long v)
+		{
+			Value.Add(v!=0);
+		}
+
+		public override long PopValue()
+		{
+			var r = Value[Value.Count - 1];
+			Value.RemoveAt(Value.Count - 1);
+			return r?1:0;
+		}
+
+		public override long PeekValue()
+		{
+			return Value[Value.Count - 1]?1:0;
+		}
+
+		public override LiteralStack Clone()
+		{
+			return new LiteralBoolStack(Position, Value.ToList(), capacity);
 		}
 	}
 
 	public class LiteralDigitStack : LiteralStack
 	{
-		private readonly int size;
+		public readonly int capacity;
+		public List<byte> Value = new List<byte>();
 
-		public LiteralDigitStack(SourceCodePosition pos, int stacksize)
+		public LiteralDigitStack(SourceCodePosition pos, List<byte> v, int c)
 			: base(pos)
 		{
-			size = stacksize;
+			capacity = c;
+			Value = v.ToList();
 		}
 
 		public override string GetDebugString()
 		{
-			return "stack<digit," + size + ">";
+			return "stack<digit," + capacity + ">";
 		}
 
-		protected override int GetStackSize()
+		public override IEnumerable<long> AsNumberList() => Value.Select(p => (long)p);
+
+		protected override int GetStackCapacity()
 		{
-			return size;
+			return capacity;
+		}
+
+		protected override int GetStackCount()
+		{
+			return Value.Count;
 		}
 
 		public override BType GetBType()
 		{
-			return new BTypeDigitStack(new SourceCodePosition(), StackSize);
+			return new BTypeDigitStack(new SourceCodePosition(), StackCapacity);
 		}
 
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			throw new NotImplementedException();
+		}
+
+		public override void PushValue(long v)
+		{
+			Value.Add((byte)v);
+		}
+
+		public override long PopValue()
+		{
+			var r = Value[Value.Count - 1];
+			Value.RemoveAt(Value.Count - 1);
+			return r;
+		}
+
+		public override long PeekValue()
+		{
+			return Value[Value.Count - 1];
+		}
+
+		public override LiteralStack Clone()
+		{
+			return new LiteralDigitStack(Position, Value.ToList(), capacity);
 		}
 	}
 

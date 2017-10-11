@@ -1,6 +1,7 @@
 using System;
 using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
+using BefunGen.AST.DirectRun;
 using BefunGen.AST.Exceptions;
 using BefunGen.MathExtensions;
 
@@ -41,6 +42,8 @@ namespace BefunGen.AST
 		public abstract BType GetResultType();
 
 		public abstract CodePiece GenerateCode(CodeGenEnvironment env, bool reversed);
+
+		public abstract long EvaluateDirect(RunnerEnvironment env);
 	}
 
 	#region Parents
@@ -328,6 +331,8 @@ namespace BefunGen.AST
 		public abstract CodePiece GenerateCodeDoubleX(CodeGenEnvironment env, bool reversed);
 		// Puts Y on the stack: [Y]
 		public abstract CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed);
+
+		public abstract void EvaluateSetDirect(RunnerEnvironment env, long newValue);
 	}
 
 	public abstract class ExpressionRand : Expression
@@ -509,6 +514,16 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed)
 		{
 			return NumberCodeHelper.GenerateCode(Target.CodeDeclarationPos.Y, reversed);
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			return env.GetVariableNumber(Target);
+		}
+
+		public override void EvaluateSetDirect(RunnerEnvironment env, long newValue)
+		{
+			env.SetVariable(Target, newValue);
 		}
 	}
 
@@ -716,6 +731,14 @@ namespace BefunGen.AST
 			p.NormalizeX();
 
 			return p;
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var xx = TargetX.EvaluateDirect(env);
+			var yy = TargetY.EvaluateDirect(env);
+
+			return env.GetDisplay(xx, yy);
 		}
 	}
 
@@ -966,6 +989,16 @@ namespace BefunGen.AST
 				return p;
 			}
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			return env.GetVariableNumberList(Target)[(int)Index.EvaluateDirect(env)];
+		}
+
+		public override void EvaluateSetDirect(RunnerEnvironment env, long newValue)
+		{
+			env.GetVariableNumberList(Target)[(int)Index.EvaluateDirect(env)] = newValue;
+		}
 	}
 
 	public class ExpressionVoidValuePointer : ExpressionValuePointer
@@ -1023,6 +1056,16 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCodeSingleY(CodeGenEnvironment env, bool reversed)
 		{
 			throw new InvalidAstStateException(Position);
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			throw new InternalCodeRunException();
+		}
+
+		public override void EvaluateSetDirect(RunnerEnvironment env, long newValue)
+		{
+			throw new InternalCodeRunException();
 		}
 	}
 
@@ -1087,6 +1130,14 @@ namespace BefunGen.AST
 		{
 			return new StatementAssignment(p, v, new ExpressionMult(p, v, e));
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return e1 * e2;
+		}
 	}
 
 	public class ExpressionDiv : ExpressionBinaryMathOperation
@@ -1137,6 +1188,15 @@ namespace BefunGen.AST
 		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
 			return new StatementAssignment(p, v, new ExpressionDiv(p, v, e));
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			if (e2 == 0) return 0;
+			return e1 / e2;
 		}
 	}
 
@@ -1189,6 +1249,15 @@ namespace BefunGen.AST
 		{
 			return new StatementAssignment(p, v, new ExpressionMod(p, v, e));
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			if (e2 == 0) return 0;
+			return e1 % e2;
+		}
 	}
 
 	public class ExpressionAdd : ExpressionBinaryMathOperation
@@ -1240,6 +1309,14 @@ namespace BefunGen.AST
 		{
 			return new StatementAssignment(p, v, new ExpressionAdd(p, v, e));
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return e1 + e2;
+		}
 	}
 
 	public class ExpressionSub : ExpressionBinaryMathOperation
@@ -1286,6 +1363,14 @@ namespace BefunGen.AST
 		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
 			return new StatementAssignment(p, v, new ExpressionSub(p, v, e));
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return e1 - e2;
 		}
 	}
 
@@ -1421,6 +1506,14 @@ namespace BefunGen.AST
 		{
 			return new StatementAssignment(p, v, new ExpressionAnd(p, v, e));
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env) != 0;
+			var e2 = Right.EvaluateDirect(env) != 0;
+
+			return (e1 && e2) ? 1 : 0;
+		}
 	}
 
 	public class ExpressionOr : ExpressionBinaryBoolOperation
@@ -1549,6 +1642,14 @@ namespace BefunGen.AST
 		public static StatementAssignment CreateAugmentedStatement(SourceCodePosition p, ExpressionValuePointer v, Expression e)
 		{
 			return new StatementAssignment(p, v, new ExpressionOr(p, v, e));
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env) != 0;
+			var e2 = Right.EvaluateDirect(env) != 0;
+
+			return (e1 || e2) ? 1 : 0;
 		}
 	}
 
@@ -1696,6 +1797,14 @@ namespace BefunGen.AST
 		{
 			return new StatementAssignment(p, v, new ExpressionXor(p, v, e));
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env) != 0;
+			var e2 = Right.EvaluateDirect(env) != 0;
+
+			return (e1 ^ e2) ? 1 : 0;
+		}
 	}
 
 	#endregion
@@ -1781,6 +1890,14 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return (e1 == e2) ? 1 : 0;
+		}
 	}
 
 	public class ExpressionUnequals : ExpressionCompare
@@ -1862,6 +1979,14 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return (e1 != e2) ? 1 : 0;
+		}
 	}
 
 	public class ExpressionGreater : ExpressionCompare
@@ -1926,6 +2051,14 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return (e1 > e2) ? 1 : 0;
+		}
 	}
 
 	public class ExpressionLesser : ExpressionCompare
@@ -1989,6 +2122,14 @@ namespace BefunGen.AST
 			p.NormalizeX();
 
 			return p;
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return (e1 < e2) ? 1 : 0;
 		}
 	}
 
@@ -2102,6 +2243,14 @@ namespace BefunGen.AST
 				return ep;
 			}
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return (e1 >= e2) ? 1 : 0;
+		}
 	}
 
 	public class ExpressionLesserEquals : ExpressionCompare
@@ -2214,6 +2363,14 @@ namespace BefunGen.AST
 				return ep;
 			}
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Left.EvaluateDirect(env);
+			var e2 = Right.EvaluateDirect(env);
+
+			return (e1 <= e2) ? 1 : 0;
+		}
 	}
 
 	#endregion Compare
@@ -2279,6 +2436,13 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Expr.EvaluateDirect(env) != 0;
+
+			return (!e1) ? 1 : 0;
+		}
 	}
 
 	public class ExpressionNegate : ExpressionUnary
@@ -2341,6 +2505,13 @@ namespace BefunGen.AST
 			p.NormalizeX();
 
 			return p;
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var e1 = Expr.EvaluateDirect(env);
+
+			return -e1;
 		}
 	}
 
@@ -2412,6 +2583,11 @@ namespace BefunGen.AST
 			}
 
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			return Expr.EvaluateDirect(env);
+		}
 	}
 
 	#endregion Unary
@@ -2466,6 +2642,15 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var v = Target.EvaluateDirect(env);
+
+			Target.EvaluateSetDirect(env, v + 1);
+
+			return v;
+		}
 	}
 
 	public class ExpressionPreIncrement : ExpressionCrement
@@ -2515,6 +2700,15 @@ namespace BefunGen.AST
 			p.NormalizeX();
 
 			return p;
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var v = Target.EvaluateDirect(env);
+
+			Target.EvaluateSetDirect(env, v + 1);
+
+			return v + 1;
 		}
 	}
 
@@ -2566,6 +2760,15 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var v = Target.EvaluateDirect(env);
+
+			Target.EvaluateSetDirect(env, v - 1);
+
+			return v;
+		}
 	}
 
 	public class ExpressionPreDecrement : ExpressionCrement
@@ -2615,6 +2818,15 @@ namespace BefunGen.AST
 			p.NormalizeX();
 
 			return p;
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var v = Target.EvaluateDirect(env);
+
+			Target.EvaluateSetDirect(env, v- 1);
+
+			return v - 1;
 		}
 	}
 
@@ -2675,6 +2887,11 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return Value.GenerateCode(env, reversed);
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			return Value.AsNumber();
 		}
 	}
 
@@ -2760,6 +2977,11 @@ namespace BefunGen.AST
 			}
 
 			return p;
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			return (env.Random.Next(2) == 0) ? 1 : 0;
 		}
 	}
 
@@ -2861,6 +3083,13 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			var ee = Exponent.EvaluateDirect(env);
+
+			return env.Random.Next((int)Math.Pow(4, (int)ee));
+		}
 	}
 
 	public class ExpressionFunctionCall : Expression
@@ -2926,6 +3155,12 @@ namespace BefunGen.AST
 		{
 			return MethodCall.GenerateCode(env, reversed, false);
 		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			MethodCall.RunDirect(env, out long? r);
+			return r.Value;
+		}
 	}
 
 	public class ExpressionClassMethodCall : Expression
@@ -2984,6 +3219,12 @@ namespace BefunGen.AST
 		public override void LinkVariables(Method owner)
 		{
 			MethodCall.LinkVariables(owner);
+		}
+
+		public override long EvaluateDirect(RunnerEnvironment env)
+		{
+			MethodCall.RunDirect(env, out long? r);
+			return r.Value;
 		}
 	}
 

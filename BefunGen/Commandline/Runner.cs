@@ -1,5 +1,6 @@
 ﻿using BefunGen.AST;
 using BefunGen.AST.CodeGen;
+using BefunGen.AST.DirectRun;
 using BefunGen.AST.Exceptions;
 using System;
 using System.IO;
@@ -34,14 +35,51 @@ namespace BefunGen.Commandline
 
 		public int Run()
 		{
-			Console.WriteLine();
-			Console.WriteLine("" + _title + " (c) Mike Schwoerer @ mikescher.com");
-
 			if (cmda.IsEmpty() || cmda.Contains("help"))
 			{
-				ShowHelp();
+				return RunHelp();
+			}
+			else if (cmda.Contains("directrun"))
+			{
+				return RunDirect();
+			}
+			else
+			{
+				return RunCompile();
+			}
+		}
+		
+		private int RunDirect()
+		{
+			var input = cmda.GetStringDefault("file", null);
+			if (string.IsNullOrWhiteSpace(input) || !File.Exists(input)) return Fail("Please specify a valid input file");
+
+			try
+			{
+				string inputCode = File.ReadAllText(input);
+				var parser = new TextFungeParser();
+
+				var prog = parser.GenerateAst(inputCode);
+				var env = new RunnerEnvironment();
+
+				prog.RunDirect(env, "");
+				
 				return 0;
 			}
+			catch (BefunGenException ex)
+			{
+				return Fail("Error while compiling:\n\n" + ex);
+			}
+			catch (Exception ex)
+			{
+				return Fail("Internal error:\n\n" + ex);
+			}
+		}
+
+		private int RunCompile()
+		{
+			Console.WriteLine();
+			Console.WriteLine("" + _title + " (c) Mike Schwoerer @ mikescher.com");
 
 			var input = cmda.GetStringDefault("file", null);
 			if (string.IsNullOrWhiteSpace(input) || !File.Exists(input)) return Fail("Please specify a valid input file");
@@ -54,31 +92,31 @@ namespace BefunGen.Commandline
 				NumberLiteralRepresentation = cmda.GetEnumDefault("numrep", NumberRep.Best),
 				SetNOPCellsToCustom = cmda.GetBoolDefault("specnop", false),
 
-				DefaultNumeralValue            = (byte) cmda.GetUIntDefaultRange("init_number", 0, 0, 255),
-				DefaultCharacterValue          = (char) cmda.GetUIntDefaultRange("init_char", ' ', 0, 255),
-				DefaultBooleanValue            = cmda.GetBoolDefault("init_bool", false),
+				DefaultNumeralValue = (byte)cmda.GetUIntDefaultRange("init_number", 0, 0, 255),
+				DefaultCharacterValue = (char)cmda.GetUIntDefaultRange("init_char", ' ', 0, 255),
+				DefaultBooleanValue = cmda.GetBoolDefault("init_bool", false),
 
-				StripDoubleStringmodeToogle    = cmda.GetBoolDefault("o_stringmode", true),
-				CompressHorizontalCombining    = cmda.GetBoolDefault("o_compresshorz", true),
-				CompressVerticalCombining      = cmda.GetBoolDefault("o_compressvert", true),
+				StripDoubleStringmodeToogle = cmda.GetBoolDefault("o_stringmode", true),
+				CompressHorizontalCombining = cmda.GetBoolDefault("o_compresshorz", true),
+				CompressVerticalCombining = cmda.GetBoolDefault("o_compressvert", true),
 				CompileTimeEvaluateExpressions = cmda.GetBoolDefault("o_staticexpr", true),
-				RemUnreferencedMethods         = cmda.GetBoolDefault("o_unused", true),
+				RemUnreferencedMethods = cmda.GetBoolDefault("o_unused", true),
 
-				ExtendedBooleanCast            = cmda.GetBoolDefault("safe_boolcast", false),
-				DisplayModuloAccess            = cmda.GetBoolDefault("safe_displacc", false),
+				ExtendedBooleanCast = cmda.GetBoolDefault("safe_boolcast", false),
+				DisplayModuloAccess = cmda.GetBoolDefault("safe_displacc", false),
 
-				DefaultVarDeclarationWidth     = cmda.GetIntDefaultRange("varwidthmin", 16, 0, 2048),
+				DefaultVarDeclarationWidth = cmda.GetIntDefaultRange("varwidthmin", 16, 0, 2048),
 
-				DefaultDisplayValue            = (char) cmda.GetUIntDefaultRange("displ_char", ' ', 0, 255),
-				DisplayBorder                  = (char) cmda.GetUIntDefaultRange("displ_borderchar", '#', 0, 255),
-				DisplayBorderThickness         = cmda.GetIntDefaultRange("displ_borderwidth", 1, 0, 128),
+				DefaultDisplayValue = (char)cmda.GetUIntDefaultRange("displ_char", ' ', 0, 255),
+				DisplayBorder = (char)cmda.GetUIntDefaultRange("displ_borderchar", '#', 0, 255),
+				DisplayBorderThickness = cmda.GetIntDefaultRange("displ_borderwidth", 1, 0, 128),
 
-				DefaultVarDeclarationSymbol    = (char) cmda.GetUIntDefaultRange("chr_vardecl", ' ', 0, 255),
-				DefaultTempSymbol              = (char) cmda.GetUIntDefaultRange("chr_tmpdecl", ' ', 0, 255),
-				DefaultResultTempSymbol        = (char) cmda.GetUIntDefaultRange("chr_tempresult", ' ', 0, 255),
-				CustomNOPSymbol                = (char) cmda.GetUIntDefaultRange("chr_nop", '@', 0, 255)
+				DefaultVarDeclarationSymbol = (char)cmda.GetUIntDefaultRange("chr_vardecl", ' ', 0, 255),
+				DefaultTempSymbol = (char)cmda.GetUIntDefaultRange("chr_tmpdecl", ' ', 0, 255),
+				DefaultResultTempSymbol = (char)cmda.GetUIntDefaultRange("chr_tempresult", ' ', 0, 255),
+				CustomNOPSymbol = (char)cmda.GetUIntDefaultRange("chr_nop", '@', 0, 255)
 			};
-			
+
 			try
 			{
 				Console.Out.WriteLine("Reading from " + Path.GetFullPath(input));
@@ -109,7 +147,7 @@ namespace BefunGen.Commandline
 			return -1;
 		}
 
-		private void ShowHelp()
+		private int RunHelp()
 		{
 			Console.WriteLine();
 			Console.WriteLine("BefunGen sourcefile [outputfile] [parameter] ");
@@ -147,6 +185,8 @@ namespace BefunGen.Commandline
 			Console.WriteLine("chr_nop           : Default char for NOP cells (needs -specnop) (ord-value)");
 			Console.WriteLine();
 			Console.WriteLine("debug             : include debug informations in output");
+
+			return 0;
 		}
 	}
 }

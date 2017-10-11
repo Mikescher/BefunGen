@@ -1,6 +1,7 @@
 ﻿using BefunGen.AST.CodeGen;
 using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.AST.CodeGen.Tags;
+using BefunGen.AST.DirectRun;
 using BefunGen.AST.Exceptions;
 using BefunGen.MathExtensions;
 using System;
@@ -107,6 +108,8 @@ namespace BefunGen.AST
 		public abstract StatementLabel FindLabelByIdentifier(string ident);
 
 		public abstract CodePiece GenerateCode(CodeGenEnvironment env, bool reversed);
+
+		public abstract RunnerResult RunDirect(RunnerEnvironment env);
 	}
 
 	#region Interfaces/Enums
@@ -789,6 +792,28 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			return RunDirect(env, 0);
+		}
+
+		public RunnerResult RunDirect(RunnerEnvironment env, int skip)
+		{
+			foreach (var stmt in List.Skip(skip))
+			{
+				if (env.HasQuit) return RunnerResult.Exit();
+
+				var r = stmt.RunDirect(env);
+
+				if (r.ResultType == RunnerResult.RRType.Exit) return r;
+				if (r.ResultType == RunnerResult.RRType.Return) return r;
+				if (r.ResultType == RunnerResult.RRType.Jump) return r;
+			}
+
+			return RunnerResult.Normal();
+		}
 	}
 
 	public class StatementMethodCall : Statement, ICodeAddressTarget
@@ -1161,6 +1186,16 @@ namespace BefunGen.AST
 			if (!current.IsEmpty()) pieces.Add(current);
 
 			return CodePieceStore.CreateSerpentine(pieces, initialReversed);
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			return RunDirect(env, out _);
+		}
+
+		public RunnerResult RunDirect(RunnerEnvironment env, out long? result)
+		{
+			return Target.RunDirect(env, CallParameter.Select(p => p.EvaluateDirect(env)).ToList(), out result);
 		}
 	}
 
@@ -1612,6 +1647,58 @@ namespace BefunGen.AST
 			foreach (Expression e in CallParameter)
 				e.LinkVariables(owner);
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			return RunDirect(env, out _);
+		}
+
+		public RunnerResult RunDirect(RunnerEnvironment env, out long? result)
+		{
+			switch (Method)
+			{
+				case AutoClassMethods.Push:
+					{
+						var v = env.GetVariableNumberList(Target.Target);
+						v.Add(CallParameter[0].EvaluateDirect(env));
+						result = null;
+						return RunnerResult.Normal();
+					}
+				case AutoClassMethods.Peek:
+					{
+						var v = env.GetVariableNumberList(Target.Target);
+						result = v.Last();
+						return RunnerResult.Normal();
+					}
+				case AutoClassMethods.Pop:
+					{
+						var v = env.GetVariableNumberList(Target.Target);
+						result = v.Last();
+						v.RemoveAt(v.Count - 1);
+						return RunnerResult.Normal();
+					}
+				case AutoClassMethods.Count:
+					{
+						var v = env.GetVariableNumberList(Target.Target);
+						result = v.Count;
+						return RunnerResult.Normal();
+					}
+				case AutoClassMethods.Empty:
+					{
+						var v = env.GetVariableNumberList(Target.Target);
+						result = (v.Count==0)?1:0;
+						return RunnerResult.Normal();
+					}
+				case AutoClassMethods.Full:
+					{
+						var v = env.GetVariableNumberList(Target.Target);
+						result = (v.Count >= ((VarDeclarationStack)Target.Target).Size) ? 1 : 0;
+						return RunnerResult.Normal();
+					}
+				default:
+					throw new InternalCodeRunException("Unknown func: " + Method);
+			}
+		}
 	}
 
 	#endregion
@@ -1712,6 +1799,11 @@ namespace BefunGen.AST
 				return new CodePiece(BCHelper.PC_Right_tagged(new MethodCallVerticalReEntryTag(this)));
 			}
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			return RunnerResult.Normal();
+		}
 	}
 
 	public class StatementGoto : Statement
@@ -1808,6 +1900,12 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			env.JumpTarget = Target;
+			return RunnerResult.Jump(Target);
+		}
 	}
 
 	public class StatementReturn : Statement
@@ -1899,6 +1997,12 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return ResultType.GenerateCodeReturnFromMethodCall(env, Position, Value, reversed);
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			env.SetResult(Value.EvaluateDirect(env));
+			return RunnerResult.Return();
 		}
 	}
 
@@ -2233,6 +2337,15 @@ namespace BefunGen.AST
 				return p;
 			}
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			if (Mode == OutMode.OUT_CHAR) env.WriteOut((char)Value.EvaluateDirect(env));
+			if (Mode == OutMode.OUT_CHAR_ARR) env.WriteOut(env.GetVariableNumberList(((ExpressionDirectValuePointer)Value).Target).Select(p => (char)p).ToArray());
+			if (Mode == OutMode.OUT_DIGIT) env.WriteOut((byte)Value.EvaluateDirect(env));
+			if (Mode == OutMode.OUT_INT) env.WriteOut(Value.EvaluateDirect(env));
+			return RunnerResult.Normal();
+		}
 	}
 
 	public class StatementOutCharArrLiteral : Statement
@@ -2378,6 +2491,12 @@ namespace BefunGen.AST
 
 				return p;
 			}
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			env.WriteOut(Value.ToCharArray());
+			return RunnerResult.Normal();
 		}
 	}
 
@@ -2606,6 +2725,11 @@ namespace BefunGen.AST
 				return p;
 			}
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			throw new NotSupportedException();
+		}
 	}
 
 	public class StatementQuit : Statement
@@ -2678,6 +2802,12 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			env.HasQuit = true;
+			return RunnerResult.Exit();
+		}
 	}
 
 	public class StatementNOP : Statement // NO OPERATION
@@ -2745,6 +2875,11 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return new CodePiece(); // easy as that ¯\_(ツ)_/¯
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			return RunnerResult.Normal();
 		}
 	}
 
@@ -2853,6 +2988,13 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			var vv = Target.EvaluateDirect(env);
+			Target.EvaluateSetDirect(env, vv + 1);
+			return RunnerResult.Normal();
+		}
 	}
 
 	public class StatementDec : Statement
@@ -2956,6 +3098,13 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			var vv = Target.EvaluateDirect(env);
+			Target.EvaluateSetDirect(env, vv - 1);
+			return RunnerResult.Normal();
+		}
 	}
 
 	public class StatementAssignment : Statement
@@ -3044,6 +3193,12 @@ namespace BefunGen.AST
 		public override CodePiece GenerateCode(CodeGenEnvironment env, bool reversed)
 		{
 			return Target.GetResultType().GenerateCodeAssignment(env, Position, Expr, Target, reversed);
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			Target.EvaluateSetDirect(env, Expr.EvaluateDirect(env));
+			return RunnerResult.Normal();
 		}
 	}
 
@@ -3527,6 +3682,18 @@ namespace BefunGen.AST
 
 			return p;
 		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			if (Condition.EvaluateDirect(env) != 0)
+			{
+				return Body.RunDirect(env);
+			}
+			else
+			{
+				return Else.RunDirect(env);
+			}
+		}
 	}
 
 	public class StatementWhile : Statement
@@ -3711,6 +3878,16 @@ namespace BefunGen.AST
 			StatementWhile sWhile = new StatementWhile(p, cond, body);
 
 			return new StatementStatementList(p, new List<Statement>() { init, sWhile });
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			while (Condition.EvaluateDirect(env) != 0)
+			{
+				var b = Body.RunDirect(env);
+				if (b.ResultType != RunnerResult.RRType.Normal) return b;
+			}
+			return RunnerResult.Normal();
 		}
 	}
 
@@ -3908,6 +4085,18 @@ namespace BefunGen.AST
 
 				return p;
 			}
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			do
+			{
+				var b = Body.RunDirect(env);
+				if (b.ResultType != RunnerResult.RRType.Normal) return b;
+			}
+			while (Condition.EvaluateDirect(env) == 0);
+
+			return RunnerResult.Normal();
 		}
 	}
 
@@ -4394,6 +4583,18 @@ namespace BefunGen.AST
 
 			p.NormalizeX();
 			return p;
+		}
+
+		public override RunnerResult RunDirect(RunnerEnvironment env)
+		{
+			var cc = Condition.EvaluateDirect(env);
+
+			foreach (var cs in Cases)
+			{
+				if (cs.Value.AsNumber() == cc) return cs.Body.RunDirect(env);
+			}
+
+			return DefaultCase.RunDirect(env);
 		}
 	}
 

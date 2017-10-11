@@ -5,6 +5,7 @@ using System;
 using BefunGen.AST.CodeGen.NumberCode;
 using BefunGen.MathExtensions;
 using BefunGen.AST.CodeGen.Tags;
+using System.Collections.Generic;
 
 namespace BefunGen.AST
 {
@@ -842,7 +843,7 @@ namespace BefunGen.AST
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralIntStack(new SourceCodePosition(), StackSize);
+			return new LiteralIntStack(new SourceCodePosition(), new List<long>(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
@@ -875,7 +876,7 @@ namespace BefunGen.AST
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralCharStack(new SourceCodePosition(), StackSize);
+			return new LiteralCharStack(new SourceCodePosition(), new List<char>(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
@@ -908,7 +909,7 @@ namespace BefunGen.AST
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralDigitStack(new SourceCodePosition(), StackSize);
+			return new LiteralDigitStack(new SourceCodePosition(), new List<byte>(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
@@ -941,7 +942,7 @@ namespace BefunGen.AST
 
 		public override Literal GetDefaultValue()
 		{
-			return new LiteralBoolStack(new SourceCodePosition(), StackSize);
+			return new LiteralBoolStack(new SourceCodePosition(), new List<bool>(), StackSize);
 		}
 
 		public override bool IsImplicitCastableTo(BType other)
