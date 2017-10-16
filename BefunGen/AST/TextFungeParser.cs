@@ -217,8 +217,11 @@ namespace BefunGen.AST
 
 			var displayBuilder = new StringBuilder();
 			var inDisplayDefinition = false;
-			foreach (var line in lines)
+			var first = true;
+			foreach (var rawline in lines)
 			{
+				var line = rawline.Trim();
+
 				if (line.StartsWith("///"))
 				{
 					string content = line.Substring(3);
@@ -231,10 +234,12 @@ namespace BefunGen.AST
 						}
 						else
 						{
-							if (displayBuilder.Length == 0)
+							if (first)
 								displayBuilder.Append(content);
 							else
 								displayBuilder.Append("\n" + content);
+
+							first = false;
 						}
 					}
 					else
@@ -243,6 +248,7 @@ namespace BefunGen.AST
 						{
 							inDisplayDefinition = true;
 							displayBuilder = new StringBuilder();
+							first = true;
 						}
 					}
 				}
@@ -253,6 +259,179 @@ namespace BefunGen.AST
 			}
 			return string.Empty;
 		}
+
+		public static bool UpdateDisplayInTFFormat(ref string sourcecode, string displayvalue)
+		{
+			if (string.IsNullOrWhiteSpace(displayvalue)) return RemoveDisplayInTFFormat(ref sourcecode);
+
+			var inputLines = Regex.Split(sourcecode, @"\r?\n");
+			var displayLines = Regex.Split(displayvalue, @"\r?\n");
+			
+			#region Patch existing <DISPLAY>
+			{
+				StringBuilder output = new StringBuilder();
+
+				bool replaced = false;
+				bool inDisplayDefinition = false;
+				string displayindent = "";
+				foreach (var rawline in inputLines)
+				{
+					var line = rawline.TrimStart();
+
+					if (line.StartsWith("///"))
+					{
+						string content = line.Substring(3);
+
+						if (inDisplayDefinition)
+						{
+							if (content.Trim() == "</DISPLAY>")
+							{
+								// skip
+								inDisplayDefinition = false;
+								output.AppendLine(rawline);
+								continue;
+							}
+							else
+							{
+								// skip
+								continue;
+							}
+						}
+						else
+						{
+							if (content.Trim() == "<DISPLAY>" && !replaced)
+							{
+								// add display
+								output.AppendLine(rawline);
+								displayindent = line.Substring(0, line.IndexOf("///"));
+								foreach (var dl in displayLines) output.AppendLine(displayindent + "///" + dl);
+								inDisplayDefinition = true;
+								replaced = true;
+							}
+							else
+							{
+								// output
+								output.AppendLine(rawline);
+							}
+						}
+					}
+					else
+					{
+						// output
+						inDisplayDefinition = false;
+						output.AppendLine(rawline);
+					}
+				}
+
+				if (replaced)
+				{
+					StringBuilderToStringWithoutDanglingNewline(output);
+					return true;
+				}
+			}
+			#endregion
+
+			#region Create new <DISPLAY>
+			{
+				StringBuilder output = new StringBuilder();
+
+				bool replaced = false;
+				string displayindent = "";
+				foreach (var rawline in inputLines)
+				{
+					var line = rawline.TrimStart();
+
+					if (line.Trim().ToLower().StartsWith("program ") && !replaced)
+					{
+						// add display
+						displayindent = rawline.Substring(0, rawline.IndexOf("program"));
+						output.AppendLine(displayindent + "///<DISPLAY>");
+						foreach (var dl in displayLines) output.AppendLine(displayindent + "///" + dl);
+						output.AppendLine(displayindent + "///</DISPLAY>");
+						replaced = true;
+					}
+
+					// output
+					output.AppendLine(rawline);
+				}
+
+				if (replaced)
+				{
+					StringBuilderToStringWithoutDanglingNewline(output);
+					return true;
+				}
+			}
+			#endregion
+
+			return false;
+		}
+
+		private static bool RemoveDisplayInTFFormat(ref string sourcecode)
+		{
+			var inputLines = Regex.Split(sourcecode, @"\r?\n");
+
+			StringBuilder output = new StringBuilder();
+
+			bool inDisplayDefinition = false;
+			foreach (var rawline in inputLines)
+			{
+				var line = rawline.TrimStart();
+
+				if (line.StartsWith("///"))
+				{
+					string content = line.Substring(3);
+
+					if (inDisplayDefinition)
+					{
+						if (content.Trim() == "</DISPLAY>")
+						{
+							// skip
+							inDisplayDefinition = false;
+							continue;
+						}
+						else
+						{
+							// skip
+							continue;
+						}
+					}
+					else
+					{
+						if (content.Trim() == "<DISPLAY>")
+						{
+							// skip
+							inDisplayDefinition = true;
+						}
+						else
+						{
+							// output
+							output.AppendLine(rawline);
+						}
+					}
+				}
+				else
+				{
+					// output
+					inDisplayDefinition = false;
+					output.AppendLine(rawline);
+				}
+			}
+
+			sourcecode = StringBuilderToStringWithoutDanglingNewline(output);
+
+			return true;
+		}
+
+		private static string StringBuilderToStringWithoutDanglingNewline(StringBuilder b)
+		{
+			var str = b.ToString();
+
+			if (str.EndsWith("\r\n")) return str.Substring(0, str.Length - 2);
+
+			if (str.EndsWith("\n")) return str.Substring(0, str.Length - 1);
+
+			return str;
+		} 
 
 		public string GetGrammarDefinition()
 		{

@@ -62,7 +62,7 @@ namespace BefunGen.Commandline
 				var prog = parser.GenerateAst(inputCode);
 				var env = new RunnerEnvironment();
 
-				prog.RunDirect(env, "");
+				prog.RunDirect(env, TextFungeParser.ExtractDisplayFromTFFormat(inputCode));
 				
 				return 0;
 			}
