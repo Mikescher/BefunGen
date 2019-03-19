@@ -25,6 +25,8 @@ Download
 
 You can download the binaries from my website [www.mikescher.com](http://www.mikescher.com/programs/view/BefunUtils)
 
+Or you can get the latest [Github release](https://github.com/Mikescher/BefunGen/releases/latest) (In case AppVeyor is down)
+
 Or you can download the latest (nightly) version from the **[AppVeyor build server](https://ci.appveyor.com/project/Mikescher/BefunGen/build/artifacts)**
 
 Set Up
